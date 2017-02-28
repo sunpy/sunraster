@@ -240,3 +240,23 @@ class IRISRaster(object):
                                                     self.data[spectral_window].time.values[-1]) + \
                "Number unique raster positions: {0}\n".format(self.meta["number unique raster positions"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
+
+
+    def convert_DN_to_photons(self, spectral_window):
+        """Converts DataArray from DN to photon counts."""
+        # Check that DataArray is in units of DN.
+        if "DN" not in self.data[spectral_window].attrs["units"]["intensity"]:
+            raise ValueError("Intensity units of DataArray are not DN.")
+        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(spectral_window)
+        self.data[spectral_window].name = "Intensity [photons]"
+        self.data[spectral_window].atrrs["units"]["intensity"] = "photons"
+
+
+    def convert_photons_to_DN(self, spectral_window):
+        """Converts DataArray from DN to photon counts."""
+        # Check that DataArray is in units of DN.
+        if "photons" not in self.data[spectral_window].attrs["units"]["intensity"]:
+            raise ValueError("Intensity units of DataArray are not DN.")
+        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(spectral_window)
+        self.data[spectral_window].name = "Intensity [DN]"
+        self.data[spectral_window].atrrs["units"]["intensity"] = "DN"
