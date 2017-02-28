@@ -284,6 +284,56 @@ class IRISRaster(object):
             self.spectral_windows.loc[spectral_window]["detector type"][:3])
 
 
+    def convert_DN_to_radiance(self, spectral_window):
+        """Convert DataArray from count rate [DN/s/pixel] to radiance [ergs/s/cm^2/sr/]."""
+        # Get spectral dispersion per pixel.
+        ######## Must check if data is in units of DN/s ############
+        spectral_dispersion_per_pixel = self.wcs["spectral"][spectral_window].cdelt[0] * u.Angstrom
+        ########### The definition of solid angle is very rough as defined. #############
+        ########### Needs to be made into an array for each scan and also the 0.33"
+        ########### width of the slit must be found in the data file somewhere. ############
+        solid_angle = self.wcs["celestial"]["scan0"].cdelt[0] * u.steradian
+        # Get effective area
+        ########### This needs to be generalized to the time of OBS once that functionality is written#########
+        iris_response = iris_tools.iris_get_response(pre_launch=True)
+        lam = iris_response["LAMBDA"]
+        if self.spectral_windows[spectral_window]["detector type"][:3] == "FUV":
+            eff_area = iris_response.area_sg[0, :]
+            dn2phot = iris_response["DN2PHOT_SG"][0]
+        elif self.spectral_windows[spectral_window]["detector type"][:3] == "NUV":
+            eff_area = iris_response.area_sg[1, :]
+            dn2phot = iris_response["DN2PHOT_SG"][1]
+        else:
+            raise ValueError("Detector type of spectral window not recognized.")
+        # Iterate through raster and slit pixel and make conversion to
+        # physical units.
+        for i in range(len(self.data[spectral_window].raster_axis)):
+            # Interpolate the effective areas to cover the wavelengths
+            # at which the data is recorded:
+            tck = interpolate.splrep(lam, eff_area.to(u.Angstrom).value, s=0)
+            eff_area_interp = interpolate.splev(wave[i, :], tck)
+            # Iterate over pixels in slit.
+            for k in range(len(self.data[spectral_window].slit_axis)):
+                data_rad[i, k, :] = constants.h * constants.c / wave[i, :] * u.Angstrom * \
+                                    self.data[spectral_window].data.isel(raster_axis=i).isel(slit_axis=k) * \
+                                    dn2phot / solid_angle / (eff_area_interp * spectral_dispersion_per_pixel)
+
+
+    def calculate_orbital_wavelength_variation(self, slit_pixel_range=None, spline_smoothing=False,
+                                               fit_individual_profiles=False):
+        if date_created < date_new_pipeline:
+            spacecraft_velocity = raster.auxiliary_data["OBS_VRIX"]
+            orbital_phase = 2. * np.pi * raster.auxiliary_data["OPHASEIX"]
+            roll_angle = raster.meta["satellite roll angle"]
+            # Check that there are measurement times with good values of
+            # spacecraft velocity and orbital phase.
+            bad_aux = np.asarray(np.isfinite(spacecraft_velocity) * np.isfinite(orbital_phase) * (-1), dtype=bool)
+        else:
+            spacecraft_velocity = None
+            orbital_phase = None
+            roll_angle = None
+
+
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
     """Used in initiation of IRISRaster to convert auxiliary data to Quantities."""
     index = np.where(np.array(header_colnames) == header_property_name)[0]
