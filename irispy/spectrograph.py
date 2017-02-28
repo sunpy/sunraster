@@ -16,7 +16,7 @@ from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
 
-from irispy import iris_tools
+import iris_tools
 
 
 class IRISRaster(object):
