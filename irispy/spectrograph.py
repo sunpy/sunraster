@@ -225,3 +225,18 @@ class IRISRaster(object):
                                                              "units", {"wavelength": spectral_coords[window_name].unit,
                                                                        "intensity": "DN"})])))
                           for window_name in self.spectral_windows["name"]])
+
+
+    def __repr__(self):
+        spectral_window = self.spectral_windows["name"][0]
+        spectral_windows_info = "".join(
+            ["\n    {0}\n        (raster axis: {1}, slit axis: {2}, spectral axis: {3})".format(
+            name, len(self.data[name].raster_axis), len(self.data[name].slit_axis),
+            len(self.data[name].spectral_axis)) for name in self.spectral_windows["name"]])
+        return "<iris.IRISRaster instance\nOBS ID: {0}\n".format(self.meta["observation ID"]) + \
+               "OBS Description: {0}\n".format(self.meta["observation description"]) + \
+               "OBS period: {0} -- {1}\n".format(self.meta["observation start"], self.meta["observation end"]) + \
+               "Instance period: {0} -- {1}\n".format(self.data[spectral_window].time.values[0],
+                                                    self.data[spectral_window].time.values[-1]) + \
+               "Number unique raster positions: {0}\n".format(self.meta["number unique raster positions"]) + \
+               "Spectral windows{0}>".format(spectral_windows_info)
