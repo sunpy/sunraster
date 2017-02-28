@@ -260,3 +260,19 @@ class IRISRaster(object):
         self.data[spectral_window].data = iris_tools.convert_photons_to_DN(spectral_window)
         self.data[spectral_window].name = "Intensity [DN]"
         self.data[spectral_window].atrrs["units"]["intensity"] = "DN"
+
+
+    def apply_exposure_time_correction(self, spectral_window):
+        """Converts DataArray from DN or photons to DN or photons per second."""
+        # Check that DataArray is in units of DN.
+        if "/s" in self.data[spectral_window].attrs["units"]["intensity"]:
+            raise ValueError("Data seems to already be in units per second. '/s' in intensity unit string.")
+        detector_type = self.spectral_windows.loc[spectral_window]["detector type"][:3]
+        exp_time_s = self.auxiliary_data["{0} EXPOSURE TIME".format(detector_type)].to("s").value
+        for i in self.data[spectral_window].raster_axis.values:
+            self.data[spectral_window].data[i, :, :] = self.data[spectral_window].data[i, :, :]/exp_time_s[i]
+        # Make new unit reflecting the division by time.
+        unit_str = self.data[spectral_window].attrs["units"]["intensity"]+"/s"
+        self.data[spectral_window].attrs["units"]["intensity"] = unit_str
+        name_split = self.data[spectral_window].name.split("[")
+        self.data[spectral_window].name = "{0}[{1}]".format(name_split[0], unit_str)
