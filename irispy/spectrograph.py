@@ -125,9 +125,9 @@ class IRISRaster(object):
                              "time step size sigma": hdulist[0].header["STEPT_DV"],
                              "spectral windows in OBS": windows_in_obs,
                              "spectral windows in object": spectral_windows,
-                             "detector gain": instr_iris.DETECTOR_GAIN,
-                             "detector yield": instr_iris.DETECTOR_YIELD,
-                             "readout noise": instr_iris.READOUT_NOISE}
+                             "detector gain": iris_tools.DETECTOR_GAIN,
+                             "detector yield": iris_tools.DETECTOR_YIELD,
+                             "readout noise": iris_tools.READOUT_NOISE}
                 # Translate some metadata to be more helpful.
                 if hdulist[0].header["IAECEVFL"] == "YES":
                     self.meta["IAECEVFL"] = True
@@ -276,3 +276,14 @@ class IRISRaster(object):
         self.data[spectral_window].attrs["units"]["intensity"] = unit_str
         name_split = self.data[spectral_window].name.split("[")
         self.data[spectral_window].name = "{0}[{1}]".format(name_split[0], unit_str)
+
+
+def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
+    """Used in initiation of IRISRaster to convert auxiliary data to Quantities."""
+    index = np.where(np.array(header_colnames) == header_property_name)[0]
+    if len(index) == 1:
+        index = index[0]
+    else:
+        raise ValueError("Multiple property names equal to {0}".format(header_property_name))
+    pop_colname = header_colnames.pop(index)
+    return Quantity(data[:, header[pop_colname]], unit=unit)
