@@ -278,6 +278,12 @@ class IRISRaster(object):
         self.data[spectral_window].name = "{0}[{1}]".format(name_split[0], unit_str)
 
 
+    def calculate_intensity_fractional_uncertainty(self, spectral_window):
+        return iris_tools.calculate_intensity_fractional_uncertainty(
+            self.data[spectral_window].data, self.data[spectral_window].attrs["units"]["intensity"],
+            self.spectral_windows.loc[spectral_window]["detector type"][:3])
+
+
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
     """Used in initiation of IRISRaster to convert auxiliary data to Quantities."""
     index = np.where(np.array(header_colnames) == header_property_name)[0]
