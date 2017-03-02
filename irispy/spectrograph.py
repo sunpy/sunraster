@@ -16,7 +16,7 @@ from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
 
-import iris_tools
+import irispy.iris_tools as iris_tools
 
 
 class IRISRaster(object):
@@ -247,9 +247,9 @@ class IRISRaster(object):
         # Check that DataArray is in units of DN.
         if "DN" not in self.data[spectral_window].attrs["units"]["intensity"]:
             raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(spectral_window)
+        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(self.data[spectral_window], self.spectral_windows['name'== spectral_window]['detector type'])
         self.data[spectral_window].name = "Intensity [photons]"
-        self.data[spectral_window].atrrs["units"]["intensity"] = "photons"
+        self.data[spectral_window].attrs["units"]["intensity"] = "photons"
 
 
     def convert_photons_to_DN(self, spectral_window):
@@ -257,9 +257,9 @@ class IRISRaster(object):
         # Check that DataArray is in units of DN.
         if "photons" not in self.data[spectral_window].attrs["units"]["intensity"]:
             raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(spectral_window)
+        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(self.data[spectral_window], self.spectral_windows['name'== spectral_window]['detector type'])
         self.data[spectral_window].name = "Intensity [DN]"
-        self.data[spectral_window].atrrs["units"]["intensity"] = "DN"
+        self.data[spectral_window].attrs["units"]["intensity"] = "DN"
 
 
     def apply_exposure_time_correction(self, spectral_window):
