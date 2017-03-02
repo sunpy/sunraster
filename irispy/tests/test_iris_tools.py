@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# """Tests for functions in iris_tools.py"""
 from __future__ import print_function
 import pytest
 import irispy.iris_tools as iris_tools
@@ -15,7 +14,6 @@ source_data1 = np.array([[1, 2, 3],
 def test_convert_DN_to_photons_NUV():
 	"""
 	"""
-	# source_DN = [[ 0.563004,  1.132289, -1.343129], [-0.719726,  1.441411,  1.566724]]
 	expected_output = np.array([[ 10.134,  20.376, -24.174],
        					[-12.942,  25.938,  28.188]])
 
@@ -27,7 +25,6 @@ def test_convert_DN_to_photons_NUV():
 def test_convert_DN_to_photons_FUV():
 	"""
 	"""
-	# source_DN = []
 	expected_output = np.array([[ 2.252,  4.528, -5.372],
        					[-2.876,  5.764,  6.264]])
 
@@ -39,18 +36,11 @@ def test_convert_DN_to_photons_FUV():
 # def test_convert_DN_to_photons_SJI():
 # 	"""
 # 	"""
-# 	source_DN = []
-# 	expected_output = []
-
-# 	photons_count = 
-
-# 	assert photons_count == expected_output
 
 
 def test_convert_photons_to_DN_NUV():
 	"""
 	"""
-	# source_photon = []
 	expected_output = np.array([[ 0.05555556,  0.11111111,  0.16666667],
     						[ 0.22222222,  0.27777778,  0.33333333]])
 
@@ -62,7 +52,6 @@ def test_convert_photons_to_DN_NUV():
 def test_convert_photons_to_DN_FUV():
 	"""
 	"""
-	# source_photon = []
 	expected_output = np.array([[ 0.25,  0.5 ,  0.75],
        							[ 1.  ,  1.25,  1.5 ]])
 
@@ -74,18 +63,11 @@ def test_convert_photons_to_DN_FUV():
 # def test_convert_photons_to_DN_SJI():
 # 	"""
 # 	"""
-# 	source_photon = []
-# 	expected_output = []
-
-# 	DN = 
-
-# 	assert DN == expected_output
-
 
 # def test_calculate_intensity_fractional_uncertainty():
 # 	"""
 # 	"""
-	
+
 # def test_get_iris_response():
 # 	"""
 # 	"""

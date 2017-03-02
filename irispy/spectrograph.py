@@ -247,7 +247,7 @@ class IRISRaster(object):
         # Check that DataArray is in units of DN.
         if "DN" not in self.data[spectral_window].attrs["units"]["intensity"]:
             raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(self.data[spectral_window], self.spectral_windows['name'== spectral_window]['detector type'])
+        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(self.data[spectral_window], self.spectral_windows.loc[spectral_window]['detector type'])
         self.data[spectral_window].name = "Intensity [photons]"
         self.data[spectral_window].attrs["units"]["intensity"] = "photons"
 
@@ -257,7 +257,7 @@ class IRISRaster(object):
         # Check that DataArray is in units of DN.
         if "photons" not in self.data[spectral_window].attrs["units"]["intensity"]:
             raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(self.data[spectral_window], self.spectral_windows['name'== spectral_window]['detector type'])
+        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(self.data[spectral_window], self.spectral_windows.loc[spectral_window]['detector type'])
         self.data[spectral_window].name = "Intensity [DN]"
         self.data[spectral_window].attrs["units"]["intensity"] = "DN"
 
