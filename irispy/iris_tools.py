@@ -95,7 +95,7 @@ def calculate_intensity_fractional_uncertainty(data, data_unit, detector_type):
 
     photons_per_dn = DETECTOR_GAIN[detector_type]/DETECTOR_YIELD[detector_type]
     if data_unit == "DN":
-        intensity_ph = photons_per_dn*convert_DN_to_photons(data, detector_type)
+        intensity_ph = convert_DN_to_photons(data, detector_type)
     elif data_unit == "photons":
         intensity_ph = data
     else:
