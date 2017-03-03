@@ -246,7 +246,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
 
 
 @custom_model
-def _gaussian1d_on_linear_bg(x=None, amplitude=None, mean=None, standard_deviation=None,
+def _gaussian1d_on_linear_bg(x, amplitude=None, mean=None, standard_deviation=None,
                              constant_term=None, linear_term=None):
     return amplitude * np.exp(-((x - mean) / standard_deviation) ** 2) + constant_term + linear_term * x
 
