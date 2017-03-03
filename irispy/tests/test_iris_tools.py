@@ -101,6 +101,29 @@ def test_calculate_intensity_fractional_uncertainty_photons_SJI():
 	calculated_intensity = iris_tools.calculate_intensity_fractional_uncertainty(source_data1, 'photons', 'SJI')
 	np_test.assert_allclose(expected_output, calculated_intensity)
 
+
+def test_calculate_intensity_fractional_uncertainty_data_not_recognised():
+	"""
+	"""
+	assert pytest.raises(ValueError, iris_tools.calculate_intensity_fractional_uncertainty, source_data1, None, 'FUV')
+
+
+def test_get_iris_response_response_version():
+	"""
+	"""
+	assert pytest.raises(ValueError, iris_tools.get_iris_response, response_version=4)
+
+
+def test_get_iris_response_not_equal_to_one():
+	"""
+	"""
+	assert pytest.raises(ValueError, iris_tools.get_iris_response, pre_launch=True, response_version=3)
+
+
+def test_get_iris_response_response_file():
+	"""
+	"""
+	assert pytest.raises(KeyError, iris_tools.get_iris_response, response_file=3)
 # def test_get_iris_response():
 # 	"""
 # 	"""
