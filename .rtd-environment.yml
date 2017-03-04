@@ -4,6 +4,8 @@ channels:
     - conda-forge
 
 dependencies:
+    - python=3
+    - sphinx
     - astropy
     - matplotlib
     - numpy
