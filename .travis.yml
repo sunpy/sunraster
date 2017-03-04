@@ -39,7 +39,7 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='sunpy xarray sphinx pytest'
+        - CONDA_DEPENDENCIES='sunpy xarray pytest coverage sphinx sphinx_rtd_theme'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -64,9 +64,9 @@ matrix:
     fast_finish: true
 
     include:
-        # Try MacOS X
-        - os: osx
-          env: SETUP_CMD='test'
+        # To enable MacOS X build uncomment two lines below.
+        #- os: osx
+        #  env: SETUP_CMD='test'
 
         # Do a coverage test.
         - os: linux
