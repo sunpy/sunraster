@@ -1,12 +1,11 @@
-name: package-template
+name: irispy
 
 channels:
-    - astropy
+    - conda-forge
 
 dependencies:
     - astropy
-    - Cython
     - matplotlib
     - numpy
-#   - pip:
-#       - dependency_from_pip
+    - sunpy
+    - xarray
