@@ -24,7 +24,6 @@ DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
 READOUT_NOISE = {"NUV": {"value": 1.2, "unit": "DN"}, "FUV": {"value": 3.1, "unit": "DN"},
                  "SJI": {"value": 1.2, "unit": "DN"}}
 
-
 def convert_DN_to_photons(data, detector_type):
     """Converts IRIS data number to photon counts depending on which CCD is being used.
 
@@ -42,6 +41,9 @@ def convert_DN_to_photons(data, detector_type):
         IRIS data in units of photon counts.
 
     """
+    if 'FUV' in detector_type:
+        detector_type = 'FUV'
+
     return DETECTOR_GAIN[detector_type]/DETECTOR_YIELD[detector_type]*data
 
 
@@ -62,6 +64,9 @@ def convert_photons_to_DN(data, detector_type):
         IRIS data in units of data number.
 
     """
+    if 'FUV' in detector_type:
+        detector_type = 'FUV'
+
     return DETECTOR_YIELD[detector_type]/DETECTOR_GAIN[detector_type]*data
 
 
@@ -85,13 +90,17 @@ def calculate_intensity_fractional_uncertainty(data, data_unit, detector_type):
         Same shape as data.
 
     """
+    if 'FUV' in detector_type:
+        detector_type = 'FUV'
+
     photons_per_dn = DETECTOR_GAIN[detector_type]/DETECTOR_YIELD[detector_type]
     if data_unit == "DN":
-        intensity_ph = photons_per_dn*convert_DN_to_photons(data, detector_type)
+        intensity_ph = convert_DN_to_photons(data, detector_type)
     elif data_unit == "photons":
         intensity_ph = data
     else:
         raise ValueError("Data not in recognized units: {0}".format(data_unit))
+    
     readout_noise_ph = READOUT_NOISE[detector_type]["value"]*photons_per_dn
     uncertainty_ph = np.sqrt(intensity_ph+readout_noise_ph**2.)
     return uncertainty_ph/intensity_ph
@@ -107,7 +116,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set simultaneously
         with response_file kwarg. Default=False
-    response_file: `int`
+    response_file: `str`
         Version number of effective area file to be used.  Cannot be set simultaneously with
         pre_launch kwarg.  Default=latest
     response_version : `int`
@@ -139,6 +148,12 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     versions to calculate time dependent effective areas.
 
     """
+    #Ensures the file exits in the path given.
+    if response_file is not None:
+        if not(os.path.isfile(response_file)):
+            raise KeyError("Not a valid file path")
+
+    
     # Ensure conflicting kwargs are not set.
     if response_file:
         response_file_set = True
