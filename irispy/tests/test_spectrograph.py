@@ -33,8 +33,8 @@ def test_fits_data_comparison(iris_l2_test_raster):
 
     spectral_windows = iris_l2_test_raster.spectral_windows['name']
 
-    np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[1]].data, data2)
     np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[0]].data, data1)
+    np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[1]].data, data2)
     np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[2]].data, data3)
 
 
@@ -44,6 +44,8 @@ def test_wcs(iris_l2_test_raster):
     for key, value in six.iteritems(wcs_l):
         for key_, value_ in six.iteritems(wcs_l[key]):
             assert isinstance(value_, wcs.WCS)
-    # spectral_windows = iris_l2_test_raster.data.keys()
+    spectral_windows = iris_l2_test_raster.spectral_windows['name']
 
-    # assert all( wcs.WCS(hdulist[2].header).wcs.crpix == wcs_l['spectral'][spectral_windows[2]].wcs.crpix)
+    np.testing.assert_array_equal( wcs.WCS(hdulist[1].header).sub(1).wcs.crpix, wcs_l['spectral'][spectral_windows[0]].wcs.crpix)
+    np.testing.assert_array_equal( wcs.WCS(hdulist[2].header).sub(1).wcs.crpix, wcs_l['spectral'][spectral_windows[1]].wcs.crpix)
+    np.testing.assert_array_equal( wcs.WCS(hdulist[3].header).sub(1).wcs.crpix, wcs_l['spectral'][spectral_windows[2]].wcs.crpix)
