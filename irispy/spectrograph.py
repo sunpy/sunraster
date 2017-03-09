@@ -74,7 +74,6 @@ class IRISRaster(object):
                     spectral_coords[window_name] = Quantity(wcs_spectral.all_pix2world(np.arange(
                         hdulist[window_fits_indices[i]].header["NAXIS1"]), 0),
                         unit=wcs_spectral.wcs.cunit[0]).to("Angstrom")[0]
-                    print(wcs_spectral)
                     wcs_spectral_objects[window_name] = wcs_spectral
                 # Put useful metadata into meta attribute.
                 self.meta = {"date data created": parse_time(hdulist[0].header["DATE"]),
