@@ -123,7 +123,7 @@ def test_get_iris_response_not_equal_to_one():
 def test_get_iris_response_response_file():
 	"""
 	"""
-	assert pytest.raises(KeyError, iris_tools.get_iris_response, response_file=3)
+	assert pytest.raises(KeyError, iris_tools.get_iris_response, response_file="hello.py")
 # def test_get_iris_response():
 # 	"""
 # 	"""
