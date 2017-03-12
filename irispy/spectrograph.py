@@ -229,17 +229,29 @@ class IRISRaster(object):
 
     def __repr__(self):
         spectral_window = self.spectral_windows["name"][0]
-        spectral_windows_info = "".join(
-            ["\n    {0}\n        (raster axis: {1}, slit axis: {2}, spectral axis: {3})".format(
-            name, len(self.data[name].raster_axis), len(self.data[name].slit_axis),
-            len(self.data[name].spectral_axis)) for name in self.spectral_windows["name"]])
+        spectral_windows_info = ""
+        for name in self.spectral_windows['name']:
+            shape = self.data[name].shape
+            spectral_windows_info = spectral_windows_info + ")\n    {0}\n           (".format(name)
+            for i, dim in enumerate(self.data[name].dims):
+                spectral_windows_info = spectral_windows_info + \
+                        "{0}".format(dim) + ": {0}  ".format(shape[i])
+
+        instance_period_data = self.data[spectral_window].time.values
+        if type(instance_period_data) is not np.datetime64:
+            instance_period_start = instance_period_data[0]
+            instance_period_end   = instance_period_data[-1]
+        else:
+            instance_period_start = instance_period_data
+            instance_period_end   = instance_period_data
+
         return "<iris.IRISRaster instance\nOBS ID: {0}\n".format(self.meta["observation ID"]) + \
                "OBS Description: {0}\n".format(self.meta["observation description"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["observation start"], self.meta["observation end"]) + \
-               "Instance period: {0} -- {1}\n".format(self.data[spectral_window].time.values[0],
-                                                    self.data[spectral_window].time.values[-1]) + \
+               "Instance period: {0} -- {1}\n".format(instance_period_start,
+                                                    instance_period_end) + \
                "Number unique raster positions: {0}\n".format(self.meta["number unique raster positions"]) + \
-               "Spectral windows{0}>".format(spectral_windows_info)
+               "Spectral windows{0})>".format(spectral_windows_info)
 
 
     def convert_DN_to_photons(self, spectral_window):
@@ -333,6 +345,43 @@ class IRISRaster(object):
             orbital_phase = None
             roll_angle = None
 
+    def select_by_index(self, **kwargs):
+        """
+        truncating data by index
+        """
+        time_parameter = kwargs.get('time', None)
+        raster_position_parameter = kwargs.get('raster_position', None)
+        slit_axis_parameter = kwargs.get('slit_axis', None)
+        if time_parameter is not None and type(time_parameter) is int:
+            return self.get_by_index(time_parameter, axis='time')
+        if raster_position_parameter is not None and type(raster_position_parameter) is int:
+            return self.get_by_index(raster_position_parameter, axis='raster_position')
+        if slit_axis_parameter is not None and type(slit_axis_parameter) is int:
+            return self.get_by_index(slit_axis_parameter, axis='slit_position')
+
+    def get_by_spectral_window(self, window=None):
+        """
+        truncating by spectral_window
+        """
+        if window is not None:
+            new_raster = copy.deepcopy(self)
+            new_raster.data = {window: self.data[window]}
+            new_raster.spectral_windows = Table(self.spectral_windows['name'==window])
+            new_raster.meta['spectral windows in object'] = list(new_raster.spectral_windows['name'])
+            return new_raster
+
+    def get_by_index(self, parameter, axis=None):
+        """
+        helper function to truncate the data
+        """
+        new_raster = copy.deepcopy(self)
+        spectral_windows = new_raster.spectral_windows['name']
+        for window in spectral_windows:
+            if axis == 'time' or axis == 'raster_axis' or axis == 'raster_position':
+                new_raster.data[window] = new_raster.data[window].isel(raster_axis=parameter)
+            if axis == 'slit_position':
+                new_raster.data[window] = new_raster.data[window].isel(slit_axis=parameter)
+        return new_raster
 
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
     """Used in initiation of IRISRaster to convert auxiliary data to Quantities."""
