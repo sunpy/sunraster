@@ -53,10 +53,9 @@ single set of WCS values.
 campaign.
 * Store non-contiguous data cubes, one for each each spectral window.
 * Truncate all spectral windows using criteria applied to common
- dimension(s) with a single command.
-* Common dimensions are the slit and raster dimensions.  The spectral
-dimension is not common.  Spectral window is a common
-pseudo-dimension.
+ dimension(s) with a single command.  Common dimensions are the slit
+ and raster dimensions.  The spectral dimension is not common.
+ Spectral window is a common pseudo-dimension.
 * Dimensions should be indexable by the coordinate systems associated
 with them.
 * Both data and coordinate systems should be unit aware (desired).
@@ -72,7 +71,7 @@ versa using gain and yield info.
 ## IRISSJIMap
 
 An object to read in, store and manipulate IRIS slit-jaw imager (SJI)
-data files the same OBS campaign.
+data files from the same OBS campaign.
 
 #### Data Description
 
