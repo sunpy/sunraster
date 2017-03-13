@@ -26,25 +26,26 @@ single set of WCS values.
   This is referred to as a pseudo-dimension because data may want to
   be selected or manipulated based on this attribute.  But the values
   along this pseudo-dimension are not numerical.
-* Each dimension is associated with one or more coordinate systems:
- * spectral  dimension: 
-  1. wavelength (or physical equivalent, e.g. frequency.)
- * slit dimension:
-  * helio-projected latitude.  This is dependent on the
-    helio-projected longitude also associated with the raster
-    dimension.
-  * slit pixel number
- * raster dimension:
-  * helioprojected longitude.  This is dependent on the
-    helio-projected latitude also associated with the slit
-    dimension.
-  * time
-  * raster scan position number, i.e. the slit position number within the
-    scan sequence.  Therefore spectra taken at the same position
-    within each raster scan will have the same value.  This makes it
-    possible to identify spectra taken at nearly the same longitude
-    (if solar rotation tracking off) or over nearly the same feature
-    on the solar (if solar rotation tracking on).
+* The spectral dimension is associated with the following coordinate
+  systems:
+ * wavelength (or physical equivalent, e.g. frequency.)
+* The slit dimension is associated with the following coordinate
+  systems:
+ * helio-projected latitude.  This is dependent on the helio-projected
+    longitude also associated with the raster dimension.
+ * slit pixel number
+* The raster dimension is associated with the following coordinate
+  systems:
+ * helioprojected longitude.  This is dependent on the
+   helio-projected latitude also associated with the slit
+   dimension.
+ * time
+ * raster scan position number, i.e. the slit position number within the
+   scan sequence.  Therefore spectra taken at the same position
+   within each raster scan will have the same value.  This makes it
+   possible to identify spectra taken at nearly the same longitude
+   (if solar rotation tracking off) or over nearly the same feature
+   on the solar (if solar rotation tracking on).
 
 #### Required Functionalities
 
