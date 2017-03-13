@@ -1,7 +1,7 @@
 # IRISpy Requirements
 ------------------------
 
-This document is to be used to define what functionalities are required and/or desired in IRISpy.
+This document is a draft of required/desired functionalities for IRISpy.
 
 ## IRISRaster Object
 
@@ -27,8 +27,8 @@ single set of WCS values.
   be selected or manipulated based on this attribute.  But the values
   along this pseudo-dimension are not numerical.
 * Each dimension is associated with one or more coordinate systems:
- * spectral  dimension:
-  * wavelength (or physical equivalent, e.g. frequency.)
+ * spectral  dimension: 
+  1. wavelength (or physical equivalent, e.g. frequency.)
  * slit dimension:
   * helio-projected latitude.  This is dependent on the
     helio-projected longitude also associated with the raster
