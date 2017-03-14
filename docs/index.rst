@@ -8,3 +8,4 @@ Reference/API
 =============
 
 .. automodapi:: irispy
+.. automodapi:: irispy.spectrograph
