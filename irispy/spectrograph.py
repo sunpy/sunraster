@@ -15,9 +15,9 @@ from astropy import wcs
 from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
-
+from sunpy.net.vso import attrs as a
 import irispy.iris_tools as iris_tools
-
+import irispy.helpers as util
 
 class IRISRaster(object):
     """An object to hold data from multiple IRIS raster scans."""
@@ -345,42 +345,121 @@ class IRISRaster(object):
             orbital_phase = None
             roll_angle = None
 
-    def select_by_index(self, **kwargs):
+    def select_by(self, **kwargs):
         """
-        truncating data by index
+        truncating data by index or slice 
         """
         time_parameter = kwargs.get('time', None)
         raster_position_parameter = kwargs.get('raster_position', None)
         slit_axis_parameter = kwargs.get('slit_axis', None)
-        if time_parameter is not None and type(time_parameter) is int:
-            return self.get_by_index(time_parameter, axis='time')
-        if raster_position_parameter is not None and type(raster_position_parameter) is int:
-            return self.get_by_index(raster_position_parameter, axis='raster_position')
-        if slit_axis_parameter is not None and type(slit_axis_parameter) is int:
-            return self.get_by_index(slit_axis_parameter, axis='slit_position')
+        if time_parameter is None and raster_position_parameter is None and slit_axis_parameter is None:
+            raise ValueError("keywords are time, raster_position, slit_axis")
+        if time_parameter is not None and type(time_parameter) is int or type(time_parameter) is slice:
+            return util._truncate(self, time_parameter, axis='time')
+        if raster_position_parameter is not None and type(raster_position_parameter) is int or type(raster_position_parameter) is slice:
+            return util._truncate(self, raster_position_parameter, axis='raster_position')
+        if slit_axis_parameter is not None and type(slit_axis_parameter) is int or type(slit_axis_parameter) is slice:
+            return util._truncate(self, slit_axis_parameter, axis='slit_position')
 
     def get_by_spectral_window(self, window=None):
         """
         truncating by spectral_window
         """
-        if window is not None:
+        spectral_windows = self.spectral_windows['name']
+        if window in spectral_windows and window is not None:
             new_raster = copy.deepcopy(self)
             new_raster.data = {window: self.data[window]}
             new_raster.spectral_windows = Table(self.spectral_windows['name'==window])
             new_raster.meta['spectral windows in object'] = list(new_raster.spectral_windows['name'])
             return new_raster
 
-    def get_by_index(self, parameter, axis=None):
+    def get_and(self, param1=None, param2=None, axis=None):
         """
-        helper function to truncate the data
+        Specify the range of the query.
+
+        Parameters
+        ----------
+
+        param1 : `~sunpy.time.TimeRange` or `tuple`.
+
+        param2 : `~sunpy.time.TimeRange` or `tuple`.
+
+        axis: String.
+            Can be time/raster_position/slit_axis.
+            Return a truncated IRISRaster object within param1 and param2 of the given axis.
+
         """
+        if axis == 'time':
+            if param1.end > param2.start:
+                raise ValueError("End time of time1 must be before start time of time2.")
+
+        if axis == 'raster_position':
+            if param1[1] > param2[0]:
+                raise ValueError("End raster position of param1 must be before start raster position of param2.")
+
+        if axis == "slit_axis":
+            if param1[1] > param2[0]:
+                raise ValueError("End slit position of param1 must be before start slit position of param2.")
+
+        if axis is None or axis not in ('time', 'raster_position', 'slit_axis'):
+            raise ValueError("axis must not be None and axis should be either 'time'/'raster_position'/'slit_axis'")
+
         new_raster = copy.deepcopy(self)
         spectral_windows = new_raster.spectral_windows['name']
+
         for window in spectral_windows:
-            if axis == 'time' or axis == 'raster_axis' or axis == 'raster_position':
-                new_raster.data[window] = new_raster.data[window].isel(raster_axis=parameter)
-            if axis == 'slit_position':
-                new_raster.data[window] = new_raster.data[window].isel(slit_axis=parameter)
+            data = new_raster.data[window]
+            if a.Time == param1.__class__ and a.Time == param2.__class__ and axis == 'time':
+                new_raster.data[window] = data.sel(raster_axis=(data.time>np.datetime64(param1.end))&(data.time<np.datetime64(param2.start)))
+            if type(param1) is tuple and type(param2) is tuple and axis == 'raster_position':
+                new_raster.data[window] = data.sel(raster_axis=(data.raster_axis>param1[1])&(data.raster_axis<param2[0]))
+            if type(param1) is tuple and type(param2) is tuple and axis == 'slit_axis':
+                new_raster.data[window] = data.sel(slit_axis=(data.slit_axis>param1[1])&(data.slit_axis<param2[0]))
+        return new_raster
+
+    def get_or(self, param1=None, param2=None, axis=None):
+        """
+        Specify the range of the query.
+
+        Parameters
+        ----------
+
+        param1 : `~sunpy.time.TimeRange` or `tuple`.
+
+        param2 : `~sunpy.time.TimeRange` or `tuple`.
+
+        axis: String.
+            Can be time/raster_position/slit_axis.
+            Return a truncated IRISRaster object from param1-start to param1-end and param1-start to param1-end,
+            of the given axis.
+
+        """
+        if axis == 'time':
+            if param1.end > param2.start:
+                raise ValueError("End time of time1 must be before start time of time2.")
+
+        if axis == 'raster_position':
+            if param1[1] > param2[0]:
+                raise ValueError("End raster position of param1 must be before start raster position of param2.")
+
+        if axis == "slit_axis":
+            if param1[1] > param2[0]:
+                raise ValueError("End slit position of param1 must be before start slit position of param2.")
+
+        if axis is None or axis not in ('time', 'raster_position', 'slit_axis'):
+            raise ValueError("axis must not be None and axis should be either 'time'/'raster_position'/'slit_axis'")
+ 
+        new_raster = copy.deepcopy(self)
+        spectral_windows = new_raster.spectral_windows['name']
+
+        for window in spectral_windows:
+            data = new_raster.data[window]
+            if a.Time == param1.__class__ and a.Time == param2.__class__ and axis == 'time':
+                new_raster.data[window] = data.sel(raster_axis=((data.time<np.datetime64(param1.end)) & (data.time>np.datetime64(param1.start)))|((data.time>np.datetime64(param2.start))&(data.time<np.datetime64(param2.end))))
+            if type(param1) is tuple and type(param2) is tuple and axis == 'raster_position':
+                new_raster.data[window] = data.sel(raster_axis=((data.raster_axis<param1[1])&(data.raster_axis>param1[0]))|((data.raster_axis>param2[0])&(data.raster_axis<param2[1])))
+            if type(param1) is tuple and type(param2) is tuple and axis == 'slit_axis':
+                new_raster.data[window] = data.sel(slit_axis=((data.slit_axis<param1[1])&(data.slit_axis>param1[0]))|((data.slit_axis>param2[0])&(data.slit_axis<param2[1])))
         return new_raster
 
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
