@@ -352,14 +352,16 @@ class IRISRaster(object):
         time_parameter = kwargs.get('time', None)
         raster_position_parameter = kwargs.get('raster_position', None)
         slit_axis_parameter = kwargs.get('slit_axis', None)
+        new_raster = copy.deepcopy(self)
         if time_parameter is None and raster_position_parameter is None and slit_axis_parameter is None:
             raise ValueError("keywords are time, raster_position, slit_axis")
         if time_parameter is not None and type(time_parameter) is int or type(time_parameter) is slice:
-            return util._truncate(self, time_parameter, axis='time')
+            new_raster = util._truncate(new_raster, time_parameter, axis='time')
         if raster_position_parameter is not None and type(raster_position_parameter) is int or type(raster_position_parameter) is slice:
-            return util._truncate(self, raster_position_parameter, axis='raster_position')
+            new_raster = util._truncate(new_raster, raster_position_parameter, axis='raster_position')
         if slit_axis_parameter is not None and type(slit_axis_parameter) is int or type(slit_axis_parameter) is slice:
-            return util._truncate(self, slit_axis_parameter, axis='slit_position')
+            new_raster = util._truncate(new_raster, slit_axis_parameter, axis='slit_position')
+        return new_raster
 
     def get_by_spectral_window(self, window=None):
         """
