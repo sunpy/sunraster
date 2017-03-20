@@ -15,7 +15,7 @@ from astropy import wcs
 from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
-from sunpy.net.vso import attrs as a
+from sunpy.net.vso import attrs as VSOAttrs
 import irispy.iris_tools as iris_tools
 import irispy.helpers as util
 
@@ -411,7 +411,7 @@ class IRISRaster(object):
 
         for window in spectral_windows:
             data = new_raster.data[window]
-            if a.Time == param1.__class__ and a.Time == param2.__class__ and axis == 'time':
+            if VSOAttrs.Time == param1.__class__ and VSOAttrs.Time == param2.__class__ and axis == 'time':
                 new_raster.data[window] = data.sel(raster_axis=(data.time>np.datetime64(param1.end))&(data.time<np.datetime64(param2.start)))
             if type(param1) is tuple and type(param2) is tuple and axis == 'raster_position':
                 new_raster.data[window] = data.sel(raster_axis=(data.raster_axis>param1[1])&(data.raster_axis<param2[0]))
@@ -456,7 +456,7 @@ class IRISRaster(object):
 
         for window in spectral_windows:
             data = new_raster.data[window]
-            if a.Time == param1.__class__ and a.Time == param2.__class__ and axis == 'time':
+            if VSOAttrs.Time == param1.__class__ and VSOAttrs.Time == param2.__class__ and axis == 'time':
                 new_raster.data[window] = data.sel(raster_axis=((data.time<np.datetime64(param1.end)) & (data.time>np.datetime64(param1.start)))|((data.time>np.datetime64(param2.start))&(data.time<np.datetime64(param2.end))))
             if type(param1) is tuple and type(param2) is tuple and axis == 'raster_position':
                 new_raster.data[window] = data.sel(raster_axis=((data.raster_axis<param1[1])&(data.raster_axis>param1[0]))|((data.raster_axis>param2[0])&(data.raster_axis<param2[1])))
