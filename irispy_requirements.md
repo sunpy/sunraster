@@ -85,6 +85,14 @@ transition region in a number of passbands.
 
 #### Implementation Suggestions
 
+## IRISObservation
+
+Combines information from the raster and the slitjaw into one object. 
+Should either be able to output IRISSJIMap and IRISRaster objects 
+or contain them. Should be able to open IRIS Level 3 data and permits 
+the user to explore the connection between the slit-jaw imagers 
+and the spectral data with one object.
+
 * Make IRISSJIMap a subclass of SunPy Map or MapCube.
 
 ## IRIS Tools
