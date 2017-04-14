@@ -39,7 +39,7 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
 
     Returns
     -------
-    iris_cube: sunpy.map.MapCube
+    iris_cube: `sunpy.map.MapCube`
         A map cube of the SJI sequence
     """
 
