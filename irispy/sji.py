@@ -23,7 +23,7 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
 
     Parameters
     ----------
-    filelist: `string` or `list`
+    filelist: `str` or `list`
         File to read, if single file string detected, will
         create a list of length 1.
 
@@ -66,16 +66,19 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
     return iris_cube
 
 
-def save_to_mp4(mc, outputfile, fps=60):
+def save_to_mp4(ani, outputfile, fps=60):
     '''
     Set up ffmpeg writer
-    Configures plot axes
     Save an animation of the MapCube
+    Example:
+    mc = sunpy.map.Map(files, cube=True)
+    ani = mc.plot()
+    save_to_mp4(ani, "myfile.mp4")
 
     Parameters
     ----------
-    mc: `sunpy.map.MapCube`
-        Input mapcube
+    ani:`matplotlib.animation.FuncAnimation`
+        Input animation
     Outputfile: `str`
         Path name of output file (.mp4)
     fps: `int`
@@ -98,12 +101,7 @@ def save_to_mp4(mc, outputfile, fps=60):
     if not writer.isAvailable():
         print('Cannot find available FFMpeg Writer')
         return
-    plt.rcParams['axes.facecolor'] = 'black'
-    plt.rcParams['xtick.direction'] = 'out'
-    plt.rcParams['ytick.direction'] = 'out'
-    ax = plt.axes(zorder=0)
 
-    ani = mc.plot(ax)
     ani.save(outputfile, writer=writer)
     print('Successfully saved to ' + outputfile)
 
@@ -114,11 +112,9 @@ def dustbuster(filelist, clobber=False):
        Image inpainting involves filling in part of an image or video
        using information from the surrounding area.
 
-       **Warning** Will clobber input file.
-
        Parameters
        ----------
-       filelist: `string` or `list`
+       filelist: `str` or `list`
            File to read, if single file string detected, will
            create a list of length 1.
 
@@ -132,10 +128,10 @@ def dustbuster(filelist, clobber=False):
     if type(filelist) == str:  # convert single file to list
         filelist = [filelist]
     nfile = 0
-    for file in filelist:
+    for fname in filelist:
         nfile += 1
-        image_header = fits.getheader(file)
-        image_orig = fits.getdata(file)
+        image_header = fits.getheader(fname)
+        image_orig = fits.getdata(fname)
         nx = image_header.get('NRASTERP')
         # TODO mapcube input
 
@@ -154,6 +150,8 @@ def dustbuster(filelist, clobber=False):
             image_fix = image_orig[i].copy()
             if nx <= 50:     # sparse/coarse raster
                 skip = 1
+                secpos = [-1]
+                thirdpos = [-1]
             elif nx > 50:    # dense raster
                 skip = 3
                 secpos = range(ndx)[1::nx]
@@ -173,9 +171,9 @@ def dustbuster(filelist, clobber=False):
 
         #  overwrite old file
         if clobber == True:
-            outputfile = file
+            outputfile = fname
         else:
-            outputfile = file + '_dustbuster'
+            outputfile = fname + '_dustbuster'
         fits.writeto(outputfile, image_result, header=image_header,
                      output_verify='fix', clobber=True)
         print("Saved to " + outputfile)
