@@ -23,17 +23,17 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
 
     Parameters
     ----------
-    filelist: string or list
+    filelist: `string` or `list`
         File to read, if single file string detected, will
         create a list of length 1.
 
-    start: step
+    start: `int`
         Temporal axis index to create MapCube from
 
-    stop: step
+    stop: `int`
         Temporal index to stop MapCube at
 
-    skip: step
+    skip: `int`
         Temporal index to skip over MapCube at
 
 
@@ -46,13 +46,6 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
     if type(filelist) == str:
         filelist = [filelist]
     iris_cube = sunpy.map.MapCube()
-    counter = 1
-    setup = sunpy.instr.iris.SJI_to_cube(filelist[0])
-    xcen = setup[0].meta.get('xcen')
-    ycen = setup[0].meta.get('ycen')
-    time = datetime.datetime.strptime(setup[0].meta.get('startobs'),
-                                      '%Y-%m-%d' + 'T' + '%H:%M:%S.%f')
-    print(xcen, ycen, time)
     for fname in filelist[0:]:
         newmap = sunpy.instr.iris.SJI_to_cube(fname)
         for frame in newmap[start:stop:skip]:
@@ -62,10 +55,8 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
                 frame.plot_settings['cmap'] = cmap
                 frame.plot_settings['norm'] = colors.LogNorm(1, vmax)
                 #  todo: iris_intscale
-                resultmapcube.maps.append(frame)
+                iris_cube.maps.append(frame)
 
-        print(str(counter)+' of '+str(len(filelist)))
-        counter += 1
     #  todo: pointing correction(rot_hpc)
 
     #  Option to overlay sun coordinates
@@ -83,11 +74,11 @@ def save_to_mp4(mc, outputfile, fps=60):
 
     Parameters
     ----------
-    mc: sunpy.map.MapCube
+    mc: `sunpy.map.MapCube`
         Input mapcube
-    Outputfile: str
+    Outputfile: `str`
         Path name of output file (.mp4)
-    fps: int
+    fps: `int`
         Desired frames per seconds (default=60)
 
     Return
@@ -117,14 +108,17 @@ def save_to_mp4(mc, outputfile, fps=60):
     print('Successfully saved to ' + outputfile)
 
 
-def dustbuster(filelist):
+def dustbuster(filelist, clobber=False):
     """
        Read SJI fits files and return Inpaint-corrected fits files.
+       Image inpainting involves filling in part of an image or video
+       using information from the surrounding area.
+
        **Warning** Will clobber input file.
 
        Parameters
        ----------
-       filelist: string or list
+       filelist: `string` or `list`
            File to read, if single file string detected, will
            create a list of length 1.
 
@@ -136,21 +130,19 @@ def dustbuster(filelist):
        """
 
     if type(filelist) == str:  # convert single file to list
-        file_list = [filelist]
+        filelist = [filelist]
     nfile = 0
     for file in filelist:
         nfile += 1
         image_header = fits.getheader(file)
         image_orig = fits.getdata(file)
         nx = image_header.get('NRASTERP')
-        print(image_header)
         # TODO mapcube input
 
         img_shape = image_orig.shape
         ndx = img_shape[0]
 
         image_result = []
-        counter = 0
         firstpos = range(ndx)[0::nx]
 
         for i in range(0, ndx):
@@ -177,12 +169,13 @@ def dustbuster(filelist):
                 image_fix[np.where(mask)] = image_inpaint[np.where(mask)]
 
             image_result.append(image_fix)  # add corrected image to new list
-            counter += 1
-            print(str(counter) + ' of ' + str(ndx))
+
 
         #  overwrite old file
-        print(len(image_result))
-        outputfile = file
+        if clobber == True:
+            outputfile = file
+        else:
+            outputfile = file + '_dustbuster'
         fits.writeto(outputfile, image_result, header=image_header,
                      output_verify='fix', clobber=True)
         print("Saved to " + outputfile)
