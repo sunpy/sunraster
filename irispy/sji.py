@@ -106,74 +106,54 @@ def save_to_mp4(ani, outputfile, fps=60):
     print('Successfully saved to ' + outputfile)
 
 
-def dustbuster(filelist, clobber=False):
+def dustbuster(mc):
     """
-       Read SJI fits files and return Inpaint-corrected fits files.
-       Image inpainting involves filling in part of an image or video
-       using information from the surrounding area.
+           Read SJI fits files and return Inpaint-corrected fits files.
+           Image inpainting involves filling in part of an image or video
+           using information from the surrounding area.
 
-       Parameters
-       ----------
-       filelist: `str` or `list`
-           File to read, if single file string detected, will
-           create a list of length 1.
+           Parameters
+           ----------
+           mc: `sunpy.map.MapCube`
+               Mapcube to read
 
 
-       Returns
-       -------
-       NoneType
-           Inpaint-corrected fits to clobber input file
-       """
-
-    if type(filelist) == str:  # convert single file to list
-        filelist = [filelist]
-    nfile = 0
-    for fname in filelist:
-        nfile += 1
-        image_header = fits.getheader(fname)
-        image_orig = fits.getdata(fname)
-        nx = image_header.get('NRASTERP')
-        # TODO mapcube input
-
-        img_shape = image_orig.shape
-        ndx = img_shape[0]
-
-        image_result = []
+           Returns
+           -------
+           mc: `sunpy.map.MapCube`
+               Inpaint-corrected Mapcube
+               Optional, save inpaint-corrected fits file
+           """
+    image_result = []
+    ndx = len(mc)
+    for i, map in enumerate(mc):
+        image_orig = map.data
+        nx = map.meta.get('NRASTERP')
         firstpos = range(ndx)[0::nx]
+        #  Create mask with values < 1, excluding frame (-200)
+        mask = np.zeros(image_orig.shape)
+        mask[np.where(image_orig < 1)] = 1
+        mask[np.where(image_orig == -200)] = 0
+        image_fix = image_orig.copy()
+        if nx <= 50:  # sparse/coarse raster
+            skip = 1
+            secpos = [-1]
+            thirdpos = [-1]
+        elif nx > 50:  # dense raster
+            skip = 3
+            secpos = range(ndx)[1::nx]
+            thirdpos = range(ndx)[2::nx]
 
-        for i in range(0, ndx):
-            #  Create mask with values < 1, excluding frame (-200)
-            mask = np.zeros(image_orig[i].shape)
-            mask[np.where(image_orig[i] < 1)] = 1
-            mask[np.where(image_orig[i] == -200)] = 0
-
-            image_fix = image_orig[i].copy()
-            if nx <= 50:     # sparse/coarse raster
-                skip = 1
-                secpos = [-1]
-                thirdpos = [-1]
-            elif nx > 50:    # dense raster
-                skip = 3
-                secpos = range(ndx)[1::nx]
-                thirdpos = range(ndx)[2::nx]
-
-            if (i in firstpos) or (i in secpos) or (i in thirdpos):
-                image_inpaint = image_orig[i + skip].copy()  # grab next frame
-            else:
-                image_inpaint = image_orig[i - skip].copy()  # grab prev frame
-
-            # Inpaint mask onto image
-            for layer in range(image_fix.shape[-1]):
-                image_fix[np.where(mask)] = image_inpaint[np.where(mask)]
-
-            image_result.append(image_fix)  # add corrected image to new list
-
-
-        #  overwrite old file
-        if clobber == True:
-            outputfile = fname
+        if (i in firstpos) or (i in secpos) or (i in thirdpos):
+            image_inpaint = mc[i + skip].data.copy()  # grab next frame
         else:
-            outputfile = fname + '_dustbuster'
-        fits.writeto(outputfile, image_result, header=image_header,
-                     output_verify='fix', clobber=True)
-        print("Saved to " + outputfile)
+            image_inpaint = mc[i - skip].data.copy()  # grab prev frame
+
+        # Inpaint mask onto image
+        for layer in range(image_fix.shape[-1]):
+            image_fix[np.where(mask)] = image_inpaint[np.where(mask)]
+
+        image_result.append(image_fix)  # add corrected image to new list
+        map.data = image_fix
+
+    return mc
