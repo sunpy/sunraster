@@ -10,13 +10,15 @@ import xarray
 from astropy.io import fits
 import astropy.units as u
 from astropy.units.quantity import Quantity
-from astropy.table import Table, vstack
+from astropy.table import Table
 from astropy import wcs
 from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
 
 import irispy.iris_tools as iris_tools
+
+__all__ = ['IRISRaster']
 
 
 class IRISRaster(object):
