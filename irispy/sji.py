@@ -10,7 +10,7 @@ from astropy.io import fits
 '''
 This module provides movie tools for level 2 IRIS SJI fits file
 '''
-
+__all__ = ["sji_fits_to_cube", "save_to_mp4", "dustbuster"]
 
 def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
     """
@@ -108,22 +108,21 @@ def save_to_mp4(ani, outputfile, fps=60):
 
 def dustbuster(mc):
     """
-           Read SJI fits files and return Inpaint-corrected fits files.
-           Image inpainting involves filling in part of an image or video
-           using information from the surrounding area.
+    Read SJI fits files and return Inpaint-corrected fits files.
+    Image inpainting involves filling in part of an image or video
+    using information from the surrounding area.
 
-           Parameters
-           ----------
-           mc: `sunpy.map.MapCube`
-               Mapcube to read
+    Parameters
+    ----------
+    mc: `sunpy.map.MapCube`
+        Mapcube to read
 
 
-           Returns
-           -------
-           mc: `sunpy.map.MapCube`
-               Inpaint-corrected Mapcube
-               Optional, save inpaint-corrected fits file
-           """
+    Returns
+    -------
+    mc: `sunpy.map.MapCube`
+        Inpaint-corrected Mapcube
+    """
     image_result = []
     ndx = len(mc)
     for i, map in enumerate(mc):
