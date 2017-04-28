@@ -1,18 +1,22 @@
 import datetime
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import sunpy.cm as cm
 import sunpy.instr.iris
 import sunpy.map
 import numpy as np
+import numpy.ma as ma
 import matplotlib.colors as colors
 from astropy.io import fits
+import sunpy.io
+import sunpy.time
+
+
 '''
 This module provides movie tools for level 2 IRIS SJI fits file
 '''
-__all__ = ["sji_fits_to_cube", "save_to_mp4", "dustbuster"]
 
-def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
+__all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster']
+
+def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
     """
     Read SJI files and return a MapCube. Inherits
     sunpy.instr.iris.SJI_to_cube to stitch multiple sji fits
@@ -59,52 +63,51 @@ def sji_fits_to_cube(filelist, start=0, stop=None, skip=None, grid=False):
 
     #  todo: pointing correction(rot_hpc)
 
-    #  Option to overlay sun coordinates
-    if grid:
-        iris_cube[0].draw_grid(linestyle='--', color='orange')
 
     return iris_cube
 
-
-def save_to_mp4(ani, outputfile, fps=60):
-    '''
-    Set up ffmpeg writer
-    Save an animation of the MapCube
-    Example:
-    mc = sunpy.map.Map(files, cube=True)
-    ani = mc.plot()
-    save_to_mp4(ani, "myfile.mp4")
-
+def SJI_to_cube(filename, start=0, stop=None, hdu=0):
+    """
+    Read a SJI file and return a MapCube
+    .. warning::
+        This function is a very early beta and is not stable. Further work is
+        on going to improve SunPy IRIS support.
     Parameters
     ----------
-    ani:`matplotlib.animation.FuncAnimation`
-        Input animation
-    Outputfile: `str`
-        Path name of output file (.mp4)
-    fps: `int`
-        Desired frames per seconds (default=60)
+    filename: string
+        File to read
+    start: int
+        Temporal axis index to create MapCube from
+    stop: int
+        Temporal index to stop MapCube at
+    hdu: int
+        Choose hdu index
+    Returns
+    -------
+    iris_cube: sunpy.map.MapCube
+        A map cube of the SJI sequence
+    """
 
-    Return
-    -----------
-    NoneType
-        mp4 to outputfile path
-    '''
+    hdus = sunpy.io.read_file(filename)
+    # Get the time delta
+    time_range = sunpy.time.TimeRange(hdus[hdu][1]['STARTOBS'],
+                                      hdus[hdu][1]['ENDOBS'])
+    splits = time_range.split(hdus[hdu][0].shape[0])
 
-    plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
-    writer = animation.FFMpegWriter(fps=fps, metadata=dict(artist='SunPy'),
-                                    bitrate=64000)
-    if not writer.isAvailable():
-        path = input('Set FFMpeg path: (ex. /usr/local/bin/ffmpeg)')
-        plt.rcParams['animation.ffmpeg_path'] = path
-    writer = animation.FFMpegWriter(fps=fps, metadata=dict(artist='SunPy'),
-                                    bitrate=64000)
-    if not writer.isAvailable():
-        print('Cannot find available FFMpeg Writer')
-        return
+    if not stop:
+        stop = len(splits)
 
-    ani.save(outputfile, writer=writer)
-    print('Successfully saved to ' + outputfile)
+    headers = [hdus[hdu][1]]*(stop-start)
+    datas = hdus[hdu][0][start:stop]
 
+    # Make the cube:
+    iris_cube = sunpy.map.Map(list(zip(datas, headers)), cube=True)
+    # Set the date/time
+
+    for i, m in enumerate(iris_cube):
+        m.meta['DATE-OBS'] = splits[i].center.isoformat()
+
+    return iris_cube
 
 def dustbuster(mc):
     """
@@ -130,16 +133,14 @@ def dustbuster(mc):
         nx = map.meta.get('NRASTERP')
         firstpos = range(ndx)[0::nx]
         #  Create mask with values < 1, excluding frame (-200)
-        mask = np.zeros(image_orig.shape)
-        mask[np.where(image_orig < 1)] = 1
-        mask[np.where(image_orig == -200)] = 0
-        image_fix = image_orig.copy()
+        m = ma.masked_inside(image_orig,-199,.1)
+
         if nx <= 50:  # sparse/coarse raster
             skip = 1
             secpos = [-1]
             thirdpos = [-1]
         elif nx > 50:  # dense raster
-            skip = 3
+            skip = 5
             secpos = range(ndx)[1::nx]
             thirdpos = range(ndx)[2::nx]
 
@@ -149,10 +150,8 @@ def dustbuster(mc):
             image_inpaint = mc[i - skip].data.copy()  # grab prev frame
 
         # Inpaint mask onto image
-        for layer in range(image_fix.shape[-1]):
-            image_fix[np.where(mask)] = image_inpaint[np.where(mask)]
+        image_orig[m.mask] = image_inpaint[m.mask]
 
-        image_result.append(image_fix)  # add corrected image to new list
-        map.data = image_fix
+        map.data = image_orig
 
     return mc
