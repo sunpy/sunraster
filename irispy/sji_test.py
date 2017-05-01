@@ -2,14 +2,15 @@ import sji
 import matplotlib.pyplot as plt
 import numpy.ma as ma
 
-iris_dir = '/Users/shelbe/Documents/IRIS/data/AR12641/'
-fname = [iris_dir + 'iris_l2_20170228_053417_3600106076_SJI_1330_t000.fits',
-              iris_dir + 'iris_l2_20170228_082338_3600106076_SJI_1330_t000.fits',
-              iris_dir + 'iris_l2_20170228_104517_3600106076_SJI_1330_t000.fits']
+iris_dir = '/Users/shelbe/sunpy/data/sample_data/'
+fname = [iris_dir + 'iris_l2_20130801_074720_4040000014_SJI_1400_t000.fits',
+              iris_dir + 'iris_l2_20130801_074720_4040000014_SJI_1400_t000.fits',
+              iris_dir + 'iris_l2_20130801_074720_4040000014_SJI_1400_t000.fits']
 
 def singlefile():
-    mc=sji.SJI_fits_to_cube(fname[0],0,10)
-    mc_db = sji.dustbuster(mc)
+    mc=sji.SJI_fits_to_cube(fname[0])
+    mc.peek()
+    plt.show()
     print('Single file input Passed')
 
 def listfits():
