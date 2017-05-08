@@ -1,6 +1,6 @@
 # IRISPy
 
-IRISPy is a SunPy-affiliated package that provides the tools to read in and
+IRISPy is a [SunPy](http://sunpy.org)-affiliated package that provides the tools to read in and
 analyze data from the [IRIS](http://iris.lmsal.com) solar-observing satellite in Python.
 
 The Interface Region Imaging Spectrograph is a NASA-funded Small Explorer which uses a
