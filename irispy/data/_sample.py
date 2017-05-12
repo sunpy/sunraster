@@ -16,19 +16,24 @@ from sunpy import config
 __author__ = "Steven Christe"
 __email__ = "steven.christe@nasa.gov"
 
-# Use SunPy's sample directory as storage for these files
-sampledata_dir = config.get("downloads", "sample_dir")
+# Creating the directory for sample files to be downloaded
+sampledata_dir = get_and_create_sample_dir()
 
 # urls to search for the data
 _base_urls = (
     'http://data.sunpy.org/sample-data/',
     'http://hesperia.gsfc.nasa.gov/~schriste/sunpy-sample-data/')
 
-_files = {"AIA_171_IMAGE": ("AIA20110319_105400_0171.fits", "")}
+_files = {"SJI_CUBE_2832": ("iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits", ""),
+          "SJI_CUBE_1330": ("iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits", ""),
+          "SJI_CUBE_2796": ("iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits", ""),
+          "SJI_CUBE_1400": ("iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits", ""),
+          "RASTER": ("iris_l2_20170502_052551_3893010094_raster_t000_r00000.fits", ".tar.gz")
+         }
 
-data_files = {}
+sample_files = {}
 for key in _files:
-    data_files[key] = os.path.abspath(os.path.join(sampledata_dir, _files[key][0]))
+    sample_files[key] = os.path.abspath(os.path.join(sampledata_dir, _files[key][0]))
 
 
 def download_data(progress=True, overwrite=True, timeout=None):
@@ -47,8 +52,7 @@ def download_data(progress=True, overwrite=True, timeout=None):
     -------
     None
     """
-    # Creating the directory for sample files to be downloaded
-    sampledata_dir = get_and_create_sample_dir()
+
     print(sampledata_dir)
     number_of_files_fetched = 0
     print("Downloading sample files to {}".format(sampledata_dir))
