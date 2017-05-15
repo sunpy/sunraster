@@ -21,14 +21,16 @@ sampledata_dir = get_and_create_sample_dir()
 
 # urls to search for the data
 _base_urls = (
+    'https://github.com/sunpy/sample-data/blob/master/irispy/,
     'http://data.sunpy.org/sample-data/',
-    'http://hesperia.gsfc.nasa.gov/~schriste/sunpy-sample-data/')
+    'http://hesperia.gsfc.nasa.gov/~schriste/sunpy-sample-data/'
+    )
 
 _files = {"SJI_CUBE_2832": ("iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits", ""),
           "SJI_CUBE_1330": ("iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits", ""),
           "SJI_CUBE_2796": ("iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits", ""),
           "SJI_CUBE_1400": ("iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits", ""),
-          "RASTER": ("iris_l2_20170502_052551_3893010094_raster_t000_r00000.fits", ".tar.gz")
+          "RASTER": ("iris_l2_20170502_052551_3893010094_raster.fits", ".tar.zip")
          }
 
 sample_files = {}
@@ -65,7 +67,11 @@ def download_data(progress=True, overwrite=True, timeout=None):
 
         for base_url in _base_urls:
             full_file_name = file_name[0] + file_name[1]
+            # if downloading from github need to add more to the request
+            if base_url.count('github'):
+                full_file_name += '?raw=true'
             try:
+                print("Trying {0}".format(os.path.join(base_url, full_file_name)))
                 exists = url_exists(os.path.join(base_url, full_file_name))
                 if exists:
                     f = download_file(os.path.join(base_url, full_file_name))
