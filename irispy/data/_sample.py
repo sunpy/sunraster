@@ -20,22 +20,22 @@ __email__ = "steven.christe@nasa.gov"
 sampledata_dir = get_and_create_sample_dir()
 
 # urls to search for the data
-_base_urls = (
+_BASE_URLS = (
     'https://github.com/sunpy/sample-data/blob/master/irispy/,
     'http://data.sunpy.org/sample-data/',
     'http://hesperia.gsfc.nasa.gov/~schriste/sunpy-sample-data/'
     )
 
-_files = {"SJI_CUBE_2832": ("iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits", ""),
+_FILES = {"SJI_CUBE_2832": ("iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits", ""),
           "SJI_CUBE_1330": ("iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits", ""),
           "SJI_CUBE_2796": ("iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits", ""),
           "SJI_CUBE_1400": ("iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits", ""),
           "RASTER": ("iris_l2_20170502_052551_3893010094_raster.fits", ".tar.zip")
-         }
+          }
 
 sample_files = {}
-for key in _files:
-    sample_files[key] = os.path.abspath(os.path.join(sampledata_dir, _files[key][0]))
+for key in _FILES:
+    sample_files[key] = os.path.abspath(os.path.join(sampledata_dir, _FILES[key][0]))
 
 
 def download_data(progress=True, overwrite=True, timeout=None):
@@ -58,14 +58,14 @@ def download_data(progress=True, overwrite=True, timeout=None):
     print(sampledata_dir)
     number_of_files_fetched = 0
     print("Downloading sample files to {}".format(sampledata_dir))
-    for handle, file_name in _files.items():
+    for handle, file_name in _FILES.items():
         if not overwrite:
             if os.path.isfile(os.path.join(sampledata_dir,
                                            file_name[0])):
                 number_of_files_fetched += 1
                 continue
 
-        for base_url in _base_urls:
+        for base_url in _BASE_URLS:
             full_file_name = file_name[0] + file_name[1]
             # if downloading from github need to add more to the request
             if base_url.count('github'):
@@ -92,6 +92,6 @@ def download_data(progress=True, overwrite=True, timeout=None):
                 warnings.warn("Download failed with error {}. \n"
                               "Retrying with different mirror.".format(e))
 
-    if number_of_files_fetched < len(list(_files.keys())):
+    if number_of_files_fetched < len(list(_FILES.keys())):
         raise URLError("Could not download all samples files."
                        "Problem with accessing sample data servers.")
