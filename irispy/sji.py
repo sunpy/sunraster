@@ -139,7 +139,7 @@ class SJICube(object):
         """Creates a new instance"""
         if isinstance(input, str):
             fits = pyfits.open(input)
-            self.data = np.ma.masked_equal(deepcopy(fits[0].data), BAD_PIXEL_VALUE)
+            self.data = np.ma.masked_less_equal(deepcopy(fits[0].data), 0)
             reference_header = deepcopy(fits[0].header)
             table_header = deepcopy(fits[1].header)
             # fix reference header
@@ -157,8 +157,8 @@ class SJICube(object):
             metas = []
             dts = fits[1].data[:, fits[1].header['TIME']]
             exposure_times = fits[1].data[:, fits[1].header['EXPTIMES']]
-            slit_position_x = fits[1].data[:, fits[1].header['SLTPX1IX']]
-            slit_position_y = fits[1].data[:, fits[1].header['SLTPX2IX']]
+            self.slit_position_x = u.Quantity(fits[1].data[:, fits[1].header['SLTPX1IX']], 'arcsec')
+            self.slit_position_y = u.Quantity(fits[1].data[:, fits[1].header['SLTPX2IX']], 'arcsec')
 
             for i in range(number_of_images):
                 metas.append(deepcopy(reference_header))
@@ -193,13 +193,6 @@ class SJICube(object):
         return self.data.shape[0]
 
     def __repr__(self):
-        data_rows = [('Observatory', self.observatory),
-                     ('Instrument', self.instrument),
-                     ('Detector', self.detector),
-                     ('Measurement', self.measurement),
-                     ('Wavelength', self.wavelength),
-                     ('Obs. range', self.date[0]),
-                     ('Obs')]
         return (
 """SunPy {dtype!s}
 ---------
@@ -516,6 +509,17 @@ Scale:\t\t {scale}
                                                  blit=False)
 
         return ani
+
+    def plot_in_notebook(self):
+        """Provides ipython widgets to plot the SJI data."""
+        # TODO: write function
+        import ipywidgets as widgets
+        pass
+
+    def to_html5_video(self):
+        """Output video of the observation"""
+        # TODO: write function
+        pass
 
     def peek(self, resample=None, **kwargs):
         """
