@@ -156,18 +156,18 @@ class SJICube(object):
             number_of_images = self.data.shape[0]
             metas = []
             dts = fits[1].data[:, fits[1].header['TIME']]
-            exposure_times = fits[1].data[:, fits[1].header['EXPTIMES']]
             self.slit_position_x = u.Quantity(fits[1].data[:, fits[1].header['SLTPX1IX']], 'arcsec')
             self.slit_position_y = u.Quantity(fits[1].data[:, fits[1].header['SLTPX2IX']], 'arcsec')
 
+            # append info in second hdu to each header
             for i in range(number_of_images):
                 metas.append(deepcopy(reference_header))
                 metas[i]['DATE_OBS'] = str(parse_time(reference_header['STARTOBS']) + timedelta(seconds=dts[i]))
                 # copy over the individual header fields
                 for item in fits[1].header[7:]:
                     metas[i][item] = fits[1].data[i, fits[1].header[item]]
-                    if item.count('exptimes'):
-                        metas[i]['exptime'] = fits[1].data[:, fits[1].header[item]]
+                    if item.count('EXPTIMES'):
+                        metas[i]['EXPTIME'] = fits[1].data[i, fits[1].header[item]]
 
             self._meta = metas
         elif len(input) > 1:
@@ -277,7 +277,7 @@ Scale:\t\t {scale}
         return self._get_map(self.ref_index).scale
 
     @property
-    def units(self):
+    def spatial_units(self):
         """
         Image coordinate units along the x and y axes (i.e. cunit1,
         cunit2).
@@ -286,7 +286,7 @@ Scale:\t\t {scale}
 
     @property
     def exposure_time(self):
-        """Exposure time of the image in seconds."""
+        """Exposure time of each frame in seconds."""
         return u.Quantity([m.get('exptime') for m in self._meta], 's')
 
     @property
@@ -298,7 +298,7 @@ Scale:\t\t {scale}
         result = [meta[key] for meta in self._meta]
         # check to see if they are all the same if so just return one value
         if len(set(result)) == 1:
-            result = set(result)[0]
+            result = set(result)
         return result
 
     def submap(self, range_a, range_b, range_c=None):
@@ -456,15 +456,15 @@ Scale:\t\t {scale}
 
             # x-axis label
             if self[0].coordinate_system.x == 'HG':
-                xlabel = 'Longitude [{lon}'.format(lon=self[i].units.x)
+                xlabel = 'Longitude [{lon}'.format(lon=self[i].spatial_units.x)
             else:
-                xlabel = 'X-position [{xpos}]'.format(xpos=self[i].units.x)
+                xlabel = 'X-position [{xpos}]'.format(xpos=self[i].spatial_units.x)
 
             # y-axis label
             if self[0].coordinate_system.y == 'HG':
-                ylabel = 'Latitude [{lat}]'.format(lat=self[i].units.y)
+                ylabel = 'Latitude [{lat}]'.format(lat=self[i].spatial_units.y)
             else:
-                ylabel = 'Y-position [{ypos}]'.format(ypos=self[i].units.y)
+                ylabel = 'Y-position [{ypos}]'.format(ypos=self[i].spatial_units.y)
 
             axes.set_xlabel(xlabel)
             axes.set_ylabel(ylabel)
@@ -484,23 +484,23 @@ Scale:\t\t {scale}
                 removes.pop(0).remove()
 
             im.set_array(ani_data[i].data)
-            im.set_cmap(self._maps[i].plot_settings['cmap'])
+            im.set_cmap(self[i].plot_settings['cmap'])
 
-            norm = deepcopy(self._maps[i].plot_settings['norm'])
+            norm = deepcopy(self[i].plot_settings['norm'])
             # The following explicit call is for bugged versions of Astropy's ImageNormalize
             norm.autoscale_None(ani_data[i].data)
             im.set_norm(norm)
 
             if wcsaxes_compat.is_wcsaxes(axes):
-                im.axes.reset_wcs(self._maps[i].wcs)
+                im.axes.reset_wcs(self[i].wcs)
                 wcsaxes_compat.default_wcs_grid(axes)
             else:
-                im.set_extent(np.concatenate((self._maps[i].xrange.value,
-                                              self._maps[i].yrange.value)))
+                im.set_extent(np.concatenate((self[i].xrange.value,
+                                              self[i].yrange.value)))
 
             if annotate:
                 annotate_frame(i)
-            removes += list(plot_function(fig, axes, self._maps[i]))
+            removes += list(plot_function(fig, axes, self[i]))
 
         ani = matplotlib.animation.FuncAnimation(fig, updatefig,
                                                  frames=list(range(0, len(self))),
