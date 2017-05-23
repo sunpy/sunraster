@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # """Tests for functions in sji.py"""
 import pytest
+import astropy.units as u
 import numpy.ma as ma
 from irispy.sji import SJICube, SJIMap
 
@@ -11,14 +12,56 @@ f2796 = iris_dir + 'iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits'
 f2832 = iris_dir + 'iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits'
 all_sji_files = [f1330, f1400, f2796, f2832]
 
-fname = [iris_dir + 'iris_l2_20170228_053417_3600106076_SJI_1330_t000.fits',
-              iris_dir + 'iris_l2_20170228_082338_3600106076_SJI_1330_t000.fits',
-              iris_dir + 'iris_l2_20170228_104517_3600106076_SJI_1330_t000.fits']
-
 
 @pytest.mark.parametrize("sji_file", all_sji_files)
 def test_open_cubes(sji_file):
+    """test that SJICube open lvl2 sji files"""
     assert isinstance(SJICube(sji_file), SJICube)
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_observatory_meta(sji_file):
+    assert SJICube(sji_file).observatory == 'IRIS'
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_detector_meta(sji_file):
+    assert SJICube(sji_file).detector == 'SJI'
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_measurement_is_quantity(sji_file):
+    assert isinstance(SJICube(sji_file).measurement, u.Quantity)
+
+
+@pytest.mark.parametrize("sji_file, measurement", [(all_sji_files[0], 1330),
+                                                   (all_sji_files[1], 1400),
+                                                   (all_sji_files[2], 2796),
+                                                   (all_sji_files[3], 2832)])
+def test_cubes_measurement_value_is_correct(sji_file, measurement):
+    assert SJICube(sji_file).measurement.value == measurement
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_length(sji_file):
+    assert len(SJICube(sji_file)) == SJICube(sji_file).data.shape[0]
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_length(sji_file):
+    assert len(SJICube(sji_file)) == SJICube(sji_file).data.shape[0]
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_indexing_to_map(sji_file):
+    assert isinstance(SJICube(sji_file)[0], SJIMap)
+
+
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_cubes_indexing_to_SJICube(sji_file):
+    assert isinstance(SJICube(sji_file)[0:4], SJICube)
+
+
 
 
 #def singlefile():
