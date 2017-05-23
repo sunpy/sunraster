@@ -204,6 +204,8 @@ Wavelength:\t {wave}
 Obs. Start:\t {date_start:{tmf}}
 Obs. End:\t {date_end:{tmf}}
 Num. of Frames:\t {frame_num}
+Obs. id:\t {obs_id}
+Obs. Description:\t {obs_desc}
 Dimensions:\t {dim}
 Scale:\t\t {scale}
 """.format(dtype=self.__class__.__name__,
@@ -211,7 +213,7 @@ Scale:\t\t {scale}
            meas=self.measurement, wave=self.wavelength, date_start=self.date[0],
            date_end=self.date[-1], frame_num=len(self),
            dim=u.Quantity(self.dimensions),
-           scale=u.Quantity(self.scale),
+           scale=u.Quantity(self.scale), obs_id=self.iris_obs_id, obs_desc=self.iris_obs_description
            tmf=TIME_FORMAT) + self.data.__repr__())
 
     # Sorting methods
