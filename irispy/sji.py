@@ -224,6 +224,16 @@ Scale:\t\t {scale}
         pass
 
     @property
+    def iris_obs_id(self):
+        """IRIS Observation ID"""
+        return self._meta[self.ref_index].get('OBSID', "")
+
+    @property
+    def iris_obs_description(self):
+        """IRIS Observation Description"""
+        return self._meta[self.ref_index].get('OBS_DESC', "")
+
+    @property
     def instrument(self):
         """Instrument name"""
         return self._meta[self.ref_index].get('instrume', "").replace("_", " ")
@@ -720,8 +730,8 @@ def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
     if type(filelist) == str:
         filelist = [filelist]
     iris_cube = sunpy.map.MapCube()
-    for fname in filelist[0:]:
-        newmap = sunpy.instr.iris.SJI_to_cube(fname)
+    for fname in filelist:
+        newmap = SJI_to_cube(fname)
         for frame in newmap[start:stop:skip]:
             if frame.mean() < frame.max():
                 cmap = cm.get_cmap(frame._get_cmap_name())
@@ -732,9 +742,8 @@ def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
                 iris_cube.maps.append(frame)
 
     #  todo: pointing correction(rot_hpc)
-
-
     return iris_cube
+
 
 def SJI_to_cube(filename, start=0, stop=None, hdu=0):
     """
@@ -778,6 +787,7 @@ def SJI_to_cube(filename, start=0, stop=None, hdu=0):
         m.meta['DATE-OBS'] = splits[i].center.isoformat()
 
     return iris_cube
+
 
 def dustbuster(mc):
     """
