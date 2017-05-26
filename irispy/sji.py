@@ -174,6 +174,12 @@ class SJICube(object):
             self.data = input[0]
             self._meta = input[1]
 
+        norm = []
+        cmap = []
+        for i in range(number_of_images):
+            norm.append(deepcopy(self[i].plot_settings['norm']))
+            cmap.append(deepcopy(self[i].plot_settings['cmap']))
+        self.plot_settings = {'norm': norm, 'cmap': cmap}
         self.ref_index = 0
 
     def _get_map(self, index):
@@ -496,11 +502,10 @@ Scale:\t\t {scale}
                 removes.pop(0).remove()
 
             im.set_array(ani_data[i].data)
-            im.set_cmap(self[i].plot_settings['cmap'])
-
-            norm = deepcopy(self[i].plot_settings['norm'])
+            im.set_cmap(self.plot_settings['cmap'][i])
+            norm = deepcopy(self.plot_settings['norm'][i])
             # The following explicit call is for bugged versions of Astropy's ImageNormalize
-            norm.autoscale_None(ani_data[i].data)
+            # norm.autoscale_None(ani_data[i].data)
             im.set_norm(norm)
 
             if wcsaxes_compat.is_wcsaxes(axes):

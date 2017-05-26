@@ -2,7 +2,6 @@
 # """Tests for functions in sji.py"""
 import pytest
 import astropy.units as u
-import numpy.ma as ma
 from irispy.sji import SJICube, SJIMap
 
 iris_dir = '/Users/schriste/Developer/repositories/sample-data/irispy/'
@@ -62,9 +61,15 @@ def test_cubes_indexing_to_SJICube(sji_file):
     assert isinstance(SJICube(sji_file)[0:4], SJICube)
 
 
+@pytest.mark.parametrize("sji_file", all_sji_files)
+def test_making_SJIMap(sji_file):
+    sji_cube = SJICube(sji_file)
+    header = sji_cube.meta(0)
+    data = sji_cube.data[0,:,:]
+    assert isinstance(SJIMap(header, data), SJICube)
 
 
-#def singlefile():
+        #def singlefile():
 #    mc=sji.SJI_fits_to_cube(fname[0],0,10)
 #    mc_db = sji.dustbuster(mc)
 #    print('Single file input Passed')
@@ -90,4 +95,3 @@ def test_cubes_indexing_to_SJICube(sji_file):
 
 #test1=singlefile()
 #test2=listfits()
-
