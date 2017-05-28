@@ -78,8 +78,9 @@ class SJIMap(GenericMap):
 
         self.meta['detector'] = "SJI"
         self.meta['waveunit'] = "Angstrom"
-
-        self.plot_settings['cmap'] = cm.get_cmap('irissji' + str(int(self.meta['wavelnth'])))
+        palette = cm.get_cmap('irissji' + str(int(self.meta['wavelnth'])))
+        palette.set_bad('black')
+        self.plot_settings['cmap'] = palette
         self.plot_settings['norm'] = ImageNormalize(stretch=visualization.AsinhStretch(0.1))
 
 
@@ -148,7 +149,6 @@ class SJICube(object):
                 reference_header['detector'] = reference_header.get('instrume')
                 reference_header['waveunit'] = "Angstrom"
                 reference_header['obsrvtry'] = reference_header.get('telescop')
-
             # check consistency
             if reference_header['NAXIS3'] != self.data.shape[0]:
                 raise ValueError("Something is not right with this file!")
@@ -173,12 +173,14 @@ class SJICube(object):
         elif len(input) > 1:
             self.data = input[0]
             self._meta = input[1]
+            number_of_images = self.data.shape[0]
 
         norm = []
         cmap = []
         for i in range(number_of_images):
             norm.append(deepcopy(self[i].plot_settings['norm']))
             cmap.append(deepcopy(self[i].plot_settings['cmap']))
+
         self.plot_settings = {'norm': norm, 'cmap': cmap}
         self.ref_index = 0
 
@@ -325,7 +327,13 @@ Scale:\t\t {scale}
         new_maps = []
         for i in range(0, len(self)):
             new_maps.append(self._get_map(i).submap(range_a, range_b))
-        return SJICube(new_maps)
+        data = np.zeros([len(self), new_maps[0].data.shape[0], new_maps[0].data.shape[1]])
+        data = np.ma.masked_less_equal(data, 0)
+        _meta = []
+        for i in range(0, len(self)):
+            data[i,:,:] = new_maps[i].data
+            _meta.append(deepcopy(new_maps[i].meta))
+        return SJICube((data, _meta))
 
     def lightcurve(self, location_a, location_b, range_c=None):
         """Given a pixel index return a lightcurve."""
@@ -496,6 +504,8 @@ Scale:\t\t {scale}
             ani_data = [self._get_map(j) for j in range(0, len(self))]
 
         im = ani_data[0].plot(axes=axes, **kwargs)
+        im.set_cmap(self.plot_settings['cmap'][0])
+        im.set_norm(self.plot_settings['norm'][0])
 
         def updatefig(i, im, annotate, ani_data, removes):
             while removes:
