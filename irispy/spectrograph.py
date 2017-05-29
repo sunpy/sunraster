@@ -3,20 +3,22 @@
 
 from datetime import timedelta
 from collections import OrderedDict
-import copy
-
-import numpy as np
-import xarray
-from astropy.io import fits
-import astropy.units as u
 from astropy.units.quantity import Quantity
 from astropy.table import Table
-from astropy import wcs
+# from astropy import wcs
 from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
+from astropy.io import fits
+from sunpycube.cube.datacube import Cube
+from sunpycube.wcs_util import WCS
 
+import copy
+import numpy as np
+# import xarray
+import astropy.units as u
 import irispy.iris_tools as iris_tools
+
 
 __all__ = ['IRISRaster']
 
@@ -72,8 +74,8 @@ class IRISRaster(object):
                 # window.
                 spectral_coords = dict()
                 for i, window_name in enumerate(self.spectral_windows["name"]):
-                    wcs_spectral = wcs.WCS(hdulist[window_fits_indices[i]].header).sub(1)
-                    spectral_coords[window_name] = Quantity(wcs_spectral.all_pix2world(np.arange(
+                    wcs_spectral = WCS(hdulist[window_fits_indices[i]].header)
+                    spectral_coords[window_name] = Quantity(wcs_spectral.sub(1).all_pix2world(np.arange(
                         hdulist[window_fits_indices[i]].header["NAXIS1"]), 0),
                         unit=wcs_spectral.wcs.cunit[0]).to("Angstrom")[0]
                     wcs_spectral_objects[window_name] = wcs_spectral
@@ -152,7 +154,7 @@ class IRISRaster(object):
             # Extract the data and meta/auxiliary data.
             # Create WCS object from FITS header and add WCS object
             # wcs dictionary.
-            wcs_celestial = wcs.WCS(hdulist[1].header).celestial
+            wcs_celestial = WCS(hdulist[1].header).celestial
             scan_label = "scan{0}".format(f)
             wcs_celestial_objects[scan_label] = wcs_celestial
             # Append to list representing the scan labels of each
@@ -216,18 +218,10 @@ class IRISRaster(object):
         times = [parse_time(self.meta["observation start"])+timedelta(seconds=s) for s in self.auxiliary_data["TIME"]]
         # Convert data for each spectral window into an an
         # xarray.DataArray and enter into data dictionary.
-        self.data = dict([(window_name, xarray.DataArray(data=data_dict[window_name],
-                                                         dims=["raster_axis", "slit_axis", "spectral_axis"],
-                                                         coords={"wavelength": ("spectral_axis",
-                                                                                spectral_coords[window_name].value),
-                                                                 "raster_position": ("raster_axis", raster_positions),
-                                                                 "time": ("raster_axis", times)},
-                                                         name="Intensity [DN]",
-                                                         attrs=OrderedDict([(
-                                                             "units", {"wavelength": spectral_coords[window_name].unit,
-                                                                       "intensity": "DN"})])))
-                          for window_name in self.spectral_windows["name"]])
 
+        self.data = dict([(window_name, Cube(data_dict[window_name],
+                                                    wcs_spectral_objects[window_name],
+                                                    )) for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
         spectral_window = self.spectral_windows["name"][0]
