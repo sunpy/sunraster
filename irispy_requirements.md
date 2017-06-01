@@ -84,6 +84,22 @@ transition region in a number of passbands.
 
 
 #### Implementation Suggestions
+Lijia's suggestions based on the ‘User Guide to Data Analysis’:
+(http://iris.lmsal.com/itn26/itn26.pdf)
+
+*routines that load data and display header in p14,32,33 of ‘user guide to data analysis’, 
+    ex. d=iris_load(my file) and d->showiness
+
+*data query from remote sever if not already implemented in sunpy
+
+*iris_get_mg_features_lev2
+    mg ii line variable component fitting, ‘moment’ fitting, gaussian fitting, red-blue asymmetry analysis (p38)
+
+*rest wavelength calibration
+
+*density calculation
+
+*quick look tool like iris_xfiles
 
 ## IRISObservation
 
