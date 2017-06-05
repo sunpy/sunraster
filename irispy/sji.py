@@ -47,7 +47,7 @@ def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
         A map cube of the SJI sequence
     """
 
-    if type(filelist) == str:
+    if isinstance(filelist, str):
         filelist = [filelist]
     iris_cube = sunpy.map.MapCube()
     for fname in filelist[0:]:
@@ -143,7 +143,6 @@ def dustbuster(mc):
             skip = 5
             secpos = range(ndx)[1::nx]
             thirdpos = range(ndx)[2::nx]
-
         if (i in firstpos) or (i in secpos) or (i in thirdpos):
             image_inpaint = mc[i + skip].data.copy()  # grab next frame
         else:
