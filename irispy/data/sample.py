@@ -6,7 +6,7 @@ import sys
 from sunpy.data.sample import get_sample_file
 
 _base_urls = (
-    'http://data.sunpy.org/sample-data/irispy/',
+    'http://data.sunpy.org/irispy/',
     'https://github.com/sunpy/sample-data/raw/master/irispy/'
 )
 
