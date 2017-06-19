@@ -66,7 +66,7 @@ class IRISRaster(object):
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_ = hdulist[window_fits_indices[i]].data
                 try:
-                    data_dict[window_name].append(Cube(data_, wcs_, meta=self.meta))
+                    data_dict[window_name].append(Cube(data_, wcs_, meta=dict(self.meta)))
                 except ValueError as e:
                     raise e
             hdulist.close()
