@@ -10,12 +10,11 @@ from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
 from astropy.io import fits
-from sunpycube.cube.datacube import Cube
+from sunpycube.cube.datacube import Cube, CubeSequence
 from sunpycube.wcs_util import WCS
 
 import copy
 import numpy as np
-# import xarray
 import astropy.units as u
 import irispy.iris_tools as iris_tools
 
@@ -60,8 +59,6 @@ class IRISRaster(object):
                     names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
 
                 self.spectral_windows.add_index("name")
-                spectral_coords = dict()
-                
                 data_dict = dict([(window_name, list()) for window_name in self.spectral_windows["name"]])
 
             self.meta = hdulist[0].header
@@ -74,7 +71,7 @@ class IRISRaster(object):
                     raise e
             hdulist.close()
 
-        self.data = dict([(window_name, data_dict[window_name]) 
+        self.data = dict([(window_name, CubeSequence(data_dict[window_name])) 
                                 for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
