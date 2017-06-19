@@ -35,6 +35,7 @@ __all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
 from sunpy import config
 TIME_FORMAT = config.get("general", "time_format")
 
+# the following value is only appopriate for bytescaled images
 BAD_PIXEL_VALUE = -200
 
 
@@ -139,8 +140,10 @@ class SJICube(object):
     def __init__(self, input):
         """Creates a new instance"""
         if isinstance(input, str):
-            fits = pyfits.open(input)
-            self.data = np.ma.masked_less_equal(deepcopy(fits[0].data), 0)
+            fits = pyfits.open(input, memmap=True, do_not_scale_image_data=True)
+            # TODO find a new masking value for unscaled data
+            #self.data = np.ma.masked_less_equal(fits[0].data, 0)
+            self.data = fits[0].data
             reference_header = deepcopy(fits[0].header)
             table_header = deepcopy(fits[1].header)
             # fix reference header
