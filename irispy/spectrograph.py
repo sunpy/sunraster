@@ -3,20 +3,20 @@
 
 from datetime import timedelta
 from collections import OrderedDict
-import copy
-
-import numpy as np
-import xarray
-from astropy.io import fits
-import astropy.units as u
 from astropy.units.quantity import Quantity
 from astropy.table import Table
-from astropy import wcs
 from astropy import constants
 from scipy import interpolate
 from sunpy.time import parse_time
+from astropy.io import fits
+from sunpycube.cube.datacube import Cube, CubeSequence
+from sunpycube.wcs_util import WCS
 
+import copy
+import numpy as np
+import astropy.units as u
 import irispy.iris_tools as iris_tools
+
 
 __all__ = ['IRISSG']
 
@@ -93,9 +93,7 @@ class IRISSG(object):
                 self.data[name][0].shape[1],
                 self.data[name][0].shape[2])
                 for name in self.spectral_windows["name"]])
-
         # Removed the instance Period. if required let me know
-
         return "<iris.IRISSG instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
@@ -154,7 +152,7 @@ class IRISSG(object):
         ########### width of the slit must be found in the data file somewhere. ############
         solid_angle = self.wcs["celestial"]["scan0"].cdelt[0] * u.steradian
         # Get effective area
-        ########### This needs to be generalized to the time of OBS once that func
+        # This needs to be generalized to the time of OBS once that func
         iris_response = iris_tools.iris_get_response(pre_launch=True)
         lam = iris_response["LAMBDA"]
         if self.spectral_windows[spectral_window]["detector type"][:3] == "FUV":
