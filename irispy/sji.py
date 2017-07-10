@@ -35,8 +35,10 @@ __all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
 from sunpy import config
 TIME_FORMAT = config.get("general", "time_format")
 
-# the following value is only appopriate for bytescaled images
+# the following value is only appropriate for byte scaled images
 BAD_PIXEL_VALUE = -200
+# the following value is only appropriate for unscaled images
+BAD_PIXEL_VALUE_UNSCALED = -32768
 
 
 class SJIMap(GenericMap):
@@ -144,6 +146,7 @@ class SJICube(object):
             # TODO find a new masking value for unscaled data
             #self.data = np.ma.masked_less_equal(fits[0].data, 0)
             self.data = fits[0].data
+            self.mask = np.ma.masked_equal(fits[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
             reference_header = deepcopy(fits[0].header)
             table_header = deepcopy(fits[1].header)
             # fix reference header
@@ -188,7 +191,7 @@ class SJICube(object):
         self.ref_index = 0
 
     def _get_map(self, index):
-        return SJIMap(self.data[index, :, :], self._meta[index], mask=self.data[index, :, :].mask)
+        return SJIMap(self.data[index, :, :], self._meta[index], mask=self.mask[index, :, :])
 
     def __getitem__(self, key):
         """Overriding indexing operation.  If the key results in a single map,
