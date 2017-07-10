@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import sys
-from sunpy.data.sample import get_sample_file
+from sunpy.data._sample import get_sample_file, download_sample_data
 
 _base_urls = (
     'http://data.sunpy.org/irispy/',
