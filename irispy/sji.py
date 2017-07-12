@@ -28,7 +28,7 @@ from sunpy.visualization import wcsaxes_compat
 from sunpy.time import parse_time
 from sunpy.lightcurve import LightCurve
 
-from irispr import iris_tools
+from irispy import iris_tools
 
 __all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
 
