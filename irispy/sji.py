@@ -2,33 +2,33 @@
 This module provides movie tools for level 2 IRIS SJI fits file
 '''
 
+from copy import deepcopy
 from datetime import timedelta
-import sunpy.cm as cm
-import sunpy.instr.iris
-import sunpy.map
+
 import numpy as np
 import numpy.ma as ma
 import matplotlib.colors as colors
+import matplotlib.animation
+from pandas import DataFrame
+from astropy.table import Table
 from astropy.io import fits as pyfits
+import astropy.units as u
+from astropy.visualization.mpl_normalize import ImageNormalize
+from astropy import visualization
+from astropy.wcs import WCS
 import sunpy.io
 import sunpy.time
-from astropy.table import Table
-from copy import deepcopy
-
-import numpy as np
-import matplotlib.animation
-
+import sunpy.cm as cm
+import sunpy.instr.iris
+import sunpy.map
 from sunpy.map import GenericMap
 from sunpy.map.map_factory import Map
 from sunpy.visualization.mapcubeanimator import MapCubeAnimator
 from sunpy.visualization import wcsaxes_compat
-import astropy.units as u
 from sunpy.time import parse_time
 from sunpy.lightcurve import LightCurve
-from pandas import DataFrame
-from sunpy.time import parse_time
-from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy import visualization
+
+from irispr import iris_tools
 
 __all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
 
@@ -162,8 +162,16 @@ class SJICube(object):
             number_of_images = self.data.shape[0]
             metas = []
             dts = fits[1].data[:, fits[1].header['TIME']]
-            self.slit_position_x = u.Quantity(fits[1].data[:, fits[1].header['SLTPX1IX']], 'arcsec')
-            self.slit_position_y = u.Quantity(fits[1].data[:, fits[1].header['SLTPX2IX']], 'arcsec')
+            file_wcs = WCS(fits[0].header)
+            # Caution!! This has not been confirmed for non-zero roll
+            # angles.
+            self.slit_center_sji_indices_x = fits[1].data[:, fits[1].header['SLTPX1IX']]
+            self.slit_center_sji_indices_y = fits[1].data[:, fits[1].header['SLTPX2IX']]
+            slit_center_positions = file_wcs.celestial.all_pix2world(
+                self.slit_center_sji_indices_x, self.slit_center_sji_indices_y,
+                iris_tools.WCS_ORIGIN)
+            self.slit_center_position_x = u.Quantity(slit_center_positions[0], 'deg').to("arcsec")
+            self.slit_center_position_y = u.Quantity(slit_center_positions[1], 'deg').to("arcsec")
 
             # append info in second hdu to each header
             for i in range(number_of_images):
