@@ -1,35 +1,29 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
-from datetime import timedelta
-from collections import OrderedDict
 from astropy.units.quantity import Quantity
 from astropy.table import Table
-from astropy import constants
-from scipy import interpolate
-from sunpy.time import parse_time
 from astropy.io import fits
 from sunpycube.cube.datacube import Cube, CubeSequence
 from sunpycube.wcs_util import WCS
 
 import copy
+from datetime import timedelta
 import numpy as np
-import astropy.units as u
-import irispy.iris_tools as iris_tools
+from sunpy.time import parse_time
+
+__all__ = ['IRISSpectrograph']
 
 
-__all__ = ['IRISSG']
-
-
-class IRISSG(object):
+class IRISSpectrograph(object):
     """An object to hold data from multiple IRIS raster scans."""
 
     def __init__(self, filenames, spectral_windows="All", common_axis=0):
-        """Initializes an IRISSG object from IRIS level 2 files."""
+        """Initializes an IRISSpectrograph object from IRIS level 2 files."""
         # default common axis is 0.
         if type(filenames) is str:
             filenames = [filenames]
-
+        raster_index_to_file = []
         for f, filename in enumerate(filenames):
             hdulist = fits.open(filename)
             if f == 0:
@@ -52,7 +46,7 @@ class IRISSG(object):
                             "Spectral windows {0} not in file {1}".format(spectral_windows[missing_windows],
                                                                           filenames[0]))
                     window_fits_indices = np.nonzero(np.in1d(windows_in_obs, spectral_windows))[0]+1
-                # table to store hdulist headers of 0th index.
+                # Create table of spectral window info in OBS.
                 self.spectral_windows = Table([
                     [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
                     [hdulist[0].header["TDET{0}".format(i)] for i in window_fits_indices],
@@ -62,138 +56,89 @@ class IRISSG(object):
                               for i in window_fits_indices], unit="angstrom"),
                     Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
                     names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
-                # all spectral "required/all" are given name index
+                # Set spectral window name as table index.
                 self.spectral_windows.add_index("name")
                 # creating a empty list for every spectral window and each spectral window
                 # is a key for the dictionary.
                 data_dict = dict([(window_name, list())
                                   for window_name in self.spectral_windows["name"]])
-
+                auxiliary_header = hdulist[-2].header
             # the unchanged header of the hdulist indexed 0.
             self.meta = hdulist[0].header
             for i, window_name in enumerate(self.spectral_windows["name"]):
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_ = hdulist[window_fits_indices[i]].data
-                try:
-                    # appending Cube instance to the corresponding window key in dictionary's list.
-                    data_dict[window_name].append(Cube(data_, wcs_, meta=dict(self.meta)))
-                except ValueError as e:
+                data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
+                data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
+                # appending Cube instance to the corresponding window key in dictionary's list.
+                data_dict[window_name].append(
+                    Cube(data_, wcs_, meta=dict(self.meta), mask=data_nan_masked))
+
+            scan_label = "scan{0}".format(f)
+            # Append to list representing the scan labels of each
+            # spectrum.
+            len_raster_axis = hdulist[1].header["NAXIS3"]
+            raster_index_to_file = raster_index_to_file+[scan_label]*len_raster_axis
+            # Concatenate auxiliary data arrays from each file.
+            try:
+                auxiliary_data = np.concatenate(
+                    (auxiliary_data, np.array(hdulist[-2].data)), axis=0)
+            except UnboundLocalError as e:
+                if e.args[0] == "local variable 'auxiliary_data' referenced before assignment":
+                    auxiliary_data = np.array(hdulist[-2].data)
+                else:
                     raise e
             hdulist.close()
+
+        self.auxiliary_data = Table()
+        # Enter certain properties into auxiliary data table as
+        # quantities with units.
+        auxiliary_colnames = [key for key in auxiliary_header.keys()][7:]
+        quantity_colnames = [("TIME", "s"), ("PZTX", "arcsec"), ("PZTY", "arcsec"),
+                             ("EXPTIMEF", "s"), ("EXPTIMEN", "s"), ("XCENIX", "arcsec"),
+                             ("YCENIX", "arcsec"), ("OBS_VRIX", "m/s")]
+        for col in quantity_colnames:
+            self.auxiliary_data[col[0]] = _enter_column_into_table_as_quantity(
+                col[0], auxiliary_header, auxiliary_colnames, auxiliary_data, col[1])
+        # Enter remaining properties into table without units/
+        for i, colname in enumerate(auxiliary_colnames):
+            self.auxiliary_data[colname] = auxiliary_data[:, auxiliary_header[colname]]
+        # Reorder columns so they reflect order in data file.
+        self.auxiliary_data = self.auxiliary_data[[key for key in auxiliary_header.keys()][7:]]
+        # Rename some columns to be more user friendly.
+        rename_colnames = [("EXPTIMEF", "FUV EXPOSURE TIME"), ("EXPTIMEN", "NUV EXPOSURE TIME")]
+        for col in rename_colnames:
+            self.auxiliary_data.rename_column(col[0], col[1])
+        # Add column designating what scan/file number each spectra
+        # comes from.  This can be used to determine the corresponding
+        # wcs object and level 1 info.
+        self.auxiliary_data["scan"] = raster_index_to_file
+        # Attach dictionary containing level 1 and wcs info for each file used.
+        # Calculate measurement time of each spectrum.
+        times = [parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
+                 for s in self.auxiliary_data["TIME"]]
         # making a CubeSequence of every dictionary key window.
-        self.data = dict([(window_name, CubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis))
+        self.data = dict([(window_name, CubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
                           for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
         spectral_window = self.spectral_windows["name"][0]
         spectral_windows_info = "".join(
-            ["\n    {0}\n        (raster axis: {1}, slit axis: {2}, spectral axis: {3})".format(
+            ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
                 name,
-                self.data[name][0].shape[0],
-                self.data[name][0].shape[1],
-                self.data[name][0].shape[2])
+                self.data[name].shape[1])
                 for name in self.spectral_windows["name"]])
-        # Removed the instance Period. if required let me know
-        return "<iris.IRISSG instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
+        return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
+               "Instance period: {0} -- {1}\n".format(self.data[spectral_window].time[0],
+                                                      self.data[spectral_window].time[-1]) + \
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
-    def convert_DN_to_photons(self, spectral_window):
-        """Converts DataArray from DN to photon counts."""
-        # Check that DataArray is in units of DN.
-        if "DN" not in self.data[spectral_window].attrs["units"]["intensity"]:
-            raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_DN_to_photons(
-            self.data[spectral_window], self.spectral_windows.loc[spectral_window]['detector type'])
-        self.data[spectral_window].name = "Intensity [photons]"
-        self.data[spectral_window].attrs["units"]["intensity"] = "photons"
-
-    def convert_photons_to_DN(self, spectral_window):
-        """Converts DataArray from DN to photon counts."""
-        # Check that DataArray is in units of DN.
-        if "photons" not in self.data[spectral_window].attrs["units"]["intensity"]:
-            raise ValueError("Intensity units of DataArray are not DN.")
-        self.data[spectral_window].data = iris_tools.convert_photons_to_DN(
-            self.data[spectral_window], self.spectral_windows.loc[spectral_window]['detector type'])
-        self.data[spectral_window].name = "Intensity [DN]"
-        self.data[spectral_window].attrs["units"]["intensity"] = "DN"
-
-    def apply_exposure_time_correction(self, spectral_window):
-        """Converts DataArray from DN or photons to DN or photons per second."""
-        # Check that DataArray is in units of DN.
-        if "/s" in self.data[spectral_window].attrs["units"]["intensity"]:
-            raise ValueError(
-                "Data seems to already be in units per second. '/s' in intensity unit string.")
-        detector_type = self.spectral_windows.loc[spectral_window]["detector type"][:3]
-        exp_time_s = self.auxiliary_data["{0} EXPOSURE TIME".format(detector_type)].to("s").value
-        for i in self.data[spectral_window].raster_axis.values:
-            self.data[spectral_window].data[i, :, :] = self.data[
-                spectral_window].data[i, :, :]/exp_time_s[i]
-        # Make new unit reflecting the division by time.
-        unit_str = self.data[spectral_window].attrs["units"]["intensity"]+"/s"
-        self.data[spectral_window].attrs["units"]["intensity"] = unit_str
-        name_split = self.data[spectral_window].name.split("[")
-        self.data[spectral_window].name = "{0}[{1}]".format(name_split[0], unit_str)
-
-    def calculate_intensity_fractional_uncertainty(self, spectral_window):
-        return iris_tools.calculate_intensity_fractional_uncertainty(
-            self.data[spectral_window].data, self.data[spectral_window].attrs["units"]["intensity"],
-            self.spectral_windows.loc[spectral_window]["detector type"][:3])
-
-    def convert_DN_to_radiance(self, spectral_window):
-        """Convert DataArray from count rate [DN/s/pixel] to radiance [ergs/s/cm^2/sr/]."""
-        # Get spectral dispersion per pixel.
-        ######## Must check if data is in units of DN/s ############
-        spectral_dispersion_per_pixel = self.wcs["spectral"][spectral_window].cdelt[0] * u.Angstrom
-        ########### The definition of solid angle is very rough as defined. #############
-        # Needs to be made into an array for each scan and also the 0.33"
-        ########### width of the slit must be found in the data file somewhere. ############
-        solid_angle = self.wcs["celestial"]["scan0"].cdelt[0] * u.steradian
-        # Get effective area
-        # This needs to be generalized to the time of OBS once that func
-        iris_response = iris_tools.iris_get_response(pre_launch=True)
-        lam = iris_response["LAMBDA"]
-        if self.spectral_windows[spectral_window]["detector type"][:3] == "FUV":
-            eff_area = iris_response.area_sg[0, :]
-            dn2phot = iris_response["DN2PHOT_SG"][0]
-        elif self.spectral_windows[spectral_window]["detector type"][:3] == "NUV":
-            eff_area = iris_response.area_sg[1, :]
-            dn2phot = iris_response["DN2PHOT_SG"][1]
-        else:
-            raise ValueError("Detector type of spectral window not recognized.")
-        # Iterate through raster and slit pixel and make conversion to
-        # physical units.
-        for i in range(len(self.data[spectral_window].raster_axis)):
-            # Interpolate the effective areas to cover the wavelengths
-            # at which the data is recorded:
-            tck = interpolate.splrep(lam, eff_area.to(u.Angstrom).value, s=0)
-            eff_area_interp = interpolate.splev(wave[i, :], tck)
-            # Iterate over pixels in slit.
-            for k in range(len(self.data[spectral_window].slit_axis)):
-                data_rad[i, k, :] = constants.h * constants.c / wave[i, :] * u.Angstrom * \
-                    self.data[spectral_window].data.isel(raster_axis=i).isel(slit_axis=k) * \
-                    dn2phot / solid_angle / (eff_area_interp * spectral_dispersion_per_pixel)
-
-    def calculate_orbital_wavelength_variation(self, slit_pixel_range=None, spline_smoothing=False,
-                                               fit_individual_profiles=False):
-        if date_created < date_new_pipeline:
-            spacecraft_velocity = raster.auxiliary_data["OBS_VRIX"]
-            orbital_phase = 2. * np.pi * raster.auxiliary_data["OPHASEIX"]
-            roll_angle = raster.meta["satellite roll angle"]
-            # Check that there are measurement times with good values of
-            # spacecraft velocity and orbital phase.
-            bad_aux = np.asarray(np.isfinite(spacecraft_velocity) *
-                                 np.isfinite(orbital_phase) * (-1), dtype=bool)
-        else:
-            spacecraft_velocity = None
-            orbital_phase = None
-            roll_angle = None
-
 
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
-    """Used in initiation of IRISSG to convert auxiliary data to Quantities."""
+    """Used in initiation of IRISSpectrograph to convert auxiliary data to Quantities."""
     index = np.where(np.array(header_colnames) == header_property_name)[0]
     if len(index) == 1:
         index = index[0]
