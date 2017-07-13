@@ -14,6 +14,7 @@ import irispy.data.test
 
 testpath = irispy.data.test.rootdir
 
+
 @pytest.fixture
 def iris_l2_test_raster():
     return irispy.spectrograph.IRISSpectrograph(os.path.join(testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
@@ -21,7 +22,8 @@ def iris_l2_test_raster():
 
 def test_fits_data_comparison(iris_l2_test_raster):
     """Make sure the data is the same in pyfits and irispy"""
-    hdulist = fits.open(os.path.join(testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
+    hdulist = fits.open(os.path.join(
+        testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
     data1 = copy.deepcopy(hdulist[1].data)
     data2 = copy.deepcopy(hdulist[2].data)
     data3 = copy.deepcopy(hdulist[3].data)
