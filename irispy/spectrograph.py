@@ -69,9 +69,10 @@ class IRISSpectrograph(object):
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
                 data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
+                data_mask = hdulist[window_fits_indices[i]].data == -200.
                 # appending Cube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    Cube(data_nan_masked, wcs_, meta=dict(self.meta), mask=data_nan_masked))
+                    Cube(data_nan_masked, wcs_, meta=dict(self.meta), mask=data_mask))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
