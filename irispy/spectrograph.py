@@ -67,12 +67,11 @@ class IRISSpectrograph(object):
             self.meta = hdulist[0].header
             for i, window_name in enumerate(self.spectral_windows["name"]):
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
-                data_ = hdulist[window_fits_indices[i]].data
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
                 data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
                 # appending Cube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    Cube(data_, wcs_, meta=dict(self.meta), mask=data_nan_masked))
+                    Cube(data_nan_masked, wcs_, meta=dict(self.meta), mask=data_nan_masked))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
@@ -115,8 +114,8 @@ class IRISSpectrograph(object):
         self.auxiliary_data["scan"] = raster_index_to_file
         # Attach dictionary containing level 1 and wcs info for each file used.
         # Calculate measurement time of each spectrum.
-        times = [parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
-                 for s in self.auxiliary_data["TIME"]]
+        times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
+                 for s in self.auxiliary_data["TIME"]])
         # making a CubeSequence of every dictionary key window.
         self.data = dict([(window_name, CubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
                           for window_name in self.spectral_windows['name']])
