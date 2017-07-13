@@ -17,7 +17,7 @@ testpath = irispy.data.test.rootdir
 
 @pytest.fixture
 def iris_l2_test_raster():
-    return irispy.spectrograph.IRISSG(os.path.join(testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
+    return irispy.spectrograph.IRISSpectrograph(os.path.join(testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
 
 
 def test_fits_data_comparison(iris_l2_test_raster):
