@@ -33,13 +33,13 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='suds-jurko sphinx-gallery pytest-sugar git+https://github.com/sunpy/sunpy.git git+https://github.com/sunpy/cube.git'
+        - PIP_DEPENDENCIES='git+https://github.com/sunpy/cube.git'
         - EVENT_TYPE='pull_request push'
 
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='xarray pytest coverage sphinx sphinx_rtd_theme openjpeg Cython jinja2 scipy matplotlib mock requests beautifulsoup4 sqlalchemy scikit-image pytest-mock pyyaml pandas nomkl pytest-cov coverage hypothesis glymur'
+        - CONDA_DEPENDENCIES='sunpy xarray pytest coverage sphinx sphinx_rtd_theme'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
