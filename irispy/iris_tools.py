@@ -24,6 +24,9 @@ DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
 READOUT_NOISE = {"NUV": {"value": 1.2, "unit": "DN"}, "FUV": {"value": 3.1, "unit": "DN"},
                  "SJI": {"value": 1.2, "unit": "DN"}}
 
+# Define whether IRIS WCS is 0 or 1 origin based.
+WCS_ORIGIN = 1
+
 def convert_DN_to_photons(data, detector_type):
     """Converts IRIS data number to photon counts depending on which CCD is being used.
 
