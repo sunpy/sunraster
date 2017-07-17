@@ -136,6 +136,10 @@ class IRISSpectrograph(object):
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
+    # A tuple giving coordinate names of axes in CubeSequences
+    coord_names = ("raster number", "x", "y", "wavelength")
+    coord_names_index_as_cube = ("exposure number", "y", "wavelength")
+
 
 def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
     """Used in initiation of IRISSpectrograph to convert auxiliary data to Quantities."""
