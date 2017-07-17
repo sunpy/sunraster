@@ -72,7 +72,7 @@ class IRISSpectrograph(object):
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
                 # appending Cube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    Cube(data_nan_masked, wcs_, meta=self.meta, mask=data_mask))
+                    Cube(data_nan_masked, wcs_, meta=dict(self.meta), mask=data_mask))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
