@@ -30,6 +30,7 @@ from sunpy.lightcurve import LightCurve
 
 from irispy import iris_tools
 
+
 __all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
 
 from sunpy import config
@@ -761,20 +762,16 @@ def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
     if type(filelist) == str:
         filelist = [filelist]
     iris_cube = sunpy.map.MapCube()
-    for fname in filelist:
+    for fname in filelist[0:]:
         newmap = SJI_to_cube(fname)
         for frame in newmap[start:stop:skip]:
             if frame.mean() < frame.max():
-                cmap = cm.get_cmap(frame._get_cmap_name())
-                vmax = frame.mean()+3.*frame.std()
-                frame.plot_settings['cmap'] = cmap
-                frame.plot_settings['norm'] = colors.LogNorm(1, vmax)
-                #  todo: iris_intscale
                 iris_cube.maps.append(frame)
 
     #  todo: pointing correction(rot_hpc)
-    return iris_cube
 
+
+    return iris_cube
 
 def SJI_to_cube(filename, start=0, stop=None, hdu=0):
     """
@@ -802,6 +799,16 @@ def SJI_to_cube(filename, start=0, stop=None, hdu=0):
     # Get the time delta
     time_range = sunpy.time.TimeRange(hdus[hdu][1]['STARTOBS'],
                                       hdus[hdu][1]['ENDOBS'])
+
+    #(xcen,ycen)=diff_rot.rot_hpc(hdus[hdu][1]['CRVAL1']*u.arcsec,hdus[hdu][1]['CRVAL2']*u.arcsec,hdus[hdu][1]['ENDOBS'],
+#                                 hdus[hdu][1]['STARTOBS'],rot_type='howard')
+
+    #crval1=xcen/u.arcsec
+    #crval2=ycen/u.arcsec
+    #dx = (hdus[hdu][1]['CRVAL1'] - crval1) / hdus[hdu][0].shape[0]
+    #dy = (hdus[hdu][1]['CRVAL2'] - crval2) / hdus[hdu][0].shape[0]
+
+
     splits = time_range.split(hdus[hdu][0].shape[0])
 
     if not stop:
@@ -811,14 +818,17 @@ def SJI_to_cube(filename, start=0, stop=None, hdu=0):
     datas = hdus[hdu][0][start:stop]
 
     # Make the cube:
-    iris_cube = sunpy.map.Map(list(zip(datas, headers)), cube=True)
+    mc = sunpy.map.Map(list(zip(datas, headers)), cube=True)
     # Set the date/time
-
+    iris_cube = dustbuster(mc)
+    cmap = cm.get_cmap(iris_cube[0]._get_cmap_name())
     for i, m in enumerate(iris_cube):
         m.meta['DATE-OBS'] = splits[i].center.isoformat()
+        m.plot_settings['cmap'] = cmap
+        m.plot_settings['norm'] = colors.LogNorm(1, 200)
+
 
     return iris_cube
-
 
 def dustbuster(mc):
     """
@@ -839,26 +849,32 @@ def dustbuster(mc):
     """
     image_result = []
     ndx = len(mc)
+
+
     for i, map in enumerate(mc):
         image_orig = map.data
         nx = map.meta.get('NRASTERP')
+
         firstpos = range(ndx)[0::nx]
         #  Create mask with values < 1, excluding frame (-200)
-        m = ma.masked_inside(image_orig,-199,.1)
+        m = ma.masked_inside(image_orig,-199,.9)
 
         if nx <= 50:  # sparse/coarse raster
             skip = 1
             secpos = [-1]
             thirdpos = [-1]
         elif nx > 50:  # dense raster
-            skip = 5
+            skip = 3
             secpos = range(ndx)[1::nx]
             thirdpos = range(ndx)[2::nx]
-
         if (i in firstpos) or (i in secpos) or (i in thirdpos):
             image_inpaint = mc[i + skip].data.copy()  # grab next frame
         else:
-            image_inpaint = mc[i - skip].data.copy()  # grab prev frame
+            if (i+skip)%nx>=nx-4:
+                skip = (nx-1)-(i%(nx))
+                image_inpaint = mc[i + skip].data.copy()
+            else:
+                image_inpaint = mc[i - skip].data.copy()  # grab prev frame
 
         # Inpaint mask onto image
         image_orig[m.mask] = image_inpaint[m.mask]
