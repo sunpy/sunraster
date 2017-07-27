@@ -14,7 +14,7 @@ _sample_files = {"SJI_CUBE_2832": "iris_l2_20170502_052551_3893010094_SJI_2832_t
                  "SJI_CUBE_1330": "iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits",
                  "SJI_CUBE_2796": "iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits",
                  "SJI_CUBE_1400": "iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits",
-                 "RASTER": "iris_l2_20170502_052551_3893010094_raster.fits.tar.zip"
+                 "RASTER": "iris_l2_20170502_052551_3893010094_raster_t000_r00000.fits"
 }
 
 file_list = []
