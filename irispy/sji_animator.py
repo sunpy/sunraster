@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 #import vso_query
 import irispy.sji
-
+import sunpycube
+import sunpy.map
 
 
 import matplotlib.colors as colors
@@ -21,9 +22,9 @@ plt.rcParams.update({'font.size': 7})
 
 
 #local directories
-local='/Users/shelbe/Documents/IRIS/data/AR12661/'
+local='/Users/shelbe/Documents/IRIS/data/AR12641/'
 iris_dir = '/Volumes/G-DRIVE with Thunderbolt/Users/Shelbe/IRIS/SJI/'
-aia_dir = local + 'AIA/
+aia_dir = local + 'AIA/'
 
 #grab all .fits in directory
 import os
@@ -71,10 +72,10 @@ jitter = [( 0,  0), (-1,  0), (-1, -1), ( 1,  1), ( 0,  0), (-7, -1), ( 3,  1), 
 
 for i,file in enumerate(sji_flist[0:]):
 
-    mc = irispy.sji.SJI_to_cube(file) #TODO: Move to SJICube map object
+    mc = irispy.sji.SJICube(file) #TODO: Move to SJICube map object
 
     print('Getting FITS data from ' + file)
-    img_shape = (mc.as_array().shape)
+
 
     crval1 = mc[0].meta.get('CRVAL1')
     crval2 = mc[0].meta.get('CRVAL2')
