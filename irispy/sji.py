@@ -854,10 +854,11 @@ def dustbuster(mc):
     for i, map in enumerate(mc):
         image_orig = map.data
         nx = map.meta.get('NRASTERP')
-
+        scale = 31968
+        image_orig[:, :] += int(scale)
         firstpos = range(ndx)[0::nx]
-        #  Create mask with values < 1, excluding frame (-200)
-        m = ma.masked_inside(image_orig,-199,.9)
+        #  Create mask with values < 10)
+        m = ma.masked_less(image_orig,10)
 
         if nx <= 50:  # sparse/coarse raster
             skip = 1
@@ -869,6 +870,7 @@ def dustbuster(mc):
             thirdpos = range(ndx)[2::nx]
         if (i in firstpos) or (i in secpos) or (i in thirdpos):
             image_inpaint = mc[i + skip].data.copy()  # grab next frame
+
         else:
             if (i+skip)%nx>=nx-4:
                 skip = (nx-1)-(i%(nx))
@@ -876,9 +878,9 @@ def dustbuster(mc):
             else:
                 image_inpaint = mc[i - skip].data.copy()  # grab prev frame
 
+        image_inpaint[:, :] += int(scale)
         # Inpaint mask onto image
         image_orig[m.mask] = image_inpaint[m.mask]
 
-        map.data = image_orig
-
     return mc
+
