@@ -26,6 +26,7 @@ class IRISSpectrograph(object):
         raster_index_to_file = []
         for f, filename in enumerate(filenames):
             hdulist = fits.open(filename)
+            hdulist.verify('fix')
             if f == 0:
                 # collecting the window observations.
                 windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
