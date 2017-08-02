@@ -2,7 +2,7 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 #import vso_query
-from irispy.sji import SJICube,SJIMap, dustbuster, scale_map
+from irispy.sji import SJICube,SJIMap, dustbuster, intscale
 import sunpycube
 import sunpy.map
 from astropy.coordinates import SkyCoord as SC
@@ -73,7 +73,7 @@ jitter = [( 0,  0), (-1,  0), (-1, -1), ( 1,  1), ( 0,  0), (-7, -1), ( 3,  1), 
 for i,file in enumerate(sji_flist[0:2]):
 
     mc = SJICube(file)
-    scale_map(mc)
+    intscale(mc)
     dustbuster(mc)
 
     print('Getting FITS data from ' + file)
@@ -170,17 +170,15 @@ for i,file in enumerate(sji_flist[0:2]):
             print('Mean: ',sji.mean())
             #sji.plot(axes=ax0)
             submap=sji.submap(bl,tr)
-            submap.plot_settings['norm'] = colors.LogNorm(1, 400)
+            submap.plot_settings['norm'] = colors.PowerNorm(.4, 1, 300)
             submap.plot(axes=ax0)
             #Label axes
             ax0.set_title(title, visible=False)
             ax0.set_xlabel('X [Arcsec]')
             ax0.set_ylabel('Y [Arcsec]')
-            #ax0.set_xlim(xmin, xmax)
-            #ax0.set_ylim(ymin, ymax)
             ax0.set_facecolor('black')
-            note = ax0.annotate(title + ' ' + sji.meta['DATE-OBS'][:-7], xy=(xmin, ymin),
-                                color='white')
+            note = ax0.annotate(title + ' ' + sji.meta['DATE-OBS'][:-7],
+                                xy=(bl.data._lon.arcsec,bl.data._lat.arcsec),color='white')
 
             aia[i].plot(axes=ax1)
             aia[i].draw_rectangle(bl, xlength, ylength, color='black')
