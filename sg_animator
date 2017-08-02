@@ -1,0 +1,14 @@
+from irispy.spectrograph import IRISSpectrograph
+from sunpycube.cube.datacube import Cube, CubeSequence
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+from irispy.data import sample
+from IPython.display import HTML
+plt.rcParams.update({'figure.dpi': 100,'font.size':10})
+
+testfile='/Users/shelbe/sunpy/raster/iris_l2_20170502_095734_3620250135_raster_t000_r00000.fits'
+sg=IRISSpectrograph(testfile)
+window = sg.spectral_windows["name"]
+mg=sg.data[window[7]]
+mg.animate(cmap='irissji1330',norm=colors.PowerNorm(.5))
+plt.show()

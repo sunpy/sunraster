@@ -2,7 +2,7 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 #import vso_query
-from irispy.sji import SJICube,SJIMap, dustbuster
+from irispy.sji import SJICube,SJIMap, dustbuster, scale_map
 import sunpycube
 import sunpy.map
 from astropy.coordinates import SkyCoord as SC
@@ -73,7 +73,8 @@ jitter = [( 0,  0), (-1,  0), (-1, -1), ( 1,  1), ( 0,  0), (-7, -1), ( 3,  1), 
 for i,file in enumerate(sji_flist[0:2]):
 
     mc = SJICube(file)
-    mc = dustbuster(mc)
+    scale_map(mc)
+    dustbuster(mc)
 
     print('Getting FITS data from ' + file)
 
