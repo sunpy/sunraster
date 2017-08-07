@@ -378,9 +378,9 @@ Scale:\t\t {scale}
         """
         Apply a function that operates on the full 3-d data in the mapcube and
         return a single 2-d map based on that function.
-        
-        Parameter
-        ---------
+
+        Parameters
+        ----------
         function: a function that takes a 3-d numpy array as its first
             argument.
         function_args: function arguments

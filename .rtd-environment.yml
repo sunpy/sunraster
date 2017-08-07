@@ -10,4 +10,6 @@ dependencies:
     - matplotlib
     - numpy
     - sunpy
-    - xarray
+
+- pip:
+    - git+https://github.com/sunpy/sunpy-sphinx-theme.git@v0.1.0a3
