@@ -17,7 +17,7 @@ __all__ = ['IRISSpectrograph']
 
 class IRISSpectrograph(object):
     """
-    A 2D IRIS Slit Jaw Imager Map.
+    An object to hold data from multiple IRIS raster scans.
 
     The Interface Region Imaging Spectrograph (IRIS) small explorer spacecraft
     provides simultaneous spectra and images of the photosphere, chromosphere,
@@ -25,8 +25,6 @@ class IRISSpectrograph(object):
     2-second temporal resolution and 1 km/s velocity resolution over a
     field-of- view of up to 175 arcsec by 175 arcsec.  IRIS consists of a 19-cm
     UV telescope that feeds a slit-based dual-bandpass imaging spectrograph.
-
-    An object to hold data from multiple IRIS raster scans.
 
     IRIS was launched into a Sun-synchronous orbit on 27 June 2013.
 
