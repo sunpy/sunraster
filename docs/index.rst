@@ -4,9 +4,10 @@ IRISPy Documentation
 
 This is the documentation for IRISPy.
 
+Reference/API
+=============
 
-.. toctree::
-
-    irispy
-    spectrograph
-    sji
+.. automodapi:: irispy
+.. automodapi:: irispy.spectrograph
+.. automodapi:: irispy.sji
+.. automodapi:: irispy.mapcubed

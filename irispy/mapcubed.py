@@ -252,11 +252,17 @@ Scale:\t\t {scale}
         """
         Apply a function that operates on the full 3-d data in the mapcube and
         return a single 2-d map based on that function.
-        :param function: a function that takes a 3-d numpy array as its first
-        argument.
-        :param function_args: function arguments
-        :param function_kwargs: function keywords
-        :return: `sunpy.map.Map`
+        
+        Parameter
+        ---------
+        function: a function that takes a 3-d numpy array as its first
+            argument.
+        function_args: function arguments
+        function_kwargs: function keywords
+
+        Returns
+        -------
+        MAP: `sunpy.map.Map`
             A map that stores the result of applying the function to the 3-d
             data of the mapcube.
         """
