@@ -28,18 +28,20 @@ env:
         # The following versions are the 'default' for tests, unless
         # overridden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - PYTHON_VERSION=3.5
+        - PYTHON_VERSION=3.6
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='git+https://github.com/sunpy/cube.git'
+        - PIP_DEPENDENCIES='suds-jurko git+https://github.com/sunpy/sunpy-sphinx-theme.git@v0.1.0a1 git+https://github.com/sunpy/cube.git git+https://github.com/sunpy/sunpy'
         - EVENT_TYPE='pull_request push'
 
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='sunpy xarray pytest coverage sphinx sphinx_rtd_theme'
+        - SUNPY_DEPENDENCIES='openjpeg Cython jinja2 scipy matplotlib mock requests beautifulsoup4 sqlalchemy scikit-image pytest-mock pyyaml pandas nomkl pytest-cov coverage hypothesis glymur'
+        - CONDA_DEPENDENCIES='xarray pytest coverage sphinx sphinx_rtd_theme'
+        - CONDA_DEPENDENCIES="$SUNPY_DEPENDENCIES $CONDA_DEPENDENCIES"
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -54,7 +56,6 @@ env:
 
     matrix:
         # Make sure that egg_info works without dependencies
-        - PYTHON_VERSION=2.7 SETUP_CMD='egg_info'
         - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
         - PYTHON_VERSION=3.6 SETUP_CMD='egg_info'
 
