@@ -9,3 +9,4 @@ Reference/API
 
 .. automodapi:: irispy
 .. automodapi:: irispy.spectrograph
+.. automodapi:: irispy.sji

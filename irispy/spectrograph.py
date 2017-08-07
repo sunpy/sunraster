@@ -16,7 +16,27 @@ __all__ = ['IRISSpectrograph']
 
 
 class IRISSpectrograph(object):
-    """An object to hold data from multiple IRIS raster scans."""
+    """
+    A 2D IRIS Slit Jaw Imager Map.
+
+    The Interface Region Imaging Spectrograph (IRIS) small explorer spacecraft
+    provides simultaneous spectra and images of the photosphere, chromosphere,
+    transition region, and corona with 0.33 to 0.4 arcsec spatial resolution,
+    2-second temporal resolution and 1 km/s velocity resolution over a
+    field-of- view of up to 175 arcsec by 175 arcsec.  IRIS consists of a 19-cm
+    UV telescope that feeds a slit-based dual-bandpass imaging spectrograph.
+
+    An object to hold data from multiple IRIS raster scans.
+
+    IRIS was launched into a Sun-synchronous orbit on 27 June 2013.
+
+    References
+    ----------
+    * `IRIS Mission Page <http://iris.lmsal.com>`_
+    * `IRIS Analysis Guide <https://iris.lmsal.com/itn26/itn26.pdf>`_
+    * `IRIS Instrument Paper <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0196&file_type=pdf>`_
+    * `IRIS FITS Header keywords <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0077&file_type=pdf>`_
+    """
 
     def __init__(self, filenames, spectral_windows="All", common_axis=0):
         """Initializes an IRISSpectrograph object from IRIS level 2 files."""
@@ -117,7 +137,7 @@ class IRISSpectrograph(object):
         # Attach dictionary containing level 1 and wcs info for each file used.
         # Calculate measurement time of each spectrum.
         times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
-                 for s in self.auxiliary_data["TIME"]])
+                          for s in self.auxiliary_data["TIME"]])
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name, NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
                           for window_name in self.spectral_windows['name']])
