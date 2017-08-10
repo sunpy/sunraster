@@ -4,7 +4,7 @@
 from astropy.units.quantity import Quantity
 from astropy.table import Table
 from astropy.io import fits
-from sunpycube.cube.datacube import Cube, CubeSequence
+from sunpycube.cube.NDCube import NDCube, NDCubeSequence
 from sunpycube.wcs_util import WCS
 
 import copy
@@ -71,9 +71,9 @@ class IRISSpectrograph(object):
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
                 data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
-                # appending Cube instance to the corresponding window key in dictionary's list.
+                # appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    Cube(data_nan_masked, wcs_, meta=dict(self.meta), mask=data_mask))
+                    NDCube(data_nan_masked, wcs=wcs_, meta=dict(self.meta), mask=data_mask))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
@@ -118,8 +118,8 @@ class IRISSpectrograph(object):
         # Calculate measurement time of each spectrum.
         times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
                  for s in self.auxiliary_data["TIME"]])
-        # making a CubeSequence of every dictionary key window.
-        self.data = dict([(window_name, CubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
+        # making a NDCubeSequence of every dictionary key window.
+        self.data = dict([(window_name, NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
                           for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
@@ -127,7 +127,7 @@ class IRISSpectrograph(object):
         spectral_windows_info = "".join(
             ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
                 name,
-                self.data[name].shape[1])
+                self.data[name].dimensions[1::])
                 for name in self.spectral_windows["name"]])
         return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
@@ -137,7 +137,7 @@ class IRISSpectrograph(object):
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
-    # A tuple giving coordinate names of axes in CubeSequences
+    # A tuple giving coordinate names of axes in NDCubeSequences
     coord_names = ("raster number", "x", "y", "wavelength")
     coord_names_index_as_cube = ("exposure number", "y", "wavelength")
 
