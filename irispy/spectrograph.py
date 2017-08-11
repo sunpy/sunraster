@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
+
+
+from astropy.units.quantity import Quantity
+from astropy.table import Table
+from astropy.io import fits
+from sunpycube.cube.NDCube import NDCube, NDCubeSequence
+from sunpycube.cube import cube_utils as cu
+from sunpycube.wcs_util import WCS
+
 import copy
 from datetime import timedelta
 
@@ -168,4 +177,18 @@ def _enter_column_into_table_as_quantity(header_property_name, header, header_co
     else:
         raise ValueError("Multiple property names equal to {0}".format(header_property_name))
     pop_colname = header_colnames.pop(index)
-    return u.Quantity(data[:, header[pop_colname]], unit=unit)
+    return Quantity(data[:, header[pop_colname]], unit=unit)
+
+
+
+class SpectrogramSequence(NDCubeSequence):
+    """docstring for SpectrogramSequence"""
+    def __init__(self, data_list, meta=None, common_axis=None, **kwargs):
+        self.time = kwargs.get('time', None)
+        super(SpectrogramSequence, self).__init__(data_list, meta=meta, common_axis=common_axis, **kwargs)
+
+    def __getitem__(self, item):
+        if item is None or (isinstance(item, tuple) and None in item):
+            raise IndexError("None indices not supported")
+        # need to slice the time here
+        return self.index_as_cube[item]
