@@ -184,8 +184,10 @@ def _enter_column_into_table_as_quantity(header_property_name, header, header_co
 class SpectrogramSequence(NDCubeSequence):
     """docstring for SpectrogramSequence"""
 
-    def __init__(self, data_list, meta=None, common_axis=None, **kwargs):
+    def __init__(self, data_list, common_axis, raster_positions_per_scan, first_exposure_raster_position, meta=None, **kwargs):
         self.time = kwargs.get('time', None)
+        self.raster_positions_per_scan = raster_positions_per_scan
+        self.first_exposure_raster_position = first_exposure_raster_position
         super(SpectrogramSequence, self).__init__(
             data_list, meta=meta, common_axis=common_axis, **kwargs)
 
@@ -196,19 +198,8 @@ class SpectrogramSequence(NDCubeSequence):
         return self.index_as_cube[item]
 
     @property
-    def raster_position_per_scan(self):
-        raster_each_scan = []
-        for scan in self.data:
-            raster_each_scan.append(scan.dimensions.shape[0].value)
-        return raster_each_scan
-
-    @property
-    def first_exposure_raster_position(self):
-        return "Raster Position of first exposure : " + str(self.data[0].dimensions.shape[0].value)
-
-    @property
     def index_by_raster(self):
-        return _IndexAsRasterSlicer(self)
+        return _IndexByRasterSlicer(self)
 
     @property
     def dimensions(self):
@@ -240,7 +231,7 @@ class SpectrogramSequence(NDCubeSequence):
             result.append(u.Quantity(pixel_to_world[index], unit=wcs.wcs.cunit[index]))
         return result[::-1]
 
-class _IndexAsRasterSlicer(object):
+class _IndexByRasterSlicer(object):
     """
     Helper class to make slicing in index_as_cube more pythonic.
     Helps to make operations like in numpy array.
