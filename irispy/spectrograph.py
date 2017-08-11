@@ -206,6 +206,10 @@ class SpectrogramSequence(NDCubeSequence):
         return SequenceDimensionPair(shape=tuple([len(self.data)*self.data[0].dimensions.shape[0]]+list(self.data[0].dimensions.shape[1::])),
                                      axis_types=tuple(self.data[0].dimensions.axis_types))
 
+    def index_as_cube(self):
+        # no use of this method in the subclass
+        raise NotImplementedError("Method not needed in the subclass")
+
     def axes_to_world(self, origin=0):
         list_arg = []
         indexed_not_as_one = []
@@ -230,6 +234,7 @@ class SpectrogramSequence(NDCubeSequence):
         for index in indexed_not_as_one[::-1]:
             result.append(u.Quantity(pixel_to_world[index], unit=wcs.wcs.cunit[index]))
         return result[::-1]
+
 
 class _IndexByRasterSlicer(object):
     """
