@@ -30,10 +30,11 @@ env:
         # to repeat them for all configurations.
         - PYTHON_VERSION=3.6
         - NUMPY_VERSION=stable
+        - SUNPY_VERSION=pre
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='suds-jurko git+https://github.com/sunpy/sunpy-sphinx-theme.git@v0.1.0a1 git+https://github.com/sunpy/cube.git git+https://github.com/sunpy/sunpy'
+        - PIP_DEPENDENCIES='suds-jurko sunpy-sphinx-theme git+https://github.com/sunpy/ndcube.git'
         - EVENT_TYPE='pull_request push'
 
         # For this package-template, we include examples of Cython modules,

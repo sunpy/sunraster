@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
-
-from astropy.units.quantity import Quantity
-from astropy.table import Table
-from astropy.io import fits
-from sunpycube.cube.NDCube import NDCube, NDCubeSequence
-from sunpycube.wcs_util import WCS
-
 import copy
 from datetime import timedelta
+
 import numpy as np
+import astropy.units as u
+from astropy.io import fits
+from astropy.table import Table
 from sunpy.time import parse_time
+
+from ndcube.datacube import Cube, CubeSequence
+from ndcube.wcs_util import WCS
 
 __all__ = ['IRISSpectrograph']
 
@@ -71,11 +71,11 @@ class IRISSpectrograph(object):
                 self.spectral_windows = Table([
                     [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
                     [hdulist[0].header["TDET{0}".format(i)] for i in window_fits_indices],
-                    Quantity([hdulist[0].header["TWAVE{0}".format(i)]
+                    u.Quantity([hdulist[0].header["TWAVE{0}".format(i)]
                               for i in window_fits_indices], unit="angstrom"),
-                    Quantity([hdulist[0].header["TWMIN{0}".format(i)]
+                    u.Quantity([hdulist[0].header["TWMIN{0}".format(i)]
                               for i in window_fits_indices], unit="angstrom"),
-                    Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
+                    u.Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
                     names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
                 # Set spectral window name as table index.
                 self.spectral_windows.add_index("name")
@@ -170,4 +170,4 @@ def _enter_column_into_table_as_quantity(header_property_name, header, header_co
     else:
         raise ValueError("Multiple property names equal to {0}".format(header_property_name))
     pop_colname = header_colnames.pop(index)
-    return Quantity(data[:, header[pop_colname]], unit=unit)
+    return u.Quantity(data[:, header[pop_colname]], unit=unit)
