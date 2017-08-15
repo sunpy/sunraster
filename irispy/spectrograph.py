@@ -24,6 +24,7 @@ class IRISSpectrograph(object):
         if type(filenames) is str:
             filenames = [filenames]
         raster_index_to_file = []
+        auxiliary_data = []
         for f, filename in enumerate(filenames):
             hdulist = fits.open(filename)
             hdulist.verify('fix')
