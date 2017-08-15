@@ -9,7 +9,7 @@ from astropy.io import fits
 from astropy.table import Table
 from sunpy.time import parse_time
 
-from ndcube.datacube import Cube, CubeSequence
+from ndcube import NDCube, NDCubeSequence
 from ndcube.wcs_util import WCS
 
 __all__ = ['IRISSpectrograph']
