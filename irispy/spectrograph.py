@@ -5,7 +5,7 @@
 from astropy.table import Table
 from collections import namedtuple
 from astropy.io import fits
-from ndcube.ndcube import NDCubeSequence, NDCube
+from ndcube import NDCubeSequence, NDCube
 from ndcube import cube_utils as cu
 from ndcube.wcs_util import WCS
 
@@ -79,9 +79,9 @@ class IRISSpectrograph(object):
                     [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
                     [hdulist[0].header["TDET{0}".format(i)] for i in window_fits_indices],
                     u.Quantity([hdulist[0].header["TWAVE{0}".format(i)]
-                              for i in window_fits_indices], unit="angstrom"),
+                                for i in window_fits_indices], unit="angstrom"),
                     u.Quantity([hdulist[0].header["TWMIN{0}".format(i)]
-                              for i in window_fits_indices], unit="angstrom"),
+                                for i in window_fits_indices], unit="angstrom"),
                     u.Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
                     names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
                 # Set spectral window name as table index.
