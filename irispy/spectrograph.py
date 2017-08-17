@@ -6,9 +6,9 @@ from astropy.units.quantity import Quantity
 from astropy.table import Table
 from collections import namedtuple
 from astropy.io import fits
-from sunpycube.cube.NDCube import NDCube, NDCubeSequence
-from sunpycube.cube import cube_utils as cu
-from sunpycube.wcs_util import WCS
+from ndcube.ndcube import NDCubeSequence, NDCube
+from ndcube import cube_utils as cu
+from ndcube.wcs_util import WCS
 
 import astropy.units as u
 import copy
@@ -22,7 +22,7 @@ from sunpy.time import parse_time
 
 SequenceDimensionPair = namedtuple('SequenceDimensionPair', 'shape axis_types')
 
-__all__ = ['IRISSpectrograph']
+__all__ = ['IRISSpectrograph', 'SpectrogramSequence']
 
 
 class IRISSpectrograph(object):
@@ -243,7 +243,7 @@ class _IndexByRasterSlicer(object):
 
     Attributes
     ----------
-    seq : `sunpycube.cube.NDCubeSequence`
+    seq : `ndcube.ndcube.NDCubeSequence`
         Object of NDCubeSequence.
     """
 
