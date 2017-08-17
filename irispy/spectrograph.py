@@ -1,22 +1,40 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
-
-from astropy.units.quantity import Quantity
-from astropy.table import Table
-from astropy.io import fits
-from sunpycube.cube.NDCube import NDCube, NDCubeSequence
-from sunpycube.wcs_util import WCS
-
 import copy
 from datetime import timedelta
+
 import numpy as np
+import astropy.units as u
+from astropy.io import fits
+from astropy.table import Table
 from sunpy.time import parse_time
+
+from ndcube import NDCube, NDCubeSequence
+from ndcube.wcs_util import WCS
 
 __all__ = ['IRISSpectrograph']
 
 
 class IRISSpectrograph(object):
-    """An object to hold data from multiple IRIS raster scans."""
+    """
+    An object to hold data from multiple IRIS raster scans.
+
+    The Interface Region Imaging Spectrograph (IRIS) small explorer spacecraft
+    provides simultaneous spectra and images of the photosphere, chromosphere,
+    transition region, and corona with 0.33 to 0.4 arcsec spatial resolution,
+    2-second temporal resolution and 1 km/s velocity resolution over a
+    field-of- view of up to 175 arcsec by 175 arcsec.  IRIS consists of a 19-cm
+    UV telescope that feeds a slit-based dual-bandpass imaging spectrograph.
+
+    IRIS was launched into a Sun-synchronous orbit on 27 June 2013.
+
+    References
+    ----------
+    * `IRIS Mission Page <http://iris.lmsal.com>`_
+    * `IRIS Analysis Guide <https://iris.lmsal.com/itn26/itn26.pdf>`_
+    * `IRIS Instrument Paper <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0196&file_type=pdf>`_
+    * `IRIS FITS Header keywords <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0077&file_type=pdf>`_
+    """
 
     def __init__(self, filenames, spectral_windows="All", common_axis=0):
         """Initializes an IRISSpectrograph object from IRIS level 2 files."""
@@ -51,11 +69,11 @@ class IRISSpectrograph(object):
                 self.spectral_windows = Table([
                     [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
                     [hdulist[0].header["TDET{0}".format(i)] for i in window_fits_indices],
-                    Quantity([hdulist[0].header["TWAVE{0}".format(i)]
+                    u.Quantity([hdulist[0].header["TWAVE{0}".format(i)]
                               for i in window_fits_indices], unit="angstrom"),
-                    Quantity([hdulist[0].header["TWMIN{0}".format(i)]
+                    u.Quantity([hdulist[0].header["TWMIN{0}".format(i)]
                               for i in window_fits_indices], unit="angstrom"),
-                    Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
+                    u.Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
                     names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
                 # Set spectral window name as table index.
                 self.spectral_windows.add_index("name")
@@ -117,7 +135,7 @@ class IRISSpectrograph(object):
         # Attach dictionary containing level 1 and wcs info for each file used.
         # Calculate measurement time of each spectrum.
         times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
-                 for s in self.auxiliary_data["TIME"]])
+                          for s in self.auxiliary_data["TIME"]])
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name, NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
                           for window_name in self.spectral_windows['name']])
@@ -150,4 +168,4 @@ def _enter_column_into_table_as_quantity(header_property_name, header, header_co
     else:
         raise ValueError("Multiple property names equal to {0}".format(header_property_name))
     pop_colname = header_colnames.pop(index)
-    return Quantity(data[:, header[pop_colname]], unit=unit)
+    return u.Quantity(data[:, header[pop_colname]], unit=unit)
