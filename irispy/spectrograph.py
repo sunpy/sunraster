@@ -2,7 +2,6 @@
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
 
-from astropy.units.quantity import Quantity
 from astropy.table import Table
 from collections import namedtuple
 from astropy.io import fits
@@ -178,7 +177,7 @@ def _enter_column_into_table_as_quantity(header_property_name, header, header_co
     else:
         raise ValueError("Multiple property names equal to {0}".format(header_property_name))
     pop_colname = header_colnames.pop(index)
-    return Quantity(data[:, header[pop_colname]], unit=unit)
+    return u.Quantity(data[:, header[pop_colname]], unit=unit)
 
 
 class SpectrogramSequence(NDCubeSequence):
