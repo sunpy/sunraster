@@ -9,7 +9,7 @@ dependencies:
     - astropy
     - matplotlib
     - numpy
-    - sunpy
-
-- pip:
-    - git+https://github.com/sunpy/sunpy-sphinx-theme.git@v0.1.0a3
+    - sunpy>=0.8.0rc1
+    - pip:
+      - sunpy-sphinx-theme
+      - git+https://github.com/sunpy/ndcube
