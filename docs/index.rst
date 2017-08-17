@@ -30,4 +30,3 @@ Contents
     irispy
     spectrograph
     sji
-    mapcubed
