@@ -29,9 +29,10 @@ from sunpy.time import parse_time
 from sunpy.lightcurve import LightCurve
 
 from irispy import iris_tools
+from scipy.ndimage import binary_dilation, generate_binary_structure
 
 
-__all__ = ['SJI_fits_to_cube','SJI_to_cube', 'dustbuster', 'SJICube', 'SJIMap']
+__all__ = ['SJI_fits_to_cube','SJI_to_cube', 'SJICube', 'SJIMap', 'dustbuster', 'intscale']
 
 from sunpy import config
 TIME_FORMAT = config.get("general", "time_format")
@@ -849,33 +850,34 @@ def dustbuster(mc):
     """
     image_result = []
     ndx = len(mc)
-    intscale(mc)
+    #intscale(mc)
 
     for i, map in enumerate(mc):
-
         image_orig = map.data
-        nx = map.meta.get('NRASTERP')
-
-        #  Create mask with values < 10)
-        m = ma.masked_less(image_orig,10)
-
+        xlength,ylength = map.data.shape
+        if i ==0:
+            nx = map.meta.get('NRASTERP')
         if nx <= 50:  # sparse/coarse raster
             skip = 1
         elif nx > 50:  # dense raster
             skip = 3
-        if ((i+skip)%nx)==0:
-            skip = -skip
-
-        image_inpaint = mc[i + skip].data.copy()  # grab next frame
-
-        # Inpaint mask onto image
+        #  Create mask with values < 10)
+        m = ma.masked_inside(image_orig,-199,1)
+        #  Dilate dust spots by 1 pixel
+        dilate = generate_binary_structure(2, 2)
+        m.mask = binary_dilation(m.mask, structure=dilate)
+        if (i)%nx>=nx-skip:
+            skip = -1*(skip)
+        image_inpaint = mc[i + skip].data.copy()
         image_orig[m.mask] = image_inpaint[m.mask]
-
+        map.dustmask = m.mask
+        map.meta.add_history('Dustbuster correction applied, dustmask attribute added')
     return mc
 def intscale(mc):
-    scale = 31968
+    offset = 31968
     for map in mc:
         imdata=map.data
-        if imdata.min() < -800:
-            imdata[:, :] += scale
+        if imdata.min() == BAD_PIXEL_VALUE_UNSCALED:
+            imdata[:, :] = (imdata[:, :]+offset) * .25
+            map.meta.add_history('Intscale applied')
     return mc
