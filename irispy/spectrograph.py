@@ -14,6 +14,8 @@ from ndcube import NDCube, NDCubeSequence
 from ndcube.wcs_util import WCS
 from sunpy.time import parse_time
 
+from irispy.spectrogram import SpectrogramSequence
+
 __all__ = ['IRISSpectrograph']
 
 class IRISSpectrograph(object):
@@ -47,6 +49,8 @@ class IRISSpectrograph(object):
             hdulist = fits.open(filename)
             hdulist.verify('fix')
             if f == 0:
+                # Determine number of raster positions in a scan
+                raster_positions_per_scan = int(hdulist[0].header["NRASTERP"])
                 # collecting the window observations.
                 windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
                                            for i in range(1, hdulist[0].header["NWIN"]+1)])
@@ -138,7 +142,10 @@ class IRISSpectrograph(object):
         times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
                           for s in self.auxiliary_data["TIME"]])
         # making a NDCubeSequence of every dictionary key window.
-        self.data = dict([(window_name, NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis, time=times))
+        self.data = dict([(window_name,
+        #                   NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis))
+                           SpectrogramSequence(data_dict[window_name], common_axis, raster_positions_per_scan,
+                                               first_exposure_raster_position=0, meta=self.meta, time=times))
                           for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
