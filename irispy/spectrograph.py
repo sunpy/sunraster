@@ -89,6 +89,11 @@ class IRISSpectrograph(object):
                 auxiliary_header = hdulist[-2].header
             # the unchanged header of the hdulist indexed 0.
             self.meta = hdulist[0].header
+            # Calculate measurement time of each spectrum.
+            times = np.array([parse_time(self.meta["STARTOBS"]) + timedelta(seconds=s)
+                              for s in hdulist[-2].data[:,hdulist[-2].header["TIME"]]])
+            raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
+            extra_coords = [("time", 0, times), ("raster position", 0, raster_positions)]
             for i, window_name in enumerate(self.spectral_windows["name"]):
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
@@ -96,7 +101,7 @@ class IRISSpectrograph(object):
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
                 # appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    NDCube(data_nan_masked, wcs=wcs_, meta=dict(self.meta), mask=data_mask))
+                    NDCube(data_nan_masked, wcs=wcs_, meta=dict(self.meta), mask=data_mask, extra_coords=extra_coords))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
@@ -138,14 +143,10 @@ class IRISSpectrograph(object):
         # wcs object and level 1 info.
         self.auxiliary_data["scan"] = raster_index_to_file
         # Attach dictionary containing level 1 and wcs info for each file used.
-        # Calculate measurement time of each spectrum.
-        times = np.array([parse_time(self.meta["STARTOBS"])+timedelta(seconds=s)
-                          for s in self.auxiliary_data["TIME"]])
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
-        #                   NDCubeSequence(data_dict[window_name], meta=self.meta, common_axis=common_axis))
                            SpectrogramSequence(data_dict[window_name], common_axis, raster_positions_per_scan,
-                                               first_exposure_raster_position=0, meta=self.meta, time=times))
+                                               first_exposure_raster_position=0, meta=self.meta))
                           for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
@@ -158,8 +159,9 @@ class IRISSpectrograph(object):
         return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
-               "Instance period: {0} -- {1}\n".format(self.data[spectral_window].time[0],
-                                                      self.data[spectral_window].time[-1]) + \
+               "Instance period: {0} -- {1}\n".format(
+                   self.data[spectral_window][0]._extra_coords["time"]["value"],
+                   self.data[spectral_window][-1]._extra_coords["time"]["value"]) + \
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
