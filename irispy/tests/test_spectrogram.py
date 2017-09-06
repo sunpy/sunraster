@@ -1,13 +1,13 @@
-from ndcube import NDCube, NDCubeSequence
-from irispy.spectrograph import SpectrogramSequence
-from ndcube import cube_utils as cu
-from ndcube.wcs_util import WCS
-from collections import namedtuple
-import numpy as np
 import pytest
-import astropy.units as u
 
-SequenceDimensionPair = namedtuple('SequenceDimensionPair', 'shape axis_types')
+import numpy as np
+import astropy.units as u
+import ndcube
+from ndcube import NDCube, NDCubeSequence
+from ndcube.wcs_util import WCS
+from ndcube import SequenceDimensionPair
+
+from irispy.spectrogram import SpectrogramSequence
 
 # sample data for tests
 # TODO: use a fixture reading from a test file. file TBD.
