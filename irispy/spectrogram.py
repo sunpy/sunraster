@@ -13,7 +13,8 @@ __all__ = ['SpectrogramSequence']
 class SpectrogramSequence(NDCubeSequence):
     """docstring for SpectrogramSequence"""
 
-    def __init__(self, data_list, common_axis, raster_positions_per_scan, first_exposure_raster_position, meta=None, **kwargs):
+    def __init__(self, data_list, common_axis, raster_positions_per_scan, first_exposure_raster_position,
+                 meta=None, **kwargs):
         self.time = kwargs.get('time', None)
         self.raster_positions_per_scan = raster_positions_per_scan
         self.first_exposure_raster_position = first_exposure_raster_position
@@ -60,6 +61,16 @@ class SpectrogramSequence(NDCubeSequence):
         for index in indexed_not_as_one[::-1]:
             result.append(u.Quantity(pixel_to_world[index], unit=wcs.wcs.cunit[index]))
         return result[::-1]
+
+    def __repr__(self):
+        return(
+            """SpectrogramSequence
+---------------------
+Rasters:  {n_rasters}
+Exposures per Raster: {n_steps}
+Axis Types: {axis_types}\n
+""".format(n_rasters=int((self.dimensions.shape[0]+self.first_exposure_raster_position)/self.raster_positions_per_scan),
+           n_steps=self.raster_positions_per_scan, axis_types=self.dimensions.axis_types[::]))
 
 
 class _IndexByRasterSlicer(object):
