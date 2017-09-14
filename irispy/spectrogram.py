@@ -68,9 +68,12 @@ class SpectrogramSequence(NDCubeSequence):
 ---------------------
 Rasters:  {n_rasters}
 Exposures per Raster: {n_steps}
-Axis Types: {axis_types}\n
-""".format(n_rasters=int((self.dimensions.shape[0]+self.first_exposure_raster_position)/self.raster_positions_per_scan),
-           n_steps=self.raster_positions_per_scan, axis_types=self.dimensions.axis_types[::]))
+Axis Types: {axis_types}
+Sequence Shape: {seq_shape}\n
+""".format(n_rasters=int((self.dimensions.shape[0]+self.first_exposure_raster_position)/ \
+                         self.raster_positions_per_scan),
+           n_steps=self.raster_positions_per_scan, axis_types=self.dimensions.axis_types[::],
+           seq_shape=self.dimensions.shape))
 
 
 class _IndexByRasterSlicer(object):
