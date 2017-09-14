@@ -13,11 +13,11 @@ class SpectrogramSequence(NDCubeSequence):
 
     def __init__(self, data_list, common_axis, raster_positions_per_scan, first_exposure_raster_position,
                  meta=None, **kwargs):
-        self.time = kwargs.get('time', None)
         self.raster_positions_per_scan = raster_positions_per_scan
         self.first_exposure_raster_position = first_exposure_raster_position
         super(SpectrogramSequence, self).__init__(
             data_list, meta=meta, common_axis=common_axis, **kwargs)
+        self.exposure_axis_extra_coords = self._common_axis_extra_coords
 
     def __getitem__(self, item):
         if item is None or (isinstance(item, tuple) and None in item):
