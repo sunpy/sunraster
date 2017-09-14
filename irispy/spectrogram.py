@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
-#from collections import namedtuple
-
 import astropy.units as u
 from ndcube import NDCubeSequence
 import ndcube.cube_utils as cu
@@ -33,8 +31,9 @@ class SpectrogramSequence(NDCubeSequence):
 
     @property
     def dimensions(self):
-        return SequenceDimensionPair(shape=tuple(
-            [int(sum([d.dimensions.shape[0].value for d in self.data]))]+list(self.data[0].dimensions.shape[1::])),
+        return SequenceDimensionPair(
+            shape=tuple([int(sum([d.dimensions.shape[0].value for d in self.data]))] + \
+                        list(self.data[0].dimensions.shape[1::])),
             axis_types=tuple(self.data[0].dimensions.axis_types))
 
     def axes_to_world(self, origin=0):
