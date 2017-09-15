@@ -93,15 +93,28 @@ class IRISSpectrograph(object):
             times = np.array([parse_time(self.meta["STARTOBS"]) + timedelta(seconds=s)
                               for s in hdulist[-2].data[:,hdulist[-2].header["TIME"]]])
             raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
-            extra_coords = [("time", 0, times), ("raster position", 0, raster_positions)]
+            exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
+            exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
+            general_extra_coords = [("time", 0, times), ("raster position", 0, raster_positions)]
             for i, window_name in enumerate(self.spectral_windows["name"]):
+                # Derive WCS, data and mask for NDCube from file.
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
                 data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
-                # appending NDCube instance to the corresponding window key in dictionary's list.
+                # Build up meta for NDCube
+                meta = {"detector type": hdulist[0].header["TDET{0}".format(window_fits_indices[i])]}
+                # Derive extra coords for this spectral window.
+                window_extra_coords = copy.deepcopy(general_extra_coords)
+                if "FUV" in meta["detector type"]:
+                    exposure_times = exposure_times_fuv
+                else:
+                    exposure_times = exposure_times_nuv
+                window_extra_coords.append(("exposure time", 0, exposure_times))
+                # Appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    NDCube(data_nan_masked, wcs=wcs_, meta=dict(self.meta), mask=data_mask, extra_coords=extra_coords))
+                    NDCube(data_nan_masked, wcs=wcs_, meta=meta, mask=data_mask,
+                           extra_coords=window_extra_coords))
 
             scan_label = "scan{0}".format(f)
             # Append to list representing the scan labels of each
