@@ -36,31 +36,6 @@ class SpectrogramSequence(NDCubeSequence):
                         list(self.data[0].dimensions.shape[1::])),
             axis_types=tuple(self.data[0].dimensions.axis_types))
 
-    def axes_to_world(self, origin=0):
-        list_arg = []
-        indexed_not_as_one = []
-        result = []
-        quantity_index = 0
-        missing_axis = self.data[0].missing_axis
-        wcs = self.data[0].wcs
-        shape = self.data[0].data.shape
-        for i, _ in enumerate(missing_axis):
-            # the cases where the wcs dimension was made 1 and the missing_axis is True
-            if missing_axis[wcs.naxis-1-i]:
-                list_arg.append(wcs.wcs.crpix[wcs.naxis-1-i]-1+origin)
-            else:
-                # else it is not the case where the dimension of wcs is 1.
-                list_arg.append(shape[quantity_index])
-                quantity_index += 1
-            # appending all the indexes to be returned in the answer
-                indexed_not_as_one.append(wcs.naxis-1-i)
-        list_arguments = list_arg[::-1]
-        pixel_to_world = wcs.all_pix2world(*list_arguments, origin)
-        # collecting all the needed answer in this list.
-        for index in indexed_not_as_one[::-1]:
-            result.append(u.Quantity(pixel_to_world[index], unit=wcs.wcs.cunit[index]))
-        return result[::-1]
-
     def __repr__(self):
         return(
             """SpectrogramSequence
