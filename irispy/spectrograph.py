@@ -54,7 +54,8 @@ class IRISSpectrograph(object):
                 # collecting the window observations.
                 windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
                                            for i in range(1, hdulist[0].header["NWIN"]+1)])
-                # if spectral window is All then get every window else take the appropriate windows
+                # if spectral window is All then get every window
+                # else take the appropriate windows
                 if spectral_windows == "All":
                     spectral_windows_req = windows_in_obs
                     window_fits_indices = range(1, len(hdulist)-2)
@@ -66,10 +67,10 @@ class IRISSpectrograph(object):
                         [window in windows_in_obs for window in spectral_windows_req])
                     if not all(window_is_in_obs):
                         missing_windows = window_is_in_obs == False
-                        raise ValueError(
-                            "Spectral windows {0} not in file {1}".format(spectral_windows[missing_windows],
-                                                                          filenames[0]))
-                    window_fits_indices = np.nonzero(np.in1d(windows_in_obs, spectral_windows))[0]+1
+                        raise ValueError("Spectral windows {0} not in file {1}".format(
+                            spectral_windows[missing_windows], filenames[0]))
+                    window_fits_indices = np.nonzero(np.in1d(
+                        windows_in_obs, spectral_windows))[0]+1
                 # Create table of spectral window info in OBS.
                 self.spectral_windows = Table([
                     [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
@@ -78,8 +79,10 @@ class IRISSpectrograph(object):
                                 for i in window_fits_indices], unit="angstrom"),
                     u.Quantity([hdulist[0].header["TWMIN{0}".format(i)]
                                 for i in window_fits_indices], unit="angstrom"),
-                    u.Quantity([hdulist[0].header["TWMAX{0}".format(i)] for i in window_fits_indices], unit="angstrom")],
-                    names=("name", "detector type", "brightest wavelength", "min wavelength", "max wavelength"))
+                    u.Quantity([hdulist[0].header["TWMAX{0}".format(i)]
+                                for i in window_fits_indices], unit="angstrom")],
+                    names=("name", "detector type", "brightest wavelength",
+                           "min wavelength", "max wavelength"))
                 # Set spectral window name as table index.
                 self.spectral_windows.add_index("name")
                 # creating a empty list for every spectral window and each spectral window
@@ -158,8 +161,10 @@ class IRISSpectrograph(object):
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
-                           SpectrogramSequence(data_dict[window_name], common_axis, raster_positions_per_scan,
-                                               first_exposure_raster_position=0, meta=self.meta))
+                           SpectrogramSequence(data_dict[window_name], common_axis,
+                                               raster_positions_per_scan,
+                                               first_exposure_raster_position=0,
+                                               meta=self.meta))
                           for window_name in self.spectral_windows['name']])
 
     def __repr__(self):
@@ -183,7 +188,8 @@ class IRISSpectrograph(object):
     coord_names_index_as_cube = ("exposure number", "y", "wavelength")
 
 
-def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames, data, unit):
+def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames,
+                                         data, unit):
     """Used in initiation of IRISSpectrograph to convert auxiliary data to Quantities."""
     index = np.where(np.array(header_colnames) == header_property_name)[0]
     if len(index) == 1:
