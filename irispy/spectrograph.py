@@ -83,13 +83,12 @@ class IRISSpectrograph(object):
                         "min wavelength":
                             hdulist[0].header["TWMIN{0}".format(window_fits_indices[i])],
                         "max wavelength":
-                            hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])],
+                            hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])]
                     }
                 # creating a empty list for every spectral window and each spectral window
                 # is a key for the dictionary.
                 data_dict = dict([(window_name, list())
                                   for window_name in spectral_windows_req])
-                auxiliary_header = hdulist[-2].header
             # the unchanged header of the hdulist indexed 0.
             self.meta = hdulist[0].header
             # Determine extra coords for this raster.
@@ -125,38 +124,7 @@ class IRISSpectrograph(object):
                 data_dict[window_name].append(
                     NDCube(data_nan_masked, wcs=wcs_, mask=data_mask,
                            extra_coords=window_extra_coords))
-
-            # Concatenate auxiliary data arrays from each file.
-            try:
-                auxiliary_data = np.concatenate(
-                    (auxiliary_data, np.array(hdulist[-2].data)), axis=0)
-            except UnboundLocalError as e:
-                if e.args[0] == "local variable 'auxiliary_data' referenced before assignment":
-                    auxiliary_data = np.array(hdulist[-2].data)
-                else:
-                    raise e
             hdulist.close()
-
-        self.auxiliary_data = Table()
-        # Enter certain properties into auxiliary data table as
-        # quantities with units.
-        auxiliary_colnames = [key for key in auxiliary_header.keys()][7:]
-        quantity_colnames = [("TIME", "s"), ("PZTX", "arcsec"), ("PZTY", "arcsec"),
-                             ("EXPTIMEF", "s"), ("EXPTIMEN", "s"), ("XCENIX", "arcsec"),
-                             ("YCENIX", "arcsec"), ("OBS_VRIX", "m/s")]
-        for col in quantity_colnames:
-            self.auxiliary_data[col[0]] = _enter_column_into_table_as_quantity(
-                col[0], auxiliary_header, auxiliary_colnames, auxiliary_data, col[1])
-        # Enter remaining properties into table without units/
-        for i, colname in enumerate(auxiliary_colnames):
-            self.auxiliary_data[colname] = auxiliary_data[:, auxiliary_header[colname]]
-        # Reorder columns so they reflect order in data file.
-        self.auxiliary_data = self.auxiliary_data[[key for key in auxiliary_header.keys()][7:]]
-        # Rename some columns to be more user friendly.
-        rename_colnames = [("EXPTIMEF", "FUV EXPOSURE TIME"), ("EXPTIMEN", "NUV EXPOSURE TIME")]
-        for col in rename_colnames:
-            self.auxiliary_data.rename_column(col[0], col[1])
-
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
@@ -167,12 +135,12 @@ class IRISSpectrograph(object):
                           for window_name in spectral_windows_req])
 
     def __repr__(self):
-        spectral_window = self.spectral_windows["name"][0]
+        spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
             ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
                 name,
                 self.data[name].dimensions[1::])
-                for name in self.spectral_windows["name"]])
+                for name in self.spectral_windows["spectral window"]])
         return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
@@ -181,10 +149,6 @@ class IRISSpectrograph(object):
                    self.data[spectral_window][-1]._extra_coords["time"]["value"]) + \
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
-
-    # A tuple giving coordinate names of axes in NDCubeSequences
-    coord_names = ("raster number", "x", "y", "wavelength")
-    coord_names_index_as_cube = ("exposure number", "y", "wavelength")
 
     @property
     def spectral_windows(self):
