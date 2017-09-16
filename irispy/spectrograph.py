@@ -70,9 +70,30 @@ class IRISSpectrograph(object):
                             spectral_windows[missing_windows], filenames[0]))
                     window_fits_indices = np.nonzero(np.in1d(windows_in_obs,
                                                              spectral_windows))[0]+1
+                # Generate top level meta dictionary from first file
+                # main header.
+                self.meta = {"TELESCOP": hdulist[0].header["TELESCOP"],
+                             "INSTRUME": hdulist[0].header["INSTRUME"],
+                             "DATA_LEV": hdulist[0].header["DATA_LEV"],
+                             "OBSID": hdulist[0].header["OBSID"],
+                             "OBS_DESC": hdulist[0].header["OBS_DESC"],
+                             "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
+                             "ENDOBS": parse_time(hdulist[0].header["ENDOBS"]),
+                             "SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
+                             "AECNOBS": int(hdulist[0].header["AECNOBS"]),
+                             "FOVX": hdulist[0].header["FOVX"] * u.arcsec,
+                             "FOVY": hdulist[0].header["FOVY"] * u.arcsec,
+                             "SUMSPTRN": hdulist[0].header["SUMSPTRN"],
+                             "SUMSPTRF": hdulist[0].header["SUMSPTRF"],
+                             "SUMSPAT": hdulist[0].header["SUMSPAT"],
+                             "KEYWDDOC": hdulist[0].header["KEYWDDOC"]}
                 # Initialize meta dictionary for each spectral_window
                 window_metas = {}
                 for i, window_name in enumerate(spectral_windows_req):
+                    if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+                        spectral_summing = hdulist[0].header["SUMSPTRF"]
+                    else:
+                        spectral_summing = hdulist[0].header["SUMSPTRN"]
                     window_metas[window_name] = {
                         "detector type":
                             hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
@@ -83,16 +104,17 @@ class IRISSpectrograph(object):
                         "min wavelength":
                             hdulist[0].header["TWMIN{0}".format(window_fits_indices[i])],
                         "max wavelength":
-                            hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])]
+                            hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])],
+                        "SAT_ROT": hdulist[0].header["SAT_ROT"],
+                        "spatial summing": hdulist[0].header["SUMSPAT"],
+                        "spectral summing": spectral_summing
                     }
                 # creating a empty list for every spectral window and each spectral window
                 # is a key for the dictionary.
                 data_dict = dict([(window_name, list())
                                   for window_name in spectral_windows_req])
-            # the unchanged header of the hdulist indexed 0.
-            self.meta = hdulist[0].header
             # Determine extra coords for this raster.
-            times = np.array([parse_time(self.meta["STARTOBS"]) + timedelta(seconds=s)
+            times = np.array([parse_time(hdulist[0].header["STARTOBS"]) + timedelta(seconds=s)
                               for s in hdulist[-2].data[:,hdulist[-2].header["TIME"]]])
             raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
             pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
@@ -120,9 +142,22 @@ class IRISSpectrograph(object):
                 else:
                     exposure_times = exposure_times_nuv
                 window_extra_coords.append(("exposure time", 0, exposure_times))
+                # Collect metadata relevant to single files.
+                meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
+                        "DATE_OBS": parse_time(hdulist[0].header["DATE_OBS"]),
+                        "DATE_END": parse_time(hdulist[0].header["DATE_END"]),
+                        "HLZ": bool(int(hdulist[0].header["HLZ"])),
+                        "SAA": bool(int(hdulist[0].header["SAA"])),
+                        "DSUN_OBS": hdulist[0].header["DSUN_OBS"] * u.m,
+                        "IAECEVFL": hdulist[0].header["IAECEVFL"],
+                        "IAECFLAG": hdulist[0].header["IAECFLAG"],
+                        "IAECFLFL": hdulist[0].header["IAECFLFL"],
+                        "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
+                        "HISTORY": hdulist[0].header["HISTORY"]
+                        }
                 # Appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    NDCube(data_nan_masked, wcs=wcs_, mask=data_mask,
+                    NDCube(data_nan_masked, wcs=wcs_, meta=meta, mask=data_mask,
                            extra_coords=window_extra_coords))
             hdulist.close()
         # Attach dictionary containing level 1 and wcs info for each file used.
