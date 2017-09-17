@@ -44,7 +44,6 @@ class IRISSpectrograph(object):
         # default common axis is 0.
         if type(filenames) is str:
             filenames = [filenames]
-        raster_index_to_file = []
         for f, filename in enumerate(filenames):
             hdulist = fits.open(filename)
             hdulist.verify('fix')
@@ -69,100 +68,116 @@ class IRISSpectrograph(object):
                         missing_windows = window_is_in_obs == False
                         raise ValueError("Spectral windows {0} not in file {1}".format(
                             spectral_windows[missing_windows], filenames[0]))
-                    window_fits_indices = np.nonzero(np.in1d(
-                        windows_in_obs, spectral_windows))[0]+1
-                # Create table of spectral window info in OBS.
-                self.spectral_windows = Table([
-                    [hdulist[0].header["TDESC{0}".format(i)] for i in window_fits_indices],
-                    [hdulist[0].header["TDET{0}".format(i)] for i in window_fits_indices],
-                    u.Quantity([hdulist[0].header["TWAVE{0}".format(i)]
-                                for i in window_fits_indices], unit="angstrom"),
-                    u.Quantity([hdulist[0].header["TWMIN{0}".format(i)]
-                                for i in window_fits_indices], unit="angstrom"),
-                    u.Quantity([hdulist[0].header["TWMAX{0}".format(i)]
-                                for i in window_fits_indices], unit="angstrom")],
-                    names=("name", "detector type", "brightest wavelength",
-                           "min wavelength", "max wavelength"))
-                # Set spectral window name as table index.
-                self.spectral_windows.add_index("name")
+                    window_fits_indices = np.nonzero(np.in1d(windows_in_obs,
+                                                             spectral_windows))[0]+1
+                # Generate top level meta dictionary from first file
+                # main header.
+                self.meta = {"TELESCOP": hdulist[0].header["TELESCOP"],
+                             "INSTRUME": hdulist[0].header["INSTRUME"],
+                             "DATA_LEV": hdulist[0].header["DATA_LEV"],
+                             "OBSID": hdulist[0].header["OBSID"],
+                             "OBS_DESC": hdulist[0].header["OBS_DESC"],
+                             "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
+                             "ENDOBS": parse_time(hdulist[0].header["ENDOBS"]),
+                             "SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
+                             "AECNOBS": int(hdulist[0].header["AECNOBS"]),
+                             "FOVX": hdulist[0].header["FOVX"] * u.arcsec,
+                             "FOVY": hdulist[0].header["FOVY"] * u.arcsec,
+                             "SUMSPTRN": hdulist[0].header["SUMSPTRN"],
+                             "SUMSPTRF": hdulist[0].header["SUMSPTRF"],
+                             "SUMSPAT": hdulist[0].header["SUMSPAT"],
+                             "NEXPOBS": hdulist[0].header["NEXPOBS"],
+                             "NRASTERP": hdulist[0].header["NRASTERP"],
+                             "KEYWDDOC": hdulist[0].header["KEYWDDOC"]}
+                # Initialize meta dictionary for each spectral_window
+                window_metas = {}
+                for i, window_name in enumerate(spectral_windows_req):
+                    if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+                        spectral_summing = hdulist[0].header["SUMSPTRF"]
+                    else:
+                        spectral_summing = hdulist[0].header["SUMSPTRN"]
+                    window_metas[window_name] = {
+                        "detector type":
+                            hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
+                        "spectral window":
+                            hdulist[0].header["TDESC{0}".format(window_fits_indices[i])],
+                        "brightest wavelength":
+                            hdulist[0].header["TWAVE{0}".format(window_fits_indices[i])],
+                        "min wavelength":
+                            hdulist[0].header["TWMIN{0}".format(window_fits_indices[i])],
+                        "max wavelength":
+                            hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])],
+                        "SAT_ROT": hdulist[0].header["SAT_ROT"],
+                        "spatial summing": hdulist[0].header["SUMSPAT"],
+                        "spectral summing": spectral_summing
+                    }
                 # creating a empty list for every spectral window and each spectral window
                 # is a key for the dictionary.
                 data_dict = dict([(window_name, list())
-                                  for window_name in self.spectral_windows["name"]])
-                auxiliary_header = hdulist[-2].header
-            # the unchanged header of the hdulist indexed 0.
-            self.meta = hdulist[0].header
-            # Calculate measurement time of each spectrum.
-            times = np.array([parse_time(self.meta["STARTOBS"]) + timedelta(seconds=s)
+                                  for window_name in spectral_windows_req])
+            # Determine extra coords for this raster.
+            times = np.array([parse_time(hdulist[0].header["STARTOBS"]) + timedelta(seconds=s)
                               for s in hdulist[-2].data[:,hdulist[-2].header["TIME"]]])
             raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
-            extra_coords = [("time", 0, times), ("raster position", 0, raster_positions)]
-            for i, window_name in enumerate(self.spectral_windows["name"]):
+            pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
+            pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
+            xcenix = hdulist[-2].data[:, hdulist[-2].header["XCENIX"]] * u.arcsec
+            ycenix = hdulist[-2].data[:, hdulist[-2].header["YCENIX"]] * u.arcsec
+            obs_vrix = hdulist[-2].data[:, hdulist[-2].header["OBS_VRIX"]] * u.m/u.s
+            ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
+            exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
+            exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
+            general_extra_coords = [("time", 0, times), ("raster position", 0, raster_positions),
+                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
+                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
+            for i, window_name in enumerate(spectral_windows_req):
+                # Derive WCS, data and mask for NDCube from file.
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
                 data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
-                # appending NDCube instance to the corresponding
-                # window key in dictionary's list.
-                data_dict[window_name].append(
-                    NDCube(data_nan_masked, wcs=wcs_, meta=dict(self.meta),
-                           mask=data_mask, extra_coords=extra_coords))
-
-            scan_label = "scan{0}".format(f)
-            # Append to list representing the scan labels of each
-            # spectrum.
-            len_raster_axis = hdulist[1].header["NAXIS3"]
-            raster_index_to_file = raster_index_to_file+[scan_label]*len_raster_axis
-            # Concatenate auxiliary data arrays from each file.
-            try:
-                auxiliary_data = np.concatenate(
-                    (auxiliary_data, np.array(hdulist[-2].data)), axis=0)
-            except UnboundLocalError as e:
-                if e.args[0] == "local variable 'auxiliary_data' referenced before assignment":
-                    auxiliary_data = np.array(hdulist[-2].data)
+                # Derive extra coords for this spectral window.
+                window_extra_coords = copy.deepcopy(general_extra_coords)
+                if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+                    exposure_times = exposure_times_fuv
                 else:
-                    raise e
+                    exposure_times = exposure_times_nuv
+                window_extra_coords.append(("exposure time", 0, exposure_times))
+                # Collect metadata relevant to single files.
+                meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
+                        "DATE_OBS": parse_time(hdulist[0].header["DATE_OBS"]),
+                        "DATE_END": parse_time(hdulist[0].header["DATE_END"]),
+                        "HLZ": bool(int(hdulist[0].header["HLZ"])),
+                        "SAA": bool(int(hdulist[0].header["SAA"])),
+                        "DSUN_OBS": hdulist[0].header["DSUN_OBS"] * u.m,
+                        "IAECEVFL": hdulist[0].header["IAECEVFL"],
+                        "IAECFLAG": hdulist[0].header["IAECFLAG"],
+                        "IAECFLFL": hdulist[0].header["IAECFLFL"],
+                        "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
+                        "HISTORY": hdulist[0].header["HISTORY"]
+                        }
+                # Appending NDCube instance to the corresponding window key in dictionary's list.
+                data_dict[window_name].append(
+                    NDCube(data_nan_masked, wcs=wcs_, meta=meta, mask=data_mask,
+                           extra_coords=window_extra_coords))
             hdulist.close()
-
-        self.auxiliary_data = Table()
-        # Enter certain properties into auxiliary data table as
-        # quantities with units.
-        auxiliary_colnames = [key for key in auxiliary_header.keys()][7:]
-        quantity_colnames = [("TIME", "s"), ("PZTX", "arcsec"), ("PZTY", "arcsec"),
-                             ("EXPTIMEF", "s"), ("EXPTIMEN", "s"), ("XCENIX", "arcsec"),
-                             ("YCENIX", "arcsec"), ("OBS_VRIX", "m/s")]
-        for col in quantity_colnames:
-            self.auxiliary_data[col[0]] = _enter_column_into_table_as_quantity(
-                col[0], auxiliary_header, auxiliary_colnames, auxiliary_data, col[1])
-        # Enter remaining properties into table without units/
-        for i, colname in enumerate(auxiliary_colnames):
-            self.auxiliary_data[colname] = auxiliary_data[:, auxiliary_header[colname]]
-        # Reorder columns so they reflect order in data file.
-        self.auxiliary_data = self.auxiliary_data[[key for key in auxiliary_header.keys()][7:]]
-        # Rename some columns to be more user friendly.
-        rename_colnames = [("EXPTIMEF", "FUV EXPOSURE TIME"), ("EXPTIMEN", "NUV EXPOSURE TIME")]
-        for col in rename_colnames:
-            self.auxiliary_data.rename_column(col[0], col[1])
-        # Add column designating what scan/file number each spectra
-        # comes from.  This can be used to determine the corresponding
-        # wcs object and level 1 info.
-        self.auxiliary_data["scan"] = raster_index_to_file
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
                            SpectrogramSequence(data_dict[window_name], common_axis,
                                                raster_positions_per_scan,
                                                first_exposure_raster_position=0,
-                                               meta=self.meta))
-                          for window_name in self.spectral_windows['name']])
+                                               meta=window_metas[window_name]))
+                          for window_name in spectral_windows_req])
 
     def __repr__(self):
-        spectral_window = self.spectral_windows["name"][0]
+        spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
             ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
                 name,
                 self.data[name].dimensions[1::])
-                for name in self.spectral_windows["name"]])
+                for name in self.spectral_windows["spectral window"]])
         return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
@@ -172,18 +187,13 @@ class IRISSpectrograph(object):
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
-    # A tuple giving coordinate names of axes in NDCubeSequences
-    coord_names = ("raster number", "x", "y", "wavelength")
-    coord_names_index_as_cube = ("exposure number", "y", "wavelength")
-
-
-def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames,
-                                         data, unit):
-    """Used in initiation of IRISSpectrograph to convert auxiliary data to Quantities."""
-    index = np.where(np.array(header_colnames) == header_property_name)[0]
-    if len(index) == 1:
-        index = index[0]
-    else:
-        raise ValueError("Multiple property names equal to {0}".format(header_property_name))
-    pop_colname = header_colnames.pop(index)
-    return u.Quantity(data[:, header[pop_colname]], unit=unit)
+    @property
+    def spectral_windows(self):
+        """Returns a table of info on the spectral windows."""
+        colnames = ("spectral window", "detector type", "brightest wavelength", "min wavelength",
+                    "max wavelength")
+        spectral_window_list = []
+        for key in list(self.data.keys()):
+            if type(self.data[key]) == SpectrogramSequence:
+                spectral_window_list.append([self.data[key].meta[colname] for colname in colnames])
+        return Table(rows=spectral_window_list, names=colnames)
