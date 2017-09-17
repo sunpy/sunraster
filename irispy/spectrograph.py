@@ -86,6 +86,8 @@ class IRISSpectrograph(object):
                              "SUMSPTRN": hdulist[0].header["SUMSPTRN"],
                              "SUMSPTRF": hdulist[0].header["SUMSPTRF"],
                              "SUMSPAT": hdulist[0].header["SUMSPAT"],
+                             "NEXPOBS": hdulist[0].header["NEXPOBS"],
+                             "NRASTERP": hdulist[0].header["NRASTERP"],
                              "KEYWDDOC": hdulist[0].header["KEYWDDOC"]}
                 # Initialize meta dictionary for each spectral_window
                 window_metas = {}
