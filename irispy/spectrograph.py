@@ -195,14 +195,3 @@ class IRISSpectrograph(object):
             if type(self.data[key]) == SpectrogramSequence:
                 spectral_window_list.append([self.data[key].meta[colname] for colname in colnames])
         return Table(rows=spectral_window_list, names=colnames)
-
-def _enter_column_into_table_as_quantity(header_property_name, header, header_colnames,
-                                         data, unit):
-    """Used in initiation of IRISSpectrograph to convert auxiliary data to Quantities."""
-    index = np.where(np.array(header_colnames) == header_property_name)[0]
-    if len(index) == 1:
-        index = index[0]
-    else:
-        raise ValueError("Multiple property names equal to {0}".format(header_property_name))
-    pop_colname = header_colnames.pop(index)
-    return u.Quantity(data[:, header[pop_colname]], unit=unit)
