@@ -14,9 +14,11 @@ from ndcube import NDCube, NDCubeSequence
 from ndcube.wcs_util import WCS
 from sunpy.time import parse_time
 
-from irispy.spectrogram import SpectrogramSequence
+from irispy.spectrogram import IRISSpectrogramSequence
+from irispy import iris_tools
 
 __all__ = ['IRISSpectrograph']
+
 
 class IRISSpectrograph(object):
     """
@@ -132,6 +134,17 @@ class IRISSpectrograph(object):
                                     ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
                                     ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
             for i, window_name in enumerate(spectral_windows_req):
+                # Determine values of properties dependent on detector type.
+                if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+                    exposure_times = exposure_times_fuv
+                    DN_unit = iris_tools.DN_UNIT["FUV"]
+                    readout_noise = iris_tools.READOUT_NOISE["FUV"]
+                elif "NUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+                    exposure_times = exposure_times_nuv
+                    DN_unit = iris_tools.DN_UNIT["NUV"]
+                    readout_noise = iris_tools.READOUT_NOISE["NUV"]
+                else:
+                    raise ValueError("Detector type in FITS header not recognized.")
                 # Derive WCS, data and mask for NDCube from file.
                 wcs_ = WCS(hdulist[window_fits_indices[i]].header)
                 data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
@@ -139,10 +152,6 @@ class IRISSpectrograph(object):
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
                 # Derive extra coords for this spectral window.
                 window_extra_coords = copy.deepcopy(general_extra_coords)
-                if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
-                    exposure_times = exposure_times_fuv
-                else:
-                    exposure_times = exposure_times_nuv
                 window_extra_coords.append(("exposure time", 0, exposure_times))
                 # Collect metadata relevant to single files.
                 meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
@@ -155,17 +164,23 @@ class IRISSpectrograph(object):
                         "IAECFLAG": hdulist[0].header["IAECFLAG"],
                         "IAECFLFL": hdulist[0].header["IAECFLFL"],
                         "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
-                        "HISTORY": hdulist[0].header["HISTORY"]
+                        "detector type":
+                            hdulist[0].header["TDET{0}".format(window_fits_indices[i])]
                         }
+                # Derive uncertainty of data
+                uncertainty = u.Quantity(np.sqrt(
+                    (data_nan_masked*DN_unit).to(u.ct).value + readout_noise.to(u.ct).value**2),
+                    unit=u.ct).to(DN_unit).value
                 # Appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
                     NDCube(data_nan_masked, wcs=wcs_, meta=meta, mask=data_mask,
+                           unit=DN_unit, uncertainty=uncertainty,
                            extra_coords=window_extra_coords))
             hdulist.close()
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
-                           SpectrogramSequence(data_dict[window_name], common_axis,
+                           IRISSpectrogramSequence(data_dict[window_name], common_axis,
                                                raster_positions_per_scan,
                                                first_exposure_raster_position=0,
                                                meta=window_metas[window_name]))
