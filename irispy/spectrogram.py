@@ -120,25 +120,26 @@ class IRISSpectrogramSequence(SpectrogramSequence):
     def apply_exposure_time_correction(self):
         """Applies or undoes exposure time correction to data and uncertainty."""
         for i, cube in enumerate(self.data):
-            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
-            data = cube.data / exposure_time_s[:, np.newaxis, np.newaxis]
-            uncertainty = cube.uncertainty.array / exposure_time_s[:, np.newaxis, np.newaxis]
-            self.data[i] = NDCube(
-                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit/u.s,
-                uncertainty=uncertainty,
-                extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+            if u.s not in cube.unit.decompose().bases:
+                exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+                data = cube.data / exposure_time_s[:, np.newaxis, np.newaxis]
+                uncertainty = cube.uncertainty.array / exposure_time_s[:, np.newaxis, np.newaxis]
+                self.data[i] = NDCube(
+                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit/u.s,
+                    uncertainty=uncertainty,
+                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
 
     def undo_exposure_time_correction(self):
         """Removes exposure time correction from data and uncertainty."""
         for i, cube in enumerate(self.data):
-            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
-            data = cube.data * exposure_time_s[:, np.newaxis, np.newaxis]
-            uncertainty = cube.uncertainty.array * exposure_time_s[:, np.newaxis, np.newaxis]
-            self.data[i] = NDCube(
-                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit*u.s,
-                uncertainty=uncertainty,
-                extra_coords=_extra_coords_to_input_format(cube._extra_coords))
-
+            if u.s not in (cube.unit.decompose() * u.s).bases:
+                exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+                data = cube.data * exposure_time_s[:, np.newaxis, np.newaxis]
+                uncertainty = cube.uncertainty.array * exposure_time_s[:, np.newaxis, np.newaxis]
+                self.data[i] = NDCube(
+                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit*u.s,
+                    uncertainty=uncertainty,
+                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
 
 def _extra_coords_to_input_format(extra_coords):
     """
