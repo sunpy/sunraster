@@ -2,9 +2,11 @@
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
 import astropy.units as u
-from ndcube import NDCubeSequence
+from ndcube import NDCube, NDCubeSequence
 import ndcube.cube_utils as cu
 from ndcube import SequenceDimensionPair
+
+from irispy import iris_tools
 
 __all__ = ['SpectrogramSequence']
 
@@ -49,7 +51,6 @@ Sequence Shape: {seq_shape}\n
            n_steps=self.raster_positions_per_scan, axis_types=self.dimensions.axis_types[::],
            seq_shape=self.dimensions.shape))
 
-
 class _IndexByRasterSlicer(object):
     """
     Helper class to make slicing in index_as_cube more pythonic.
@@ -72,3 +73,56 @@ class _IndexByRasterSlicer(object):
     def __getitem__(self, item):
         # slice time here
         return cu.get_cube_from_sequence(self.seq, item)
+
+class IRISSpectrogramSequence(SpectrogramSequence):
+    """A SpectrogramSequence for IRIS data including additional functionalities."""
+    def to_counts(self):
+        """Converts data and uncertainty to photon count units."""
+        for i, cube in enumerate(self.data):
+            if "FUV" in cube.meta["detector type"]:
+                DN_unit = iris_tools.DN_UNIT["FUV"]
+            elif cube.meta["detector type"] == "NUV":
+                DN_unit = iris_tools.DN_UNIT["NUV"]
+            else:
+                raise ValueError("Detector type in FITS header not recognized.")
+            if cube.unit == DN_unit or cube.unit == DN_unit/u.s:
+                data = (cube.data*DN_unit).to(u.ct).value
+                uncertainty = (cube.uncertainty.array*DN_unit).to(u.ct).value
+                self.data[i] = NDCube(
+                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=u.ct,
+                    uncertainty=uncertainty,
+                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+            elif cube.unit != u.ct and cube.unit != u.ct/u.s:
+                raise TypeError("Data unit of {0}th cube in sequence incompatible "
+                                "({1}) with {2} unit.".format(i, cube.unit, u.ct))
+
+    def to_DN(self):
+        """Converts data and uncertainty to photon units."""
+        for cube in self.data:
+            if "FUV" in cube.meta["detector type"]:
+                DN_unit = iris_tools.DN_UNIT["FUV"]
+            elif cube.meta["detector type"] == "NUV":
+                DN_unit = iris_tools.DN_UNIT["NUV"]
+            else:
+                raise ValueError("Detector type in FITS header not recognized.")
+            if cube.unit == u.ct or cube.unit == u.ct/u.s:
+                data = (cube.data * u.ct).value
+                uncertainty = (cube.uncertainty.array * u.ct).value
+                self.data[i] = NDCube(
+                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=DN_unit,
+                    uncertainty=uncertainty,
+                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+            elif cube.unit != DN_unit and cube.unit != DN_unit/u.s:
+                raise TypeError("Data unit of {0}th cube in sequence incompatible "
+                                "({1}) with {2} unit.".format(i, cube.unit, DN_unit))
+
+def _extra_coords_to_input_format(extra_coords):
+    """
+    Converts NDCube._extra_coords attribute to format required as input for new NDCube.
+
+    Paramaters
+    ----------
+    extra_coords: dict
+        An NDCube._extra_coords instance.
+    """
+    return [(key, extra_coords[key]["axis"], extra_coords[key]["value"]) for key in extra_coords]
