@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
+import numpy as np
 import astropy.units as u
 from ndcube import NDCube, NDCubeSequence
 import ndcube.cube_utils as cu
@@ -98,7 +99,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
 
     def to_DN(self):
         """Converts data and uncertainty to photon units."""
-        for cube in self.data:
+        for i, cube in enumerate(self.data):
             if "FUV" in cube.meta["detector type"]:
                 DN_unit = iris_tools.DN_UNIT["FUV"]
             elif cube.meta["detector type"] == "NUV":
@@ -115,6 +116,29 @@ class IRISSpectrogramSequence(SpectrogramSequence):
             elif cube.unit != DN_unit and cube.unit != DN_unit/u.s:
                 raise TypeError("Data unit of {0}th cube in sequence incompatible "
                                 "({1}) with {2} unit.".format(i, cube.unit, DN_unit))
+
+    def apply_exposure_time_correction(self):
+        """Applies or undoes exposure time correction to data and uncertainty."""
+        for i, cube in enumerate(self.data):
+            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+            data = cube.data / exposure_time_s[:, np.newaxis, np.newaxis]
+            uncertainty = cube.uncertainty.array / exposure_time_s[:, np.newaxis, np.newaxis]
+            self.data[i] = NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit/u.s,
+                uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+
+    def undo_exposure_time_correction(self):
+        """Removes exposure time correction from data and uncertainty."""
+        for i, cube in enumerate(self.data):
+            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+            data = cube.data * exposure_time_s[:, np.newaxis, np.newaxis]
+            uncertainty = cube.uncertainty.array * exposure_time_s[:, np.newaxis, np.newaxis]
+            self.data[i] = NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit*u.s,
+                uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+
 
 def _extra_coords_to_input_format(extra_coords):
     """
