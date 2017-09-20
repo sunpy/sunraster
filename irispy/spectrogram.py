@@ -12,7 +12,30 @@ from irispy import iris_tools
 __all__ = ['SpectrogramSequence']
 
 class SpectrogramSequence(NDCubeSequence):
-    """docstring for SpectrogramSequence"""
+    """Class for holding, slicing and plotting spectrogram data.
+
+    Parameters
+    ----------
+    data_list: `list`
+        List of `ndcube.NDCube` objects holding data.
+
+    common_axis: `int`
+        The axis of the NDCubes corresponding to time.
+
+    raster_positions_per_scan: `int`
+        Number of slit positions per raster scan.
+
+    first_exposure_raster_position: `int`
+        The slit position of the first exposure in the data assuming zero-based counting.
+        For example, a raster scan goes from left to right.  The right most position
+        is designated 0.  But the data does not include the first 3 (0, 1, 2) raster
+        positions in the first scan.  Therefore this variable should be set to 3.
+        This enables partial raster scans to be stored in the object.
+
+    meta: `dict` or header object
+        Metadata associated with the sequence.
+
+    """
 
     def __init__(self, data_list, common_axis, raster_positions_per_scan,
                  first_exposure_raster_position, meta=None):
@@ -76,10 +99,36 @@ class _IndexByRasterSlicer(object):
         return cu.get_cube_from_sequence(self.seq, item)
 
 class IRISSpectrogramSequence(SpectrogramSequence):
-    """A SpectrogramSequence for IRIS data including additional functionalities."""
+    """Class for holding, slicing and plotting IRIS spectrogram data.
+
+    This class contains all the functionality of its super class with
+    some additional functionalities.
+
+    Parameters
+    ----------
+    data_list: `list`
+        List of `ndcube.NDCube` objects holding data.
+
+    common_axis: `int`
+        The axis of the NDCubes corresponding to time.
+
+    raster_positions_per_scan: `int`
+        Number of slit positions per raster scan.
+
+    first_exposure_raster_position: `int`
+        The slit position of the first exposure in the data assuming zero-based counting.
+        For example, a raster scan goes from left to right.  The right most position
+        is designated 0.  But the data does not include the first 3 (0, 1, 2) raster
+        positions in the first scan.  Therefore this variable should be set to 3.
+        This enables partial raster scans to be stored in the object.
+
+    meta: `dict` or header object
+        Metadata associated with the sequence.
+
+    """
 
     def to_counts(self, copy=False):
-        """Converts data and uncertainty to photon count units.
+        """Converts data and uncertainty attributes to photon count units.
 
         Parameters
         ----------
@@ -90,7 +139,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
 
         """
         converted_data_list = _convert_iris_sequence(self, u.ct)
-        if copy:
+        if copy is True:
             return IRISSpectrogramSequence(
                 converted_data_list, self._common_axis, self.raster_positions_per_scan,
                 self.first_exposure_raster_position, meta=self.meta)
@@ -98,7 +147,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
             self.data = converted_data_list
 
     def to_DN(self, copy=False):
-        """Converts data and uncertainty to data number (DN).
+        """Converts data and uncertainty attributes to data number (DN).
 
         Parameters
         ----------
@@ -109,7 +158,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
 
         """
         converted_data_list = _convert_iris_sequence(self, "DN")
-        if copy:
+        if copy is True:
             return IRISSpectrogramSequence(
                 converted_data_list, self._common_axis, self.raster_positions_per_scan,
                 self.first_exposure_raster_position, meta=self.meta)
@@ -132,13 +181,13 @@ class IRISSpectrogramSequence(SpectrogramSequence):
             Default=False
 
         """
-        if undo:
+        if undo is True:
             correction_function = _uncalculate_exposure_time_correction
         else:
             correction_function = _calculate_exposure_time_correction
         converted_data_list = _apply_or_undo_exposure_time_correction(
             self, correction_function)
-        if copy:
+        if copy is True:
             IRISSpectrogramSequence(
                 converted_cube_list, self._common_axis, self.raster_positions_per_scan,
                 self.first_exposure_raster_position, meta=self.meta)
@@ -202,6 +251,13 @@ def _extra_coords_to_input_format(extra_coords):
     ----------
     extra_coords: dict
         An NDCube._extra_coords instance.
+
+
+    Returns
+    -------
+    input_format: `list`
+        Infomation on extra coords in format required by `ndcube.NDCube.__init__`.
+
     """
     return [(key, extra_coords[key]["axis"], extra_coords[key]["value"]) for key in extra_coords]
 
