@@ -472,3 +472,15 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
     orbital_wavelength_variation = Table([times, dw_orb_fuv, dw_orb_nuv],
                                          names=("time", "wavelength variation FUV", "wavelength variation NUV"))
     return orbital_wavelength_variation
+
+def _get_detector_type(meta):
+    """Gets the IRIS detector type from a meta dictionary.
+
+    In this function, FUV1 and FUV2 are just assigned as FUV.
+
+    """
+    if "FUV" in meta["detector type"]:
+        detector_type = "FUV"
+    else:
+        detector_type = meta["detector type"]
+    return detector_type

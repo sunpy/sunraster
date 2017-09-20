@@ -14,12 +14,12 @@ __all__ = ['SpectrogramSequence']
 class SpectrogramSequence(NDCubeSequence):
     """docstring for SpectrogramSequence"""
 
-    def __init__(self, data_list, common_axis, raster_positions_per_scan, first_exposure_raster_position,
-                 meta=None, **kwargs):
+    def __init__(self, data_list, common_axis, raster_positions_per_scan,
+                 first_exposure_raster_position, meta=None):
         self.raster_positions_per_scan = raster_positions_per_scan
         self.first_exposure_raster_position = first_exposure_raster_position
         super(SpectrogramSequence, self).__init__(
-            data_list, meta=meta, common_axis=common_axis, **kwargs)
+            data_list, meta=meta, common_axis=common_axis)
         self.exposure_axis_extra_coords = self._common_axis_extra_coords
 
     def __getitem__(self, item):
@@ -77,69 +77,107 @@ class _IndexByRasterSlicer(object):
 
 class IRISSpectrogramSequence(SpectrogramSequence):
     """A SpectrogramSequence for IRIS data including additional functionalities."""
-    def to_counts(self):
-        """Converts data and uncertainty to photon count units."""
-        for i, cube in enumerate(self.data):
-            if "FUV" in cube.meta["detector type"]:
-                DN_unit = iris_tools.DN_UNIT["FUV"]
-            elif cube.meta["detector type"] == "NUV":
-                DN_unit = iris_tools.DN_UNIT["NUV"]
-            else:
-                raise ValueError("Detector type in FITS header not recognized.")
-            if cube.unit == DN_unit or cube.unit == DN_unit/u.s:
-                data = (cube.data*DN_unit).to(u.ct).value
-                uncertainty = (cube.uncertainty.array*DN_unit).to(u.ct).value
-                self.data[i] = NDCube(
-                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=u.ct,
-                    uncertainty=uncertainty,
-                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
-            elif cube.unit != u.ct and cube.unit != u.ct/u.s:
-                raise TypeError("Data unit of {0}th cube in sequence incompatible "
-                                "({1}) with {2} unit.".format(i, cube.unit, u.ct))
 
-    def to_DN(self):
-        """Converts data and uncertainty to photon units."""
-        for i, cube in enumerate(self.data):
-            if "FUV" in cube.meta["detector type"]:
-                DN_unit = iris_tools.DN_UNIT["FUV"]
-            elif cube.meta["detector type"] == "NUV":
-                DN_unit = iris_tools.DN_UNIT["NUV"]
-            else:
-                raise ValueError("Detector type in FITS header not recognized.")
-            if cube.unit == u.ct or cube.unit == u.ct/u.s:
-                data = (cube.data * u.ct).value
-                uncertainty = (cube.uncertainty.array * u.ct).value
-                self.data[i] = NDCube(
-                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=DN_unit,
-                    uncertainty=uncertainty,
-                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
-            elif cube.unit != DN_unit and cube.unit != DN_unit/u.s:
-                raise TypeError("Data unit of {0}th cube in sequence incompatible "
-                                "({1}) with {2} unit.".format(i, cube.unit, DN_unit))
+    def to_counts(self, copy=False):
+        """Converts data and uncertainty to photon count units.
 
-    def apply_exposure_time_correction(self):
-        """Applies or undoes exposure time correction to data and uncertainty."""
-        for i, cube in enumerate(self.data):
-            if u.s not in cube.unit.decompose().bases:
-                exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
-                data = cube.data / exposure_time_s[:, np.newaxis, np.newaxis]
-                uncertainty = cube.uncertainty.array / exposure_time_s[:, np.newaxis, np.newaxis]
-                self.data[i] = NDCube(
-                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit/u.s,
-                    uncertainty=uncertainty,
-                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+        Parameters
+        ----------
+        copy: `bool`
+           If True a new instance with the converted data values is return.
+           If False, the current instance is overwritten.
+           Default=False
 
-    def undo_exposure_time_correction(self):
-        """Removes exposure time correction from data and uncertainty."""
-        for i, cube in enumerate(self.data):
+        """
+        converted_data_list = _convert_iris_sequence(self, u.ct)
+        if copy:
+            return IRISSpectrogramSequence(
+                converted_data_list, self._common_axis, self.raster_positions_per_scan,
+                self.first_exposure_raster_position, meta=self.meta)
+        else:
+            self.data = converted_data_list
+
+    def to_DN(self, copy=False):
+        """Converts data and uncertainty to data number (DN).
+
+        Parameters
+        ----------
+        copy: `bool`
+           If True a new instance with the converted data values is returned.
+           If False, the current instance is overwritten.
+           Default=False
+
+        """
+        converted_data_list = _convert_iris_sequence(self, "DN")
+        if copy:
+            return IRISSpectrogramSequence(
+                converted_data_list, self._common_axis, self.raster_positions_per_scan,
+                self.first_exposure_raster_position, meta=self.meta)
+        else:
+            self.data = converted_data_list
+
+    def apply_exposure_time_correction(self, undo=False, copy=False):
+        """Applies or undoes exposure time correction to data and uncertainty.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
+
+        copy: `bool`
+            If True a new instance with the converted data values is returned.
+            If False, the current instance is overwritten.
+            Default=False
+
+        """
+        if undo:
+            correction_function = _uncalculate_exposure_time_correction
+        else:
+            correction_function = _calculate_exposure_time_correction
+        converted_data_list = _apply_or_undo_exposure_time_correction(
+            self, correction_function)
+        if copy:
+            IRISSpectrogramSequence(
+                converted_cube_list, self._common_axis, self.raster_positions_per_scan,
+                self.first_exposure_raster_position, meta=self.meta)
+        else:
+            self.data = converted_data_list
+
+def _convert_iris_sequence(sequence, new_unit):
+    """Converts data and uncertainty in an IRISSpectrogramSequence between units."""
+    # Define empty list to hold NDCubes with converted data and uncertainty.
+    converted_data_list = []
+    # Cycle through each NDCube, convert data and uncertainty to new
+    # units, and append to list.
+    for i, cube in enumerate(sequence.data):
+        # Determine what type of DN unit is needed based on detector type.
+        detector_type = iris_tools._get_detector_type(cube.meta)
+        if new_unit == "DN":
+            new_unit = iris_tools.DN_UNIT[detector_type]
+        # If NDCube is already in new unit, add NDCube as is to list.
+        if cube.unit == new_unit or cube.unit == new_unit / u.s:
+            converted_data_list.append(cube)
+        # Else convert data and uncertainty to new unit.
+        if cube.unit != new_unit or cube.unit != new_unit / u.s:
+            # During calculations, the time component due to exposure
+            # time correction, if it has been applied, is ignored.
+            # Check here whether the time correction is present in the
+            # original unit so that is carried through to new unit.
             if u.s not in (cube.unit.decompose() * u.s).bases:
-                exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
-                data = cube.data * exposure_time_s[:, np.newaxis, np.newaxis]
-                uncertainty = cube.uncertainty.array * exposure_time_s[:, np.newaxis, np.newaxis]
-                self.data[i] = NDCube(
-                    data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit*u.s,
-                    uncertainty=uncertainty,
-                    extra_coords=_extra_coords_to_input_format(cube._extra_coords))
+                new_unit_time_accounted = new_unit / u.s
+            else:
+                new_unit_time_accounted = new_unit
+            # Convert data and uncertainty to new unit.
+            data = (cube.data * cube.unit).to(new_unit).value
+            uncertainty = (cube.uncertainty.array * cube.unit).to(new_unit).value
+            # Append new instance of NDCube in new unit to list.
+            converted_data_list.append(NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask,
+                unit=new_unit_time_accounted, uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
+    return converted_data_list
 
 def _extra_coords_to_input_format(extra_coords):
     """
@@ -151,3 +189,23 @@ def _extra_coords_to_input_format(extra_coords):
         An NDCube._extra_coords instance.
     """
     return [(key, extra_coords[key]["axis"], extra_coords[key]["value"]) for key in extra_coords]
+
+def _apply_or_undo_exposure_time_correction(sequence, correction_function, copy=False):
+    for i, cube in enumerate(sequence.data):
+        if u.s not in cube.unit.decompose().bases:
+            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+            data, uncertainty = correction_function(
+                cube.data, cube.uncertainty.array, exposure_time_s[:, np.newaxis, np.newaxis])
+            converted_data_list.append(NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit / u.s,
+                uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
+        else:
+            converted_data_list.append(cube)
+    return converted_data_list
+
+def _calculate_exposure_time_correction(data, uncertainty, exposure_time):
+    return data/exposure_time, uncertainty/exposure_time
+
+def _uncalculate_exposure_time_correction(data, uncertainty, exposure_time):
+    return data*exposure_time, uncertainty*exposure_time
