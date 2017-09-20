@@ -21,8 +21,12 @@ from sunpy.time import parse_time
 # paper.
 DETECTOR_GAIN = {"NUV": 18., "FUV": 6., "SJI": 18.}
 DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
-READOUT_NOISE = {"NUV": {"value": 1.2, "unit": "DN"}, "FUV": {"value": 3.1, "unit": "DN"},
-                 "SJI": {"value": 1.2, "unit": "DN"}}
+DN_UNIT = {
+    "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"]/DETECTOR_YIELD["NUV"]*u.ct),
+    "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.ct),
+    "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.ct)}
+READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
+                 "SJI": 1.2*DN_UNIT["SJI"]}
 
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
@@ -468,3 +472,15 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
     orbital_wavelength_variation = Table([times, dw_orb_fuv, dw_orb_nuv],
                                          names=("time", "wavelength variation FUV", "wavelength variation NUV"))
     return orbital_wavelength_variation
+
+def _get_detector_type(meta):
+    """Gets the IRIS detector type from a meta dictionary.
+
+    In this function, FUV1 and FUV2 are just assigned as FUV.
+
+    """
+    if "FUV" in meta["detector type"]:
+        detector_type = "FUV"
+    else:
+        detector_type = meta["detector type"]
+    return detector_type
