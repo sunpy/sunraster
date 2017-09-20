@@ -146,7 +146,22 @@ class IRISSpectrogramSequence(SpectrogramSequence):
             self.data = converted_data_list
 
 def _convert_iris_sequence(sequence, new_unit):
-    """Converts data and uncertainty in an IRISSpectrogramSequence between units."""
+    """Converts data and uncertainty in an IRISSpectrogramSequence between units.
+
+    Parameters
+    ----------
+    sequence: `NDCubeSequence`, `SpectrogramSequence` or `IRISSpectrogramSequence`
+        Sequence whose constituent NDCubes are be converted to new units.
+
+    new_unit: `astropy.units.Unit` or `str`
+       Unit to which the data is to be converted.
+
+    Returns
+    -------
+    converted_data_list: `list` of `NDCube`s.
+       List of NDCubes with data and uncertainty attributes converted to new_unit.
+
+    """
     # Define empty list to hold NDCubes with converted data and uncertainty.
     converted_data_list = []
     # Cycle through each NDCube, convert data and uncertainty to new
@@ -190,12 +205,42 @@ def _extra_coords_to_input_format(extra_coords):
     """
     return [(key, extra_coords[key]["axis"], extra_coords[key]["value"]) for key in extra_coords]
 
-def _apply_or_undo_exposure_time_correction(sequence, correction_function, copy=False):
+def _apply_or_undo_exposure_time_correction(sequence, correction_function):
+    """Applies or undoes exposure time correction to a sequence of NDCubes.
+
+    Correction is applied (or undone) to both data and uncertainty attributes of NDCubes.
+
+    Parameters
+    ----------
+    sequence: `NDCubeSequence`, `SpectrogramSequence` or `IRISSpectrogramSequence`
+        Sequence whose constituent NDCubes are be converted to new units.
+        NDCubes with sequence must have an 'exposure time' entry in its extra
+        coords attribute.
+
+    correction_function: function
+        Function applying or undoing exposure time correction.
+
+    Returns
+    -------
+    converted_data_list: `list` of `NDCube`s.
+       List of NDCubes with data and uncertainty corrected (or uncorrected)
+       for exposure time.
+
+    """
     for i, cube in enumerate(sequence.data):
         if u.s not in cube.unit.decompose().bases:
             exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
-            data, uncertainty = correction_function(
-                cube.data, cube.uncertainty.array, exposure_time_s[:, np.newaxis, np.newaxis])
+            if len(cube.dimensions.shape) == 1:
+                pass
+            elif len(cube.dimensions.shape) == 2:
+                exposure_time_s = exposure_time_s[:, np.newaxis]
+            elif len(cube.dimensions.shape) == 3:
+                exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
+            else:
+                raise ValueError("NDCube dimensions must be 2 or 3. Dimensions={0}".format(
+                    len(cube.dimensions.shape)))
+            data = correction_function(cube.data, exposure_time_s)
+            uncertainty = correction_function(cube.uncertainty.array, exposure_time_s)
             converted_data_list.append(NDCube(
                 data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit / u.s,
                 uncertainty=uncertainty,
@@ -204,8 +249,8 @@ def _apply_or_undo_exposure_time_correction(sequence, correction_function, copy=
             converted_data_list.append(cube)
     return converted_data_list
 
-def _calculate_exposure_time_correction(data, uncertainty, exposure_time):
-    return data/exposure_time, uncertainty/exposure_time
+def _calculate_exposure_time_correction(data, exposure_time):
+    return data/exposure_time
 
-def _uncalculate_exposure_time_correction(data, uncertainty, exposure_time):
-    return data*exposure_time, uncertainty*exposure_time
+def _uncalculate_exposure_time_correction(data, exposure_time):
+    return data*exposure_time
