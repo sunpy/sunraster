@@ -157,7 +157,7 @@ def _convert_iris_sequence(sequence, new_unit):
         if new_unit == "DN":
             new_unit = iris_tools.DN_UNIT[detector_type]
         # If NDCube is already in new unit, add NDCube as is to list.
-        if cube.unit == new_unit or cube.unit == new_unit / u.s:
+        if cube.unit is new_unit or cube.unit is new_unit / u.s:
             converted_data_list.append(cube)
         # Else convert data and uncertainty to new unit.
         if cube.unit != new_unit or cube.unit != new_unit / u.s:
