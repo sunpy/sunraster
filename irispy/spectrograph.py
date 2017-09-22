@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
-
 import copy
 import datetime
 from collections import namedtuple
@@ -165,7 +164,9 @@ class IRISSpectrograph(object):
                         "IAECFLFL": hdulist[0].header["IAECFLFL"],
                         "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
                         "detector type":
-                            hdulist[0].header["TDET{0}".format(window_fits_indices[i])]
+                            hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
+                        "spectral window": window_name,
+                        "OBSID": hdulist[0].header["OBSID"]
                         }
                 # Derive uncertainty of data
                 uncertainty = u.Quantity(np.sqrt(
@@ -173,9 +174,8 @@ class IRISSpectrograph(object):
                     unit=u.ct).to(DN_unit).value
                 # Appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
-                    IRISSpectrogram(data_nan_masked, wcs=wcs_, meta=meta, mask=data_mask,
-                                    unit=DN_unit, uncertainty=uncertainty,
-                                    extra_coords=window_extra_coords))
+                    IRISSpectrogram(data_nan_masked, wcs_, uncertainty, DN_unit, meta,
+                                    window_extra_coords, mask=data_mask))
             hdulist.close()
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
@@ -222,7 +222,8 @@ class IRISSpectrogramSequence(SpectrogramSequence):
     Parameters
     ----------
     data_list: `list`
-        List of `IRISSpectrogram` objects from the same OBS ID
+        List of `IRISSpectrogram` objects from the same spectral window and OBS ID.
+        Must also contain the 'detector type' in its meta attribute.
 
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
@@ -241,9 +242,45 @@ class IRISSpectrogramSequence(SpectrogramSequence):
         Metadata associated with the sequence.
 
     """
-    #def __init__(self):
-    #    for cube in data_list:
-    #        if "OBS ID" and "detector type"
+    def __init__(self, data_list, common_axis, raster_positions_per_scan,
+                 first_exposure_raster_position, meta):
+        detector_type_key = "detector type"
+        # Check that meta contains required keys.
+        required_meta_keys = [detector_type_key, "spectral window",
+                              "brightest wavelength", "min wavelength", "max wavelength"]
+        if not all([key in list(meta) for key in required_meta_keys]):
+            raise ValueError("Meta must contain following keys: {0}".format(required_meta_keys))
+        # Check that all spectrograms are from same specral window and OBS ID.
+        if len(np.unique([cube.meta["OBSID"] for cube in data_list])) != 1:
+            raise ValueError("Constituent IRISSpectrogram objects must have same "
+                             "value of 'OBSID' in its meta.")
+        if len(np.unique([cube.meta["spectral window"] for cube in data_list])) != 1:
+            raise ValueError("Constituent IRISSpectrogram objects must have same "
+                             "value of 'spectral window' in its meta.")
+        # Initialize Sequence.
+        super(IRISSpectrogramSequence, self).__init__(
+            data_list, common_axis, raster_positions_per_scan,
+            first_exposure_raster_position, meta=meta)
+
+    def __repr__(self):
+        number_of_rasters = int(
+            (self.dimensions.shape[0] + self.first_exposure_raster_position) / \
+                self.raster_positions_per_scan)
+        return """IRISSpectrogramSequence
+---------------------
+{obs_repr}
+
+Sequence period: {inst_start} -- {inst_end}
+Rasters:  {n_rasters}
+Exposures per Raster: {n_steps}
+Axis Types: {axis_types}
+Sequence Shape: {seq_shape}
+
+""".format(obs_repr=_produce_obs_repr_string(self.meta),
+           inst_start=self[0]._extra_coords["time"]["value"],
+           inst_end=self[-1]._extra_coords["time"]["value"],
+           n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
+           axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
 
     def to(self, new_unit_type, copy=False):
         """
@@ -264,56 +301,8 @@ class IRISSpectrogramSequence(SpectrogramSequence):
 
         """
         converted_data_list = []
-        for cube in enumerate(self.data):
+        for cube in self.data:
             converted_data_list.append(cube.to(new_unit_type))
-        if copy is True:
-            return IRISSpectrogramSequence(
-                converted_data_list, self._common_axis, self.raster_positions_per_scan,
-                self.first_exposure_raster_position, meta=self.meta)
-        else:
-            self.data = converted_data_list
-
-
-    def to_counts(self, copy=False):
-        """Converts data and uncertainty attributes to photon count units.
-
-        Parameters
-        ----------
-        copy: `bool`
-           If True a new instance with the converted data values is return.
-           If False, the current instance is overwritten.
-           Default=False
-
-        """
-        converted_data_list = []
-        for cube in enumerate(self.data):
-            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo))
-        if copy is True:
-            return IRISSpectrogramSequence(
-                converted_cube_list, self._common_axis, self.raster_positions_per_scan,
-                self.first_exposure_raster_position, meta=self.meta)
-        else:
-            self.data = converted_data_list
-        #converted_data_list = iris_tools._convert_iris_sequence(self, u.ct)
-        #if copy is True:
-        #    return IRISSpectrogramSequence(
-        #        converted_data_list, self._common_axis, self.raster_positions_per_scan,
-        #        self.first_exposure_raster_position, meta=self.meta)
-        #else:
-        #    self.data = converted_data_list
-
-    def to_DN(self, copy=False):
-        """Converts data and uncertainty attributes to data number (DN).
-
-        Parameters
-        ----------
-        copy: `bool`
-           If True a new instance with the converted data values is returned.
-           If False, the current instance is overwritten.
-           Default=False
-
-        """
-        converted_data_list = iris_tools._convert_iris_sequence(self, "DN")
         if copy is True:
             return IRISSpectrogramSequence(
                 converted_data_list, self._common_axis, self.raster_positions_per_scan,
@@ -338,7 +327,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
 
         """
         converted_data_list = []
-        for cube in enumerate(self.data):
+        for cube in self.data:
             converted_data_list.append(cube.apply_exposure_time_correction(undo=undo))
         if copy is True:
             return IRISSpectrogramSequence(
@@ -346,72 +335,6 @@ class IRISSpectrogramSequence(SpectrogramSequence):
                 self.first_exposure_raster_position, meta=self.meta)
         else:
             self.data = converted_data_list
-
-    def to_radiance(self, copy=False):
-        """Convert data and uncertainty to radiance units [ergs/s/cm^2/sr]."""
-        # Define empty list to hold data converted to radiance units
-        converted_data_list = []
-        # Ensure data is in units of DN/s
-        self.to_DN()
-        self.apply_exposure_time_correction()
-        for cube in self.data:
-            # Get spectral dispersion per pixel.
-            spectral_wcs_index = np.where(np.array(cube.wcs.wcs.ctype) == "WAVE")[0][0]
-            spectral_dispersion_per_pixel = cube.wcs.wcs.cdelt[spectral_wcs_index] * u.Angstrom
-            # Get solid angle from slit width for a pixel.
-            lat_wcs_index = np.where(np.array(cube.wcs.wcs.ctype) == "HPLT-TAN")[0][0]
-            solid_angle = cube.wcs.wcs.cdelt[lat_wcs_index] * u.steradian
-            # Get effective area
-            ########### This needs to be generalized to the time of OBS once that functionality is written #########
-            iris_response = iris_tools.get_iris_response(pre_launch=True)
-            detector_type = iris_tools._get_detector_type(cube.meta)
-            if detector_type == "FUV":
-                detector_type_index = 0
-            elif detector_type == "NUV":
-                detector_type_index = 1
-            else:
-                raise ValueError("Detector type of spectral window not recognized.")
-            eff_area = iris_response["AREA_SG"][detector_type_index, :]
-            response_wavelength = iris_response["LAMBDA"]
-            # Iterate through raster and slit pixel and make conversion to
-            # physical units.
-            # Get wavelength for each pixel.
-            obs_wavelength = cube.pixel_to_world([
-                np.zeros(int(cube.dimensions.shape[0].value))*u.pix,
-                np.zeros(int(cube.dimensions.shape[0].value))*u.pix,
-                np.arange(int(cube.dimensions.shape[0].value))*u.pix])[-1]
-
-            # Interpolate the effective areas to cover the wavelengths
-            # at which the data is recorded:
-            tck = interpolate.splrep(response_wavelength.to(u.Angstrom).value,
-                                     eff_area.to(u.Angstrom).value, s=0)
-            eff_area_interp = interpolate.splev(obs_wavelength.to(u.Angstrom).value, tck)
-
-            ### Does the rest need to be looped as in original?
-            data = iris_tools._convert_dn_per_s_to_radiance(
-                obs_wavelength, cube.data, iris_tools.DN_UNIT[detector_type], solid_angle,
-                eff_area_interp, spectral_dispersion_per_pixel)
-            uncertainty = iris_tools._convert_dn_per_s_to_radiance(
-                obs_wavelength, cube.uncertainty.array, iris_tools.DN_unit[detector_type], solid_angle, eff_area_interp,
-                spectral_dispersion_per_pixel)
-            # Append new NDCube to list
-            converted_data_list.append(NDCube(
-                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask,
-                unit="ergs/s/cm^2/sr", uncertainty=uncertainty,
-                extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
-        if copy is True:
-            return IRISSpectrogramSequence(
-                converted_cube_list, self._common_axis, self.raster_positions_per_scan,
-                self.first_exposure_raster_position, meta = self.meta)
-        else:
-            self.data = converted_data_list
-            #### Rewritten from version 1 branch up to here #########
-            #for j in range(len(self.data[spectral_window].raster_axis)):
-            #    # Iterate over pixels in slit.
-            #    for k in range(len(self.data[spectral_window].slit_axis)):
-            #        data_rad[j, k, :] = constants.h * constants.c / wave[j, :] * u.Angstrom * \
-            #                            self.data[spectral_window].data.isel(raster_axis=j).isel(slit_axis=k) * \
-            #                            dn2phot / solid_angle / (eff_area_interp * spectral_dispersion_per_pixel)
 
 class IRISSpectrogram(NDCube):
     """
@@ -459,18 +382,46 @@ class IRISSpectrogram(NDCube):
         Default is False.
     """
 
-    def __init__(self, data, wcs, unit, meta, uncertainty=None, mask=None,
-                 extra_coords=None, copy=False, missing_axis=None):
+    def __init__(self, data, wcs, uncertainty, unit, meta, extra_coords,
+                 mask=None, copy=False, missing_axis=None):
+        # Check required meta data is provided.
+        required_meta_keys = ["detector type"]
+        if not all([key in list(meta) for key in required_meta_keys]):
+                raise ValueError("Meta must contain following keys: {0}".format(required_meta_keys))
+        # Check extra_coords contains required coords.
+        required_extra_coords_keys = ["time", "exposure time"]
+        extra_coords_keys = [coord[0] for coord in extra_coords]
+        if not all([key in extra_coords_keys for key in required_extra_coords_keys]):
+            raise ValueError("The following extra coords must be supplied: {0} vs. {1} from {2}".format(
+                required_extra_coords_keys, extra_coords_keys, extra_coords))
+        # Initialize IRISSpectrogram.
         super(IRISSpectrogram, self).__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
             unit=unit, extra_coords=extra_coords, copy=copy, missing_axis=missing_axis)
 
     def __getitem__(self, item):
         result = super(IRISSpectrogram, self).__getitem__(item)
-        return IRISSpectrogram(result.data, result.wcs, result.unit, result.meta,
-                               uncertainty=result.uncertainty, mask=result.mask,
-                               extra_coords=_extra_coords_to_input_format(result._extra_coords),
-                               missing_axis=result.missing_axis)
+        return IRISSpectrogram(
+            result.data, result.wcs, result.uncertainty, result.unit, result.meta,
+            _extra_coords_to_input_format(result._extra_coords), mask=result.mask,
+            missing_axis=result.missing_axis)
+
+    def __repr__(self):
+        if self.missing_axis[::-1][self._extra_coords["time"]["axis"]]:
+            instance_start = instance_end = self._extra_coords["time"]["value"]
+        else:
+            instance_start = self._extra_coords["time"]["value"][0],
+            instance_end = self._extra_coords["time"]["value"][-1]
+        return """IRISSpectrogram
+---------------------
+{obs_repr}
+
+Spectrogram period: {inst_start} -- {inst_end}
+Data shape: {shape}
+Axis Types: {axis_types}
+""".format(obs_repr=_produce_obs_repr_string(self.meta),
+           inst_start=instance_start, inst_end=instance_end,
+           shape=self.dimensions, axis_types=self.dimensions.axis_types[::])
 
     def to(self, new_unit_type):
         """
@@ -519,10 +470,9 @@ class IRISSpectrogram(NDCube):
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogram(
-                    new_data, self.wcs, new_unit, self.meta,
-                    uncertainty=new_uncertainty, mask=self.mask,
-                    extra_coords=_extra_coords_to_input_format(self._extra_coords),
-                    missing_axis=self.missing_axis)
+                    new_data, self.wcs, new_uncertainty, new_unit, self.meta,
+                    _extra_coords_to_input_format(self._extra_coords),
+                    mask=self.mask, missing_axis=self.missing_axis)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
             else:
@@ -549,10 +499,9 @@ class IRISSpectrogram(NDCube):
                 new_unit = new_data_quantities[0].unit
         else:
             raise ValueError("Input unit type not recognized.")
-        return IRISSpectrogram(
-            new_data, self.wcs, new_unit, self.meta, uncertainty=new_uncertainty,
-            mask=self.mask, extra_coords=_extra_coords_to_input_format(self._extra_coords),
-            missing_axis=self.missing_axis)
+        return IRISSpectrogram(new_data, self.wcs, new_uncertainty, new_unit, self.meta,
+                               _extra_coords_to_input_format(self._extra_coords),
+                               mask=self.mask, missing_axis=self.missing_axis)
 
     def apply_exposure_time_correction(self, undo=False):
         """
@@ -599,9 +548,9 @@ class IRISSpectrogram(NDCube):
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s)
         # Return new instance of IRISSpectrogram with correction applied/undone.
         return IRISSpectrogram(
-            new_data_arrays[0], self.wcs, new_unit, self.meta, uncertainty=new_data_arrays[1],
-            mask=self.mask, extra_coords=_extra_coords_to_input_format(self._extra_coords),
-            missing_axis=self.missing_axis)
+            new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
+            _extra_coords_to_input_format(self._extra_coords),
+            mask=self.mask, missing_axis=self.missing_axis)
 
 def _extra_coords_to_input_format(extra_coords):
     """
@@ -620,3 +569,20 @@ def _extra_coords_to_input_format(extra_coords):
     """
     return [(key, extra_coords[key]["axis"], extra_coords[key]["value"])
             for key in extra_coords]
+
+def _get_meta_values(keys, meta, unknown_message="Unknown"):
+    values = []
+    for key in keys:
+        try:
+            value = meta[key]
+        except KeyError:
+            value = unknown_message
+        values.append(value)
+    return values
+
+def _produce_obs_repr_string(meta):
+    obs_info = _get_meta_values(["OBSID", "OBS_DESC", "STARTOBS", "ENDOBS"], meta)
+    return """OBS ID: {obs_id}
+OBS Description: {obs_desc}
+OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_info[1],
+                                               obs_start=obs_info[2], obs_end=obs_info[3])

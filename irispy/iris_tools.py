@@ -586,8 +586,8 @@ def convert_or_undo_photons_per_sec_to_radiance(
                                for data in data_quantities]
     return new_data_quantities
 
-def calculate_photons_per_sec_to_radiance_factor(wavelength, detector_type,
-                                                 spectral_dispersion_per_pixel, solid_angle):
+def calculate_photons_per_sec_to_radiance_factor(
+        wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
 
