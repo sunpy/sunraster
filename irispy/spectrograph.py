@@ -501,8 +501,7 @@ class IRISSpectrogram(NDCube):
                                             self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "HPLT-TAN")[0][0]
-            ######### Is this definition of solid angle right??? ###############
-            solid_angle = self.wcs.wcs.cdelt[lat_wcs_index] * u.steradian
+            solid_angle = (self.wcs.wcs.cdelt[lat_wcs_index]*self.wcs.wcs.cunit[lat_wcs_index])**2
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.pixel_to_world([
