@@ -35,88 +35,6 @@ RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
 
-def convert_DN_to_photons(data, detector_type):
-    """Converts IRIS data number to photon counts depending on which CCD is being used.
-
-    Parameters
-    ----------
-    data: array-like
-        IRIS data in units of DN.
-    detector_type: `str`
-        Detector/CCD upon which data was recorded.
-        Can take values 'NUV', 'FUV' or 'SJI'.
-
-    Returns
-    -------
-    data_photons: array-like
-        IRIS data in units of photon counts.
-
-    """
-    if 'FUV' in detector_type:
-        detector_type = 'FUV'
-
-    return DETECTOR_GAIN[detector_type]/DETECTOR_YIELD[detector_type]*data
-
-
-def convert_photons_to_DN(data, detector_type):
-    """Converts photon counts to IRIS data number depending on which CCD is being used.
-
-    Parameters
-    ----------
-    data: array-like
-        IRIS data in units of photon counts.
-    detector_type: `str`
-        Detector/CCD upon which data was recorded.
-        Can take values 'NUV', 'FUV' or 'SJI'.
-
-    Returns
-    -------
-    data_dn: array-like
-        IRIS data in units of data number.
-
-    """
-    if 'FUV' in detector_type:
-        detector_type = 'FUV'
-
-    return DETECTOR_YIELD[detector_type]/DETECTOR_GAIN[detector_type]*data
-
-
-def calculate_intensity_fractional_uncertainty(data, data_unit, detector_type):
-    """Calculates fractional uncertainty of IRIS data.
-
-    Parameters
-    ----------
-    data: array-like
-        IRIS data.
-    data_unit: `str`
-        Unit of data.  Must be either 'DN' or 'photons'.
-    detector_type: `str`
-        Detector/CCD upon which data was recorded.
-        Can take values 'NUV', 'FUV' or 'SJI'.
-
-    Returns
-    -------
-    fractional_uncertainty: array-like
-        Fractional uncertainty of each element in data array.
-        Same shape as data.
-
-    """
-    if 'FUV' in detector_type:
-        detector_type = 'FUV'
-
-    photons_per_dn = DETECTOR_GAIN[detector_type]/DETECTOR_YIELD[detector_type]
-    if data_unit == "DN":
-        intensity_ph = convert_DN_to_photons(data, detector_type)
-    elif data_unit == "photons":
-        intensity_ph = data
-    else:
-        raise ValueError("Data not in recognized units: {0}".format(data_unit))
-    
-    readout_noise_ph = READOUT_NOISE[detector_type]["value"]*photons_per_dn
-    uncertainty_ph = np.sqrt(intensity_ph+readout_noise_ph**2.)
-    return uncertainty_ph/intensity_ph
-
-
 def get_iris_response(pre_launch=False, response_file=None, response_version=None):
     """Returns IRIS response structure.
 
@@ -125,14 +43,14 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     Parameters
     ----------
     pre_launch: `bool`
-        Equivalent to setting response_version=2.  Cannot be set simultaneously
-        with response_file kwarg. Default=False
+        Equivalent to setting response_version=2.  Cannot be set
+        simultaneously with response_file kwarg. Default=False
     response_file: `str`
-        Version number of effective area file to be used.  Cannot be set simultaneously with
-        pre_launch kwarg.  Default=latest
+        Version number of effective area file to be used.  Cannot be set
+        simultaneously with pre_launch kwarg.  Default=latest
     response_version : `int`
-        Version number of effective area file to be used. Cannot be set simultaneously with
-        response_file or pre_launch kwarg. Default=latest
+        Version number of effective area file to be used. Cannot be set
+        simultaneously with response_file or pre_launch kwarg. Default=latest
 
     Returns
     -------
@@ -609,9 +527,9 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_tim
         new_unit = old_unit
     return new_data_arrays, new_unit
 
-def convert_or_undo_photons_per_sec_to_radiance(data_quantities, obs_wavelength, detector_type,
-                                                spectral_dispersion_per_pixel, solid_angle,
-                                                undo=False):
+def convert_or_undo_photons_per_sec_to_radiance(
+        data_quantities, obs_wavelength, detector_type,
+        spectral_dispersion_per_pixel, solid_angle, undo=False):
     """
     Converts data quantities from counts/s to radiance (or vice versa).
 
