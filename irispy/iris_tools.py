@@ -14,8 +14,11 @@ from astropy.units.quantity import Quantity
 from astropy import wcs
 from astropy.modeling import models, fitting
 from astropy.modeling.models import custom_model
+from astropy import constants
 import scipy.io
+from scipy import interpolate
 from sunpy.time import parse_time
+from ndcube import NDCube
 
 # Define some properties of IRIS detectors.  Source: IRIS instrument
 # paper.
@@ -27,6 +30,7 @@ DN_UNIT = {
     "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.ct)}
 READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
                  "SJI": 1.2*DN_UNIT["SJI"]}
+RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
@@ -197,10 +201,10 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     iris_response = dict([(name, raw_response_data["p0"][name][0])
                           for name in raw_response_data["p0"].dtype.names])
     # Convert some properties to more convenient types.
-    iris_response["LAMBDA"] = Quantity(iris_response["LAMBDA"], unit="nm")
-    iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit="cm")
-    iris_response["AREA_SJI"] = Quantity(iris_response["AREA_SJI"], unit="cm")
-    iris_response["GEOM_AREA"] = Quantity(iris_response["GEOM_AREA"], unit="cm")
+    iris_response["LAMBDA"] = Quantity(iris_response["LAMBDA"], unit=u.nm)
+    iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
+    iris_response["AREA_SJI"] = Quantity(iris_response["AREA_SJI"], unit=u.cm**2)
+    iris_response["GEOM_AREA"] = Quantity(iris_response["GEOM_AREA"], unit=u.cm**2)
     iris_response["VERSION"] = int(iris_response["VERSION"])
     # Convert some properties not found in version below version 3 to
     # more convenient types.
@@ -473,10 +477,21 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
                                          names=("time", "wavelength variation FUV", "wavelength variation NUV"))
     return orbital_wavelength_variation
 
-def _get_detector_type(meta):
-    """Gets the IRIS detector type from a meta dictionary.
+def get_detector_type(meta):
+    """
+    Gets the IRIS detector type from a meta dictionary.
 
     In this function, FUV1 and FUV2 are just assigned as FUV.
+
+    Parameters
+    ----------
+    meta: dict-like
+        Dictionary-like object containing entry for "detector type"
+
+    Returns
+    -------
+    detector_type: `str`
+       Detector type.
 
     """
     if "FUV" in meta["detector type"]:
@@ -484,3 +499,329 @@ def _get_detector_type(meta):
     else:
         detector_type = meta["detector type"]
     return detector_type
+
+def convert_between_DN_and_photons(old_data_arrays, old_unit, new_unit):
+    """Converts arrays from IRIS DN to photons or vice versa.
+
+    In this function, an inverse time component due to exposure time
+    correction is ignored during calculations but preserved in final unit.
+
+    Parameters
+    ----------
+    old_data_arrays: iterable of `numpy.ndarray`s
+        Arrays of data to be converted.
+
+    old_unit: `astropy.unit.Unit`
+        Unit of data arrays.
+
+    new_unit: `astropy.unit.Unit`
+        Unit to convert data arrays to.
+
+    Returns
+    -------
+    new_data_arrays: `list` of `numpy.ndarray`s
+        Data arrays converted to new_unit.
+
+    new_unit_time_accounted: `astropy.unit.Unit`
+        Unit of new data arrays with any inverse time component preserved.
+
+    """
+    if old_unit == new_unit or old_unit == new_unit / u.s:
+        new_data_arrays = [data for data in old_data_arrays]
+        new_unit_time_accounted = old_unit
+    else:
+        # During calculations, the time component due to exposure
+        # time correction, if it has been applied, is ignored.
+        # Check here whether the time correction is present in the
+        # original unit so that is carried through to new unit.
+        if u.s not in (old_unit * u.s).decompose().bases:
+            old_unit_without_time = old_unit * u.s
+            new_unit_time_accounted = new_unit / u.s
+        else:
+            old_unit_without_time = old_unit
+            new_unit_time_accounted = new_unit
+        # Convert data and uncertainty to new unit.
+        new_data_arrays = [(data * old_unit_without_time).to(new_unit).value
+                           for data in old_data_arrays]
+    return new_data_arrays, new_unit_time_accounted
+
+def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time):
+    """
+    Applies exposure time correction to data arrays.
+
+    Parameters
+    ----------
+    old_data_arrays: iterable of `numpy.ndarray`s
+        Arrays of data to be converted.
+
+    old_unit: `astropy.unit.Unit`
+        Unit of data arrays.
+
+    exposure_time: `numpy.ndarray`
+        Exposure time in seconds for each exposure in data arrays.
+
+    Returns
+    -------
+    new_data_arrays: `list` of `numpy.ndarray`s
+        Data arrays with exposure time corrected for.
+
+    new_unit_time_accounted: `astropy.unit.Unit`
+        Unit of new data arrays after exposure time correction.
+
+    """
+    if u.s not in old_unit.decompose().bases:
+        new_data_arrays = [old_data/exposure_time for old_data in old_data_arrays]
+        new_unit = old_unit/u.s
+    else:
+        new_data_arrays = old_data_arrays
+        new_unit = old_unit
+    return new_data_arrays, new_unit
+
+def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time):
+    """
+    Removes exposure time correction from data arrays.
+
+    Parameters
+    ----------
+    old_data_arrays: iterable of `numpy.ndarray`s
+        Arrays of data to be converted.
+
+    old_unit: `astropy.unit.Unit`
+        Unit of data arrays.
+
+    exposure_time: `numpy.ndarray`
+        Exposure time in seconds for each exposure in data arrays.
+
+    Returns
+    -------
+    new_data_arrays: `list` of `numpy.ndarray`s
+        Data arrays with exposure time correction removed.
+
+    new_unit_time_accounted: `astropy.unit.Unit`
+        Unit of new data arrays after exposure time correction removed.
+
+    """
+    if u.s not in (old_unit*u.s).decompose().bases:
+        new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
+        new_unit = old_unit*u.s
+    else:
+        new_data_arrays = old_data_arrays
+        new_unit = old_unit
+    return new_data_arrays, new_unit
+
+def convert_or_undo_photons_per_sec_to_radiance(data_quantities, obs_wavelength, detector_type,
+                                                spectral_dispersion_per_pixel, solid_angle,
+                                                undo=False):
+    """
+    Converts data quantities from counts/s to radiance (or vice versa).
+
+    Parameters
+    ----------
+    data_quantities: iterable of `astropy.units.Quantity`s
+        Quantities to be converted.  Must have units of counts/s or
+        radiance equivalent counts, e.g. erg / cm**2 / s / sr / Angstrom.
+
+    obs_wavelength: `astropy.units.Quantity`
+        Wavelength at each element along spectral axis of data quantities.
+
+    detector_type: `str`
+        Detector type: 'FUV', 'NUV', or 'SJI'.
+
+    spectral_dispersion_per_pixel: scalar `astropy.units.Quantity`
+        spectral dispersion (wavelength width) of a pixel.
+
+    solid_angle: scalar `astropy.units.Quantity`
+        Solid angle corresponding to a pixel.
+
+    undo: `bool`
+        If False, converts counts/s to radiance.
+        If True, converts radiance to counts/s.
+        Default=False
+
+    Returns
+    -------
+    new_data_quantities: `list` of `astropy.units.Quantity`s
+        Data quantities converted to radiance or counts/s
+        depending on value of undo kwarg.
+
+    """
+    # Check data quantities are in the right units.
+    if undo is True:
+        for data in data_quantities:
+            assert data.unit.is_equivalent(RADIANCE_UNIT)
+    else:
+        for data in data_quantities:
+            assert data.unit == u.ct/u.s
+    photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(
+        obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+    # Change shape of arrays so they are compatible for broadcasting
+    # with data and uncertainty arrays.
+    photons_per_sec_to_radiance_factor = \
+        _reshape_1D_wavelength_dimensions_for_broadcast(photons_per_sec_to_radiance_factor,
+                                                        data_quantities[0].ndim)
+    # Perform (or undo) radiometric conversion.
+    if undo is True:
+        new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.ct/u.s)
+                               for data in data_quantities]
+    else:
+        new_data_quantities = [(data*photons_per_sec_to_radiance_factor).to(RADIANCE_UNIT)
+                               for data in data_quantities]
+    return new_data_quantities
+
+def calculate_photons_per_sec_to_radiance_factor(wavelength, detector_type,
+                                                 spectral_dispersion_per_pixel, solid_angle):
+    """
+    Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
+
+    Parameters
+    ----------
+    wavelength: `astropy.units.Quantity`
+        Wavelengths for which counts/s-to-radiance factor is to be calculated
+
+    detector_type: `str`
+        Detector type: 'FUV' or 'NUV'.
+
+    spectral_dispersion_per_pixel: scalar `astropy.units.Quantity`
+        spectral dispersion (wavelength width) of a pixel.
+
+    solid_angle: scalar `astropy.units.Quantity`
+        Solid angle corresponding to a pixel.
+
+    Returns
+    -------
+    radiance_factor: `astropy.units.Quantity`
+        Mutliplicative conversion factor from counts/s to radiance units
+        for input wavelengths.
+
+    """
+    # Get effective area and interpolate to observed wavelength grid.
+    eff_area_interp = _get_interpolated_effective_area(detector_type, wavelength)
+    # Return radiometric conversed data assuming input data is in units of photons/s.
+    return constants.h * constants.c / wavelength / u.ct / \
+           spectral_dispersion_per_pixel / eff_area_interp / solid_angle
+
+def _get_interpolated_effective_area(detector_type, obs_wavelength):
+    # Get effective area
+    ########### This needs to be generalized to the time of OBS once that functionality is written #########
+    iris_response = get_iris_response(pre_launch=True)
+    if detector_type == "FUV":
+        detector_type_index = 0
+    elif detector_type == "NUV":
+        detector_type_index = 1
+    else:
+        raise ValueError("Detector type not recognized.")
+    eff_area = iris_response["AREA_SG"][detector_type_index, :]
+    response_wavelength = iris_response["LAMBDA"]
+    # Interpolate the effective areas to cover the wavelengths
+    # at which the data is recorded:
+    eff_area_interp_base_unit = u.Angstrom
+    tck = interpolate.splrep(response_wavelength.to(eff_area_interp_base_unit).value,
+                             eff_area.to(eff_area_interp_base_unit ** 2).value, s=0)
+    eff_area_interp = interpolate.splev(
+        obs_wavelength.to(eff_area_interp_base_unit).value, tck) * eff_area_interp_base_unit ** 2
+    return eff_area_interp
+
+def _reshape_1D_wavelength_dimensions_for_broadcast(wavelength, n_data_dim):
+    if n_data_dim == 1:
+        pass
+    elif n_data_dim == 2:
+        wavelength = wavelength[np.newaxis, :]
+    elif n_data_dim == 3:
+        wavelength = wavelength[np.newaxis, np.newaxis, :]
+    else:
+        raise ValueError("IRISSpectrogram dimensions must be 2 or 3.")
+    return wavelength
+
+def _convert_iris_sequence(sequence, new_unit):
+    """Converts data and uncertainty in an IRISSpectrogramSequence between units.
+
+    Parameters
+    ----------
+    sequence: `NDCubeSequence`, `SpectrogramSequence` or `IRISSpectrogramSequence`
+        Sequence whose constituent NDCubes are be converted to new units.
+
+    new_unit: `astropy.units.Unit` or `str`
+       Unit to which the data is to be converted.
+
+    Returns
+    -------
+    converted_data_list: `list` of `NDCube`s.
+       List of NDCubes with data and uncertainty attributes converted to new_unit.
+
+    """
+    # Define empty list to hold NDCubes with converted data and uncertainty.
+    converted_data_list = []
+    # Cycle through each NDCube, convert data and uncertainty to new
+    # units, and append to list.
+    for i, cube in enumerate(sequence.data):
+        # Determine what type of DN unit is needed based on detector type.
+        detector_type = _get_detector_type(cube.meta)
+        if new_unit == "DN":
+            new_unit = DN_UNIT[detector_type]
+        # If NDCube is already in new unit, add NDCube as is to list.
+        if cube.unit is new_unit or cube.unit is new_unit / u.s:
+            converted_data_list.append(cube)
+        # Else convert data and uncertainty to new unit.
+        if cube.unit != new_unit or cube.unit != new_unit / u.s:
+            # During calculations, the time component due to exposure
+            # time correction, if it has been applied, is ignored.
+            # Check here whether the time correction is present in the
+            # original unit so that is carried through to new unit.
+            if u.s not in (cube.unit.decompose() * u.s).bases:
+                new_unit_time_accounted = new_unit / u.s
+            else:
+                new_unit_time_accounted = new_unit
+            # Convert data and uncertainty to new unit.
+            data = (cube.data * cube.unit).to(new_unit).value
+            uncertainty = (cube.uncertainty.array * cube.unit).to(new_unit).value
+            # Append new instance of NDCube in new unit to list.
+            converted_data_list.append(NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask,
+                unit=new_unit_time_accounted, uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
+    return converted_data_list
+
+def _apply_or_undo_exposure_time_correction(sequence, correction_function):
+    """Applies or undoes exposure time correction to a sequence of NDCubes.
+
+    Correction is applied (or undone) to both data and uncertainty attributes of NDCubes.
+
+    Parameters
+    ----------
+    sequence: `NDCubeSequence`, `SpectrogramSequence` or `IRISSpectrogramSequence`
+        Sequence whose constituent NDCubes are be converted to new units.
+        NDCubes with sequence must have an 'exposure time' entry in its extra
+        coords attribute.
+
+    correction_function: function
+        Function applying or undoing exposure time correction.
+
+    Returns
+    -------
+    converted_data_list: `list` of `NDCube`s.
+       List of NDCubes with data and uncertainty corrected (or uncorrected)
+       for exposure time.
+
+    """
+    converted_data_list = []
+    for i, cube in enumerate(sequence.data):
+        if u.s not in cube.unit.decompose().bases:
+            exposure_time_s = cube._extra_coords["exposure time"]["value"].to(u.s).value
+            if len(cube.dimensions.shape) == 1:
+                pass
+            elif len(cube.dimensions.shape) == 2:
+                exposure_time_s = exposure_time_s[:, np.newaxis]
+            elif len(cube.dimensions.shape) == 3:
+                exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
+            else:
+                raise ValueError("NDCube dimensions must be 2 or 3. Dimensions={0}".format(
+                    len(cube.dimensions.shape)))
+            data = correction_function(cube.data, exposure_time_s)
+            uncertainty = correction_function(cube.uncertainty.array, exposure_time_s)
+            converted_data_list.append(NDCube(
+                data, wcs=cube.wcs, meta=cube.meta, mask=cube.mask, unit=cube.unit / u.s,
+                uncertainty=uncertainty,
+                extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
+        else:
+            converted_data_list.append(cube)
+    return converted_data_list
