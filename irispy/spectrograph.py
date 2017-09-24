@@ -331,7 +331,7 @@ Sequence Shape: {seq_shape}
             converted_data_list.append(cube.apply_exposure_time_correction(undo=undo))
         if copy is True:
             return IRISSpectrogramSequence(
-                converted_cube_list, self._common_axis, self.raster_positions_per_scan,
+                converted_data_list, self._common_axis, self.raster_positions_per_scan,
                 self.first_exposure_raster_position, meta=self.meta)
         else:
             self.data = converted_data_list
@@ -354,8 +354,9 @@ class IRISSpectrogram(NDCube):
     meta : dict-like object
         Additional meta information about the dataset. Must contain at least the
         following keys:
-            detector type (FUV1, FUV2 or NUV)
-            OBS ID
+            detector type: str, (FUV1, FUV2 or NUV)
+            OBSID: int
+            spectral window: str
 
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
@@ -403,8 +404,8 @@ class IRISSpectrogram(NDCube):
         result = super(IRISSpectrogram, self).__getitem__(item)
         return IRISSpectrogram(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            _extra_coords_to_input_format(result._extra_coords), mask=result.mask,
-            missing_axis=result.missing_axis)
+            _extra_coords_to_input_format(result._extra_coords, result.missing_axis),
+            mask=result.mask, missing_axis=result.missing_axis)
 
     def __repr__(self):
         if self.missing_axis[::-1][self._extra_coords["time"]["axis"]]:
@@ -471,7 +472,7 @@ Axis Types: {axis_types}
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogram(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    _extra_coords_to_input_format(self._extra_coords),
+                    _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
                     mask=self.mask, missing_axis=self.missing_axis)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
@@ -500,7 +501,7 @@ Axis Types: {axis_types}
         else:
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogram(new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                               _extra_coords_to_input_format(self._extra_coords),
+                               _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
                                mask=self.mask, missing_axis=self.missing_axis)
 
     def apply_exposure_time_correction(self, undo=False):
@@ -549,7 +550,7 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogram with correction applied/undone.
         return IRISSpectrogram(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            _extra_coords_to_input_format(self._extra_coords),
+            _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
             mask=self.mask, missing_axis=self.missing_axis)
 
 def _get_meta_values(keys, meta, unknown_message="Unknown"):
