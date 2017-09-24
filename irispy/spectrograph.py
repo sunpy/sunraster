@@ -9,7 +9,7 @@ import numpy as np
 import astropy.units as u
 from astropy.io import fits
 from astropy.table import Table
-from ndcube import NDCube, NDCubeSequence
+from ndcube import NDCube, NDCubeSequence, _extra_coords_to_input_format
 from ndcube.wcs_util import WCS
 from sunpy.time import parse_time
 
@@ -551,24 +551,6 @@ Axis Types: {axis_types}
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
             _extra_coords_to_input_format(self._extra_coords),
             mask=self.mask, missing_axis=self.missing_axis)
-
-def _extra_coords_to_input_format(extra_coords):
-    """
-    Converts NDCube._extra_coords attribute to format required as input for new NDCube.
-
-    Paramaters
-    ----------
-    extra_coords: dict
-        An NDCube._extra_coords instance.
-
-    Returns
-    -------
-    input_format: `list`
-        Infomation on extra coords in format required by `ndcube.NDCube.__init__`.
-
-    """
-    return [(key, extra_coords[key]["axis"], extra_coords[key]["value"])
-            for key in extra_coords]
 
 def _get_meta_values(keys, meta, unknown_message="Unknown"):
     values = []
