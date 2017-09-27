@@ -32,6 +32,14 @@ READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
                  "SJI": 1.2*DN_UNIT["SJI"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 
+# Define some custom error messages.
+APPLY_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
+    "been applied since the unit already includes inverse time.  " + \
+    "To apply exposure time correction anyway, set 'force' kwarg to True."
+UNDONE_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
+    "been undone since the unit does not include inverse time.  " + \
+    "To undo exposure time correction anyway, set 'force' kwarg to True."
+
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
 
@@ -463,7 +471,8 @@ def convert_between_DN_and_photons(old_data_arrays, old_unit, new_unit):
                            for data in old_data_arrays]
     return new_data_arrays, new_unit_time_accounted
 
-def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time):
+def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
+                                       force=False):
     """
     Applies exposure time correction to data arrays.
 
@@ -487,15 +496,22 @@ def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time)
         Unit of new data arrays after exposure time correction.
 
     """
-    if u.s not in old_unit.decompose().bases:
+    # If force is not set to True and unit already includes inverse time,
+    # raise error as exposure time correction has probably already been
+    # applied and should not be applied again.
+    if force is not True and u.s not in old_unit.decompose().bases:
+        raise ValueError(APPLY_EXPOSURE_TIME_ERROR)
+    else:
+        # Else, either unit does not include inverse time and so
+        # exposure does need to be applied, or
+        # user has set force=True and wants the correction applied
+        # regardless of the unit.
         new_data_arrays = [old_data/exposure_time for old_data in old_data_arrays]
         new_unit = old_unit/u.s
-    else:
-        new_data_arrays = old_data_arrays
-        new_unit = old_unit
     return new_data_arrays, new_unit
 
-def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time):
+def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
+                                         force=False):
     """
     Removes exposure time correction from data arrays.
 
@@ -519,12 +535,18 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_tim
         Unit of new data arrays after exposure time correction removed.
 
     """
-    if u.s not in (old_unit*u.s).decompose().bases:
+    # If force is not set to True and unit does not include inverse time,
+    # raise error as exposure time correction has probably already been
+    # undone and should not be undone again.
+    if force is not True and u.s not in (old_unit*u.s).decompose().bases:
+        raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
+    else:
+        # Else, either unit does include inverse time and so
+        # exposure does need to be removed, or
+        # user has set force=True and wants the correction removed
+        # regardless of the unit.
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
         new_unit = old_unit*u.s
-    else:
-        new_data_arrays = old_data_arrays
-        new_unit = old_unit
     return new_data_arrays, new_unit
 
 def convert_or_undo_photons_per_sec_to_radiance(

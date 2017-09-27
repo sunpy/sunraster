@@ -3,7 +3,6 @@
 
 import copy
 import datetime
-from collections import namedtuple
 
 import numpy as np
 import astropy.units as u
@@ -282,7 +281,7 @@ Sequence Shape: {seq_shape}
            n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
            axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
 
-    def to(self, new_unit_type, copy=False):
+    def convert_to(self, new_unit_type, copy=False):
         """
         Converts data, uncertainty and unit of each spectrogram in sequence to new unit.
 
@@ -310,8 +309,13 @@ Sequence Shape: {seq_shape}
         else:
             self.data = converted_data_list
 
-    def apply_exposure_time_correction(self, undo=False, copy=False):
-        """Applies or undoes exposure time correction to data and uncertainty.
+    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
 
         Parameters
         ----------
@@ -325,10 +329,25 @@ Sequence Shape: {seq_shape}
             If False, the current instance is overwritten.
             Default=False
 
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `None` or `IRISSpectrogramSequence`
+            If copy=False, the original IRISSpectrogramSequence is modified with the
+            exposure time correction applied (undone).
+            If copy=True, a new IRISSpectrogramSequence is returned with the correction
+            applied (undone).
+
         """
         converted_data_list = []
         for cube in self.data:
-            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo))
+            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo,
+                                                                           force=force))
         if copy is True:
             return IRISSpectrogramSequence(
                 converted_data_list, self._common_axis, self.raster_positions_per_scan,
@@ -424,7 +443,7 @@ Axis Types: {axis_types}
            inst_start=instance_start, inst_end=instance_end,
            shape=self.dimensions, axis_types=self.dimensions.axis_types[::])
 
-    def to(self, new_unit_type):
+    def convert_to(self, new_unit_type):
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
@@ -453,6 +472,7 @@ Axis Types: {axis_types}
                                             self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "HPLT-TAN")[0][0]
+            ##### This is not quite correct.  Needs to be lat x long for a pixel. #####
             solid_angle = (self.wcs.wcs.cdelt[lat_wcs_index]*self.wcs.wcs.cunit[lat_wcs_index])**2
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
@@ -489,8 +509,11 @@ Axis Types: {axis_types}
                 new_unit = self.unit
             else:
                 # Ensure spectrogram is in units of counts/s.
-                cube = self.to("counts")
-                cube = cube.apply_exposure_time_correction()
+                cube = self.convert_to("counts")
+                try:
+                    cube = cube.apply_exposure_time_correction()
+                except ValueError(iris_tools.APPLY_EXPOSURE_TIME_ERROR):
+                    pass
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
@@ -504,9 +527,13 @@ Axis Types: {axis_types}
                                _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
                                mask=self.mask, missing_axis=self.missing_axis)
 
-    def apply_exposure_time_correction(self, undo=False):
+    def apply_exposure_time_correction(self, undo=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
 
         Parameters
         ----------
@@ -515,10 +542,11 @@ Axis Types: {axis_types}
             If True, exposure time correction is undone.
             Default=False
 
-        copy: `bool`
-            If True a new instance with the converted data values is returned.
-            If False, the current instance is overwritten.
-            Default=False
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
 
         Returns
         -------
@@ -543,10 +571,10 @@ Axis Types: {axis_types}
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data_arrays, new_unit = iris_tools.uncalculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s)
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
         else:
             new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s)
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
         # Return new instance of IRISSpectrogram with correction applied/undone.
         return IRISSpectrogram(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,

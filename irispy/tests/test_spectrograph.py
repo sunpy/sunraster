@@ -83,6 +83,22 @@ spectrogram_DN_per_s1 = IRISSpectrogram(SOURCE_DATA_DN/single_exposure_time, wcs
 spectrogram_ct_per_s1 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
                                         SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time,
                                         u.ct/u.s, meta0, extra_coords1)
+spectrogram_ct_per_s_per_s0 = IRISSpectrogram(
+    SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
+    u.ct/u.s/u.s, meta0, extra_coords0)
+spectrogram_ct_s0 = IRISSpectrogram(
+    SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
+    u.ct*u.s, meta0, extra_coords0)
+spectrogram_ct_per_s_per_s1 = IRISSpectrogram(
+    SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
+    u.ct/u.s/u.s, meta0, extra_coords1)
+spectrogram_ct_s1 = IRISSpectrogram(
+    SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
+    u.ct*u.s, meta0, extra_coords1)
 
 # Define meta dict for an IRISSpectrogramSequence
 meta_seq = {"detector type": "FUV", "spectral window": "C II 1336",
@@ -96,6 +112,11 @@ sequence_DN_per_s = IRISSpectrogramSequence([spectrogram_DN_per_s0, spectrogram_
                                              SOURCE_DATA_DN.shape[0], 0, meta_seq)
 sequence_ct_per_sec = IRISSpectrogramSequence([spectrogram_ct_per_s0, spectrogram_ct_per_s1], 0,
                                                SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
+sequence_ct_per_sec_per_sec = IRISSpectrogramSequence(
+    [spectrogram_ct_per_s_per_s0, spectrogram_ct_per_s1], 0,
+    SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
+sequence_ct_s = IRISSpectrogramSequence([spectrogram_ct_s0, spectrogram_ct_s1], 0,
+                                        SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
 
 @pytest.fixture
 def iris_l2_test_raster():
@@ -126,29 +147,28 @@ def test_fits_data_comparison(iris_l2_test_raster):
     (spectrogram_DN0, "DN", spectrogram_DN0),
     (spectrogram_DN0, "counts", spectrogram_ct0),
     (spectrogram_DN_per_s0, "DN", spectrogram_DN_per_s0),
-    (spectrogram_DN_per_s0, "counts", spectrogram_ct_per_s0)
+    (spectrogram_DN_per_s0, "counts", spectrogram_ct_per_s0),
     (spectrogram_ct0, "DN", spectrogram_DN0),
     (spectrogram_ct0, "counts", spectrogram_ct0),
     (spectrogram_ct_per_s0, "DN", spectrogram_DN_per_s0),
     (spectrogram_ct_per_s0, "counts", spectrogram_ct_per_s0)
 ])
-tdef test_irisspectrogram_to(input_cube, new_unit, expected_cube):
-    output_cube = input_cube.to(new_unit)
+def test_irisspectrogram_convert_to(input_cube, new_unit, expected_cube):
+    output_cube = input_cube.convert_to(new_unit)
     assert_cubes_equal(output_cube, expected_cube)
 
 
-@pytest.mark.parametrize("input_cube, undo, expected_cube", [
-    (spectrogram_DN0, False, spectrogram_DN_per_s0),
-    (spectrogram_DN0, True, spectrogram_DN0),
-    (spectrogram_DN_per_s0, False, spectrogram_DN_per_s0),
-    (spectrogram_DN_per_s0, True, spectrogram_DN0),
-    (spectrogram_ct0, False, spectrogram_ct_per_s0),
-    (spectrogram_ct0, True, spectrogram_ct0),
-    (spectrogram_ct_per_s0, False, spectrogram_ct_per_s0),
-    (spectrogram_ct_per_s0, True, spectrogram_ct0)
+@pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
+    (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
+    (spectrogram_DN_per_s0, True, False, spectrogram_DN0),
+    (spectrogram_ct0, False, False, spectrogram_ct_per_s0),
+    (spectrogram_ct_per_s0, True, False, spectrogram_ct0),
+    (spectrogram_ct_per_s0, False, True, spectrogram_ct_per_s_per_s0),
+    (spectrogram_ct0, True, True, spectrogram_ct_s0)
 ])
-def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo, expected_cube):
-    output_cube = input_cube.apply_exposure_time_correction(undo=undo)
+def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo,
+                                                        force, expected_cube):
+    output_cube = input_cube.apply_exposure_time_correction(undo=undo, force=force)
     assert_cubes_equal(output_cube, expected_cube)
 
 
@@ -162,22 +182,21 @@ def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo, expect
     (sequence_ct_per_sec, "DN", sequence_DN_per_s),
     (sequence_ct_per_sec, "counts", sequence_ct_per_sec)
 )]
-def test_irisspectrogramsequence_to(input_sequence, new_unit, expected_sequence):
+def test_irisspectrogramsequence_convert_to(input_sequence, new_unit, expected_sequence):
     output_sequence = input_sequence.to(new_unit, copy=True)
     assert_cubesequences_equal(output_sequence, expected_sequence)
 
 
-@pytest.mark.parametrize("input_sequence, undo, expected_sequence", [
-    (sequence_DN, False, sequence_DN_per_s),
-    (sequence_DN, True, sequence_DN),
-    (sequence_DN_per_s, False, sequence_DN_per_s),
-    (sequence_DN_per_s, True, sequence_DN),
-    (sequence_ct, False, sequence_ct_per_s),
-    (sequence_ct, True, sequence_ct),
-    (sequence_ct_per_s, False, sequence_ct_per_s),
-    (sequence_ct_per_s, True, sequence_ct)
+@pytest.mark.parametrize("input_sequence, undo, force, expected_sequence", [
+    (sequence_DN, False, False, sequence_DN_per_s),
+    (sequence_DN_per_s, True, False, sequence_DN),
+    (sequence_ct, False, False, sequence_ct_per_s),
+    (sequence_ct, True, True, sequence_ct_s),
+    (sequence_ct_per_s, False, True, sequence_ct_per_s_per_s),
+    (sequence_ct_per_s, True, True, sequence_ct)
 ])
-def test_irisspectrogramsequence_apply_exposure_time_correction(input_sequence,
-                                                                undo, expected_sequence):
-    output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True)
+def test_irisspectrogramsequence_apply_exposure_time_correction(
+        input_sequence, undo, force, expected_sequence):
+    output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True,
+                                                                    force=force)
     assert_cubesequences_equal(output_sequence, expected_sequence)
