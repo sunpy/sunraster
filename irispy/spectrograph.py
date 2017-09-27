@@ -276,8 +276,8 @@ Axis Types: {axis_types}
 Sequence Shape: {seq_shape}
 
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
-           inst_start=self[0]._extra_coords["time"]["value"],
-           inst_end=self[-1]._extra_coords["time"]["value"],
+           inst_start=self[0]._extra_coords["time"]["value"][0],
+           inst_end=self[-1]._extra_coords["time"]["value"][-1],
            n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
            axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
 
@@ -301,7 +301,7 @@ Sequence Shape: {seq_shape}
         """
         converted_data_list = []
         for cube in self.data:
-            converted_data_list.append(cube.to(new_unit_type))
+            converted_data_list.append(cube.convert_to(new_unit_type))
         if copy is True:
             return IRISSpectrogramSequence(
                 converted_data_list, self._common_axis, self.raster_positions_per_scan,

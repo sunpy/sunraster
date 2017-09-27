@@ -500,7 +500,7 @@ def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
     # If force is not set to True and unit already includes inverse time,
     # raise error as exposure time correction has probably already been
     # applied and should not be applied again.
-    if force is not True and u.s not in old_unit.decompose().bases:
+    if force is not True and u.s in old_unit.decompose().bases:
         raise ValueError(APPLY_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does not include inverse time and so
@@ -539,7 +539,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_tim
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
-    if force is not True and u.s not in (old_unit*u.s).decompose().bases:
+    if force is not True and u.s in (old_unit*u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does include inverse time and so
