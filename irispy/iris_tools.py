@@ -587,11 +587,19 @@ def convert_or_undo_photons_per_sec_to_radiance(
     """
     # Check data quantities are in the right units.
     if undo is True:
-        for data in data_quantities:
-            assert data.unit.is_equivalent(RADIANCE_UNIT)
+        for i, data in enumerate(data_quantities):
+            if not data.unit.is_equivalent(RADIANCE_UNIT):
+                raise ValueError(
+                    "Invalid unit provided.  As kwarg undo=True, "
+                    "unit must be equivalent to {0}.  Error found for {1}th element "
+                    "of data_quantities. Unit: {2}".format(RADIANCE_UNIT, i, data.unit))
     else:
         for data in data_quantities:
-            assert data.unit == u.ct/u.s
+            if data.unit != u.ct/u.s:
+                raise ValueError(
+                    "Invalid unit provided.  As kwarg undo=False, "
+                    "unit must be equivalent to {0}.  Error found for {1}th element "
+                    "of data_quantities. Unit: {2}".format(u.ct/u.s, i, data.unit))
     photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(
         obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
     # Change shape of arrays so they are compatible for broadcasting
