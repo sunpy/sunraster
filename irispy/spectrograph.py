@@ -471,9 +471,11 @@ Axis Types: {axis_types}
             spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \
                                             self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
-            lat_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "HPLT-TAN")[0][0]
-            ##### This is not quite correct.  Needs to be lat x long for a pixel. #####
-            solid_angle = (self.wcs.wcs.cdelt[lat_wcs_index]*self.wcs.wcs.cunit[lat_wcs_index])**2
+            lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
+            lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
+            lat_wcs_index = lat_wcs_index[0]
+            solid_angle = self.wcs.wcs.cdelt[lat_wcs_index] * \
+                          self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.pixel_to_world([
