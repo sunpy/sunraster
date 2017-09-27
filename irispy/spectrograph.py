@@ -581,18 +581,9 @@ Axis Types: {axis_types}
             _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
             mask=self.mask, missing_axis=self.missing_axis)
 
-def _get_meta_values(keys, meta, unknown_message="Unknown"):
-    values = []
-    for key in keys:
-        try:
-            value = meta[key]
-        except KeyError:
-            value = unknown_message
-        values.append(value)
-    return values
 
 def _produce_obs_repr_string(meta):
-    obs_info = _get_meta_values(["OBSID", "OBS_DESC", "STARTOBS", "ENDOBS"], meta)
+    obs_info = [meta.get(key, "Unknown") for key in ["OBSID", "OBS_DESC", "STARTOBS", "ENDOBS"]]
     return """OBS ID: {obs_id}
 OBS Description: {obs_desc}
 OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_info[1],
