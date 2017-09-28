@@ -169,8 +169,8 @@ class IRISSpectrograph(object):
                         }
                 # Derive uncertainty of data
                 uncertainty = u.Quantity(np.sqrt(
-                    (data_nan_masked*DN_unit).to(u.ct).value + readout_noise.to(u.ct).value**2),
-                    unit=u.ct).to(DN_unit).value
+                    (data_nan_masked*DN_unit).to(u.photon).value + readout_noise.to(u.photon).value**2),
+                    unit=u.photon).to(DN_unit).value
                 # Appending NDCube instance to the corresponding window key in dictionary's list.
                 data_dict[window_name].append(
                     IRISSpectrogram(data_nan_masked, wcs_, uncertainty, DN_unit, meta,
@@ -290,7 +290,7 @@ Sequence Shape: {seq_shape}
         new_unit_type: `str`
            Unit type to convert data to.  Three values are accepted:
            "DN": Relevant IRIS data number based on detector type.
-           "counts": photon counts
+           "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
 
         copy: `bool`
@@ -455,7 +455,7 @@ Axis Types: {axis_types}
         new_unit_type: `str`
            Unit type to convert data to.  Three values are accepted:
            "DN": Relevant IRIS data number based on detector type.
-           "counts": photon counts
+           "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
 
         Returns
@@ -482,7 +482,7 @@ Axis Types: {axis_types}
                 np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
                 np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
                 np.arange(int(self.dimensions.shape[spectral_data_index].value)) * u.pix])[-1]
-        if new_unit_type == "DN" or new_unit_type == "counts":
+        if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
@@ -499,7 +499,7 @@ Axis Types: {axis_types}
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
             else:
-                new_unit = u.ct
+                new_unit = u.photon
             new_data_arrays, new_unit = iris_tools.convert_between_DN_and_photons(
                 (self.data, self.uncertainty.array), self.unit, new_unit)
             new_data = new_data_arrays[0]
@@ -511,7 +511,7 @@ Axis Types: {axis_types}
                 new_unit = self.unit
             else:
                 # Ensure spectrogram is in units of counts/s.
-                cube = self.convert_to("counts")
+                cube = self.convert_to("photons")
                 try:
                     cube = cube.apply_exposure_time_correction()
                 except ValueError(iris_tools.APPLY_EXPOSURE_TIME_ERROR):

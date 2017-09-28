@@ -145,13 +145,13 @@ def test_fits_data_comparison(iris_l2_test_raster):
 
 @pytest.mark.parametrize("input_cube, new_unit, expected_cube", [
     (spectrogram_DN0, "DN", spectrogram_DN0),
-    (spectrogram_DN0, "counts", spectrogram_ct0),
+    (spectrogram_DN0, "photons", spectrogram_ct0),
     (spectrogram_DN_per_s0, "DN", spectrogram_DN_per_s0),
-    (spectrogram_DN_per_s0, "counts", spectrogram_ct_per_s0),
+    (spectrogram_DN_per_s0, "photons", spectrogram_ct_per_s0),
     (spectrogram_ct0, "DN", spectrogram_DN0),
-    (spectrogram_ct0, "counts", spectrogram_ct0),
+    (spectrogram_ct0, "photons", spectrogram_ct0),
     (spectrogram_ct_per_s0, "DN", spectrogram_DN_per_s0),
-    (spectrogram_ct_per_s0, "counts", spectrogram_ct_per_s0)
+    (spectrogram_ct_per_s0, "photons", spectrogram_ct_per_s0)
 ])
 def test_irisspectrogram_convert_to(input_cube, new_unit, expected_cube):
     output_cube = input_cube.convert_to(new_unit)
@@ -174,13 +174,13 @@ def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo,
 
 @pytest.mark.parametrize("input_sequence, new_unit, expected_sequence", [
     (sequence_DN, "DN", sequence_DN),
-    (sequence_DN, "counts", sequence_ct),
+    (sequence_DN, "photons", sequence_ct),
     (sequence_ct, "DN", sequence_DN),
-    (sequence_ct, "counts", sequence_ct),
+    (sequence_ct, "photons", sequence_ct),
     (sequence_DN_per_s, "DN", sequence_DN_per_s),
-    (sequence_DN_per_s, "counts", sequence_ct_per_sec),
+    (sequence_DN_per_s, "photons", sequence_ct_per_sec),
     (sequence_ct_per_sec, "DN", sequence_DN_per_s),
-    (sequence_ct_per_sec, "counts", sequence_ct_per_sec)
+    (sequence_ct_per_sec, "photons", sequence_ct_per_sec)
 )]
 def test_irisspectrogramsequence_convert_to(input_sequence, new_unit, expected_sequence):
     output_sequence = input_sequence.to(new_unit, copy=True)

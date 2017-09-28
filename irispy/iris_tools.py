@@ -25,9 +25,9 @@ from ndcube import NDCube
 DETECTOR_GAIN = {"NUV": 18., "FUV": 6., "SJI": 18.}
 DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
 DN_UNIT = {
-    "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"]/DETECTOR_YIELD["NUV"]*u.ct),
-    "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.ct),
-    "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.ct)}
+    "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"]/DETECTOR_YIELD["NUV"]*u.photon),
+    "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
+    "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon)}
 READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
                  "SJI": 1.2*DN_UNIT["SJI"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
@@ -596,11 +596,11 @@ def convert_or_undo_photons_per_sec_to_radiance(
                     "of data_quantities. Unit: {2}".format(RADIANCE_UNIT, i, data.unit))
     else:
         for data in data_quantities:
-            if data.unit != u.ct/u.s:
+            if data.unit != u.photon/u.s:
                 raise ValueError(
                     "Invalid unit provided.  As kwarg undo=False, "
                     "unit must be equivalent to {0}.  Error found for {1}th element "
-                    "of data_quantities. Unit: {2}".format(u.ct/u.s, i, data.unit))
+                    "of data_quantities. Unit: {2}".format(u.photon/u.s, i, data.unit))
     photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(
         obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
     # Change shape of arrays so they are compatible for broadcasting
@@ -610,7 +610,7 @@ def convert_or_undo_photons_per_sec_to_radiance(
                                                         data_quantities[0].ndim)
     # Perform (or undo) radiometric conversion.
     if undo is True:
-        new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.ct/u.s)
+        new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.photon/u.s)
                                for data in data_quantities]
     else:
         new_data_quantities = [(data*photons_per_sec_to_radiance_factor).to(RADIANCE_UNIT)
@@ -646,7 +646,7 @@ def calculate_photons_per_sec_to_radiance_factor(
     # Get effective area and interpolate to observed wavelength grid.
     eff_area_interp = _get_interpolated_effective_area(detector_type, wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
-    return constants.h * constants.c / wavelength / u.ct / \
+    return constants.h * constants.c / wavelength / u.photon / \
            spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
 def _get_interpolated_effective_area(detector_type, obs_wavelength):
