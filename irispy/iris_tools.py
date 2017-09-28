@@ -8,16 +8,16 @@ import warnings
 import os.path
 
 import numpy as np
-from astropy.io import fits
 import astropy.units as u
 from astropy.units.quantity import Quantity
-from astropy import wcs
-from astropy.modeling import models, fitting
+from astropy.modeling import fitting
 from astropy.modeling.models import custom_model
 from astropy import constants
 import scipy.io
 from scipy import interpolate
 from sunpy.time import parse_time
+import sunpy.util.config
+from sunpy.util.net import check_download_file
 from ndcube import NDCube
 
 # Define some properties of IRIS detectors.  Source: IRIS instrument
@@ -33,6 +33,10 @@ READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 SLIT_WIDTH = 0.33*u.arcsec
 
+IRIS_RESPONSE_REMOTE_PATH = "https://sohowww.nascom.nasa.gov/solarsoft/iris/response/"
+RESPONSE_VERSION_FILENAMES = {"1": "iris_sra_20130211.geny", "2": "iris_sra_20130715.geny",
+                              "3": "iris_sra_c_20150331.geny", "4": "iris_sra_c_20161022.geny"}
+
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
     "been applied since the unit already includes inverse time.  " + \
@@ -44,7 +48,8 @@ UNDONE_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + 
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
 
-def get_iris_response(pre_launch=False, response_file=None, response_version=None):
+def get_iris_response(pre_launch=False, response_file=None, response_version=None,
+                      force_download=False):
     """Returns IRIS response structure.
 
     One and only one of pre_launch, response_file and response_version must be set.
@@ -86,7 +91,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     versions to calculate time dependent effective areas.
 
     """
-    #Ensures the file exits in the path given.
+    # Ensures the file exits in the path given.
     if response_file is not None:
         if not(os.path.isfile(response_file)):
             raise KeyError("Not a valid file path")
@@ -110,19 +115,26 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     # If response_file not set, define appropriate response file
     # based on version.
     if not response_file:
-        respdir = os.path.expanduser(os.path.join("~", "ssw", "iris", "response"))
-        if response_version == 1:
-            response_file = os.path.join(respdir, "iris_sra_20130211.geny")
-        elif response_version == 2:
-            response_file = os.path.join(respdir, "iris_sra_20130715.geny")
-        elif response_version == 3:
-            response_file = os.path.join(respdir, "iris_sra_c_20150331.geny")
+        try:
+            response_filename = RESPONSE_VERSION_FILENAMES[str(response_version)]
+        except KeyError:
+            raise KeyError("Version number not recognized.")
+        if response_version > 2:
             warnings.warn("Effective areas are not available (i.e. set  to zero).  "
-                          "For response file versions > 2 time dependent effective areas must be"
-                          " calculated via fitting, which is not supported by this function at"
-                          " this time. Version of this response file = {0}".format(response_version))
-        else:
-            raise ValueError("Version number not recognized.")
+                  "For response file versions > 2 time dependent effective "
+                  "areas must be calculated via fitting, which is not supported "
+                  "by this function at this time. "
+                  "Version of this response file = {0}".format(response_version))
+        # Define the directory in which the response file should exist
+        # to be the sunpy download directory.
+        config = sunpy.util.config.load_config()
+        download_dir = config.get('downloads', 'download_dir')
+        # Check response file exists in download_dir.  If not, download it.
+        check_download_file(response_filename, IRIS_RESPONSE_REMOTE_PATH, download_dir,
+                            replace=force_download)
+        # Define response file as path + filename.
+        response_file = os.path.join(download_dir, response_filename)
+
     # Read response file and store in a dictionary.
     raw_response_data = scipy.io.readsav(response_file)
     iris_response = dict([(name, raw_response_data["p0"][name][0])
