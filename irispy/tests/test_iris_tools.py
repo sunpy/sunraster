@@ -35,17 +35,17 @@ def test_get_detector_type(test_input, expected_output):
     assert iris_tools.get_detector_type(test_input) == expected_output
 
 @pytest.mark.parametrize("data_arrays, old_unit, new_unit, expected_data_arrays, expected_unit", [
-    ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["FUV"], u.ct,
-     [SOURCE_DATA_PHOTONS_FUV, SOURCE_DATA_PHOTONS_FUV], u.ct),
-    ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"], u.ct,
-     [SOURCE_DATA_PHOTONS_NUV, SOURCE_DATA_PHOTONS_NUV], u.ct),
-    ([SOURCE_DATA_DN_1, SOURCE_DATA_DN_1], iris_tools.DN_UNIT["SJI"], u.ct,
-     [SOURCE_DATA_PHOTONS_SJI_1, SOURCE_DATA_PHOTONS_SJI_1], u.ct),
-    ([SOURCE_DATA_PHOTONS_FUV, SOURCE_DATA_PHOTONS_FUV], u.ct, iris_tools.DN_UNIT["FUV"],
+    ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["FUV"], u.photon,
+     [SOURCE_DATA_PHOTONS_FUV, SOURCE_DATA_PHOTONS_FUV], u.photon),
+    ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"], u.photon,
+     [SOURCE_DATA_PHOTONS_NUV, SOURCE_DATA_PHOTONS_NUV], u.photon),
+    ([SOURCE_DATA_DN_1, SOURCE_DATA_DN_1], iris_tools.DN_UNIT["SJI"], u.photon,
+     [SOURCE_DATA_PHOTONS_SJI_1, SOURCE_DATA_PHOTONS_SJI_1], u.photon),
+    ([SOURCE_DATA_PHOTONS_FUV, SOURCE_DATA_PHOTONS_FUV], u.photon, iris_tools.DN_UNIT["FUV"],
     [SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["FUV"]),
-    ([SOURCE_DATA_PHOTONS_NUV, SOURCE_DATA_PHOTONS_NUV], u.ct, iris_tools.DN_UNIT["NUV"],
+    ([SOURCE_DATA_PHOTONS_NUV, SOURCE_DATA_PHOTONS_NUV], u.photon, iris_tools.DN_UNIT["NUV"],
     [SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"]),
-    ([SOURCE_DATA_PHOTONS_SJI_1, SOURCE_DATA_PHOTONS_SJI_1], u.ct, iris_tools.DN_UNIT["SJI"],
+    ([SOURCE_DATA_PHOTONS_SJI_1, SOURCE_DATA_PHOTONS_SJI_1], u.photon, iris_tools.DN_UNIT["SJI"],
     [SOURCE_DATA_DN_1, SOURCE_DATA_DN_1], iris_tools.DN_UNIT["SJI"])
 ])
 def test_convert_between_DN_and_photons(input_arrays, old_unit, new_unit,
@@ -58,15 +58,15 @@ def test_convert_between_DN_and_photons(input_arrays, old_unit, new_unit,
 
 @pytest.mark.parametrize(
     "input_arrays, old_unit, exposure_time, force, expected_arrays, expected_unit",[
-        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct, EXPOSURE_TIME, False
+        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon, EXPOSURE_TIME, False
          [SOURCE_DATA_DN/single_exposure_time, SOURCE_DATA_DN/single_exposure_time],
-         u.ct/u.s),
+         u.photon/u.s),
         ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"], EXPOSURE_TIME, False
          [SOURCE_DATA_DN/single_exposure_time, SOURCE_DATA_DN/single_exposure_time],
          iris_tools.DN_UNIT["NUV"]/u.s),
-        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct/u.s, EXPOSURE_TIME, True,
+        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon/u.s, EXPOSURE_TIME, True,
          [SOURCE_DATA_DN/single_exposure_time, SOURCE_DATA_DN/single_exposure_time],
-         u.ct/u.s/u.s),
+         u.photon/u.s/u.s),
         ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"]/u.s, EXPOSURE_TIME, True,
          [SOURCE_DATA_DN/single_exposure_time, SOURCE_DATA_DN/single_exposure_time],
          iris_tools.DN_UNIT["NUV"]/u.s/u.s)
@@ -80,7 +80,7 @@ def test_calculate_exposure_time_correction(input_arrays, old_unit, exposure_tim
     assert output_unit == expected_unit
 
 @pytest.mark.parametrize("input_arrays, old_unit, exposure_time, force", [
-    ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct/u.s, EXPOSURE_TIME, False),
+    ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon/u.s, EXPOSURE_TIME, False),
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"]/u.s, EXPOSURE_TIME, False)
 ])
 def test_calculate_exposure_time_correction_error():
@@ -89,13 +89,13 @@ def test_calculate_exposure_time_correction_error():
 
 @pytest.mark.parametrize(
     "input_arrays, old_unit, exposure_time, force, expected_arrays, expected_unit", [
-        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct/u.s, EXPOSURE_TIME, False,
-         [SOURCE_DATA_DN * single_exposure_time, SOURCE_DATA_DN * single_exposure_time], u.ct),
+        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon/u.s, EXPOSURE_TIME, False,
+         [SOURCE_DATA_DN * single_exposure_time, SOURCE_DATA_DN * single_exposure_time], u.photon),
         ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"]/u.s, EXPOSURE_TIME, False,
          [SOURCE_DATA_DN * single_exposure_time, SOURCE_DATA_DN * single_exposure_time],
          iris_tools.DN_UNIT["NUV"]),
-        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct, EXPOSURE_TIME, True,
-         [SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct*u.s),
+        ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon, EXPOSURE_TIME, True,
+         [SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon*u.s),
         ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["FUV"], EXPOSURE_TIME, True,
          [SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["FUV"]*u.s)
 ])
@@ -108,7 +108,7 @@ def test_uncalculate_exposure_time_correction(input_arrays, old_unit, exposure_t
         assert output_unit == expected_unit
 
 @pytest.mark.parametrize("input_arrays, old_unit, exposure_time, force", [
-    ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.ct, EXPOSURE_TIME, False),
+    ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon, EXPOSURE_TIME, False),
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"], EXPOSURE_TIME, False)
 ])
 def test_uncalculate_exposure_time_correction_error():
