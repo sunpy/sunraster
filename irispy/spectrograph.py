@@ -276,8 +276,8 @@ Axis Types: {axis_types}
 Sequence Shape: {seq_shape}
 
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
-           inst_start=self[0]._extra_coords["time"]["value"][0],
-           inst_end=self[-1]._extra_coords["time"]["value"][-1],
+           inst_start=self[0]._extra_coords["time"]["value"],
+           inst_end=self[-1]._extra_coords["time"]["value"],
            n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
            axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
 
@@ -427,7 +427,11 @@ class IRISSpectrogram(NDCube):
             mask=result.mask, missing_axis=result.missing_axis)
 
     def __repr__(self):
-        if self.missing_axis[::-1][self._extra_coords["time"]["axis"]]:
+        if self._extra_coords["time"]["axis"] is None:
+            axis_missing = True
+        else:
+            axis_missing = self.missing_axis[::-1][self._extra_coords["time"]["axis"]]
+        if axis_missing is True:
             instance_start = instance_end = self._extra_coords["time"]["value"]
         else:
             instance_start = self._extra_coords["time"]["value"][0],
@@ -590,3 +594,4 @@ def _produce_obs_repr_string(meta):
 OBS Description: {obs_desc}
 OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_info[1],
                                                obs_start=obs_info[2], obs_end=obs_info[3])
+
