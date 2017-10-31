@@ -165,7 +165,10 @@ class IRISSpectrograph(object):
                         "detector type":
                             hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
                         "spectral window": window_name,
-                        "OBSID": hdulist[0].header["OBSID"]
+                        "OBSID": hdulist[0].header["OBSID"],
+                        "OBS_DESC": hdulist[0].header["OBS_DESC"],
+                        "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
+                        "ENDOBS": parse_time(hdulist[0].header["ENDOBS"])
                         }
                 # Derive uncertainty of data
                 uncertainty = u.Quantity(np.sqrt(
