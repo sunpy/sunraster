@@ -24,7 +24,7 @@ import sunpy.map
 from sunpy.map import GenericMap
 from sunpy.map.map_factory import Map
 from sunpy.visualization.mapcubeanimator import MapCubeAnimator
-from sunpy.visualization import wcsaxes_compat
+from sunpy.visualization import wcsaxes_compat, axis_labels_from_ctype
 from sunpy.time import parse_time
 from sunpy.lightcurve import LightCurve
 
@@ -513,21 +513,10 @@ Scale:\t\t {scale}
         # Normal plot
         def annotate_frame(i):
             axes.set_title("{s.name}".format(s=self[i]))
-
-            # x-axis label
-            if self[0].coordinate_system.axis1 == 'HG':
-                xlabel = 'Longitude [{lon}'.format(lon=self[i].spatial_units.axis1)
-            else:
-                xlabel = 'X-position [{xpos}]'.format(xpos=self[i].spatial_units.axis1)
-
-            # y-axis label
-            if self[0].coordinate_system.axis2 == 'HG':
-                ylabel = 'Latitude [{lat}]'.format(lat=self[i].spatial_units.axis2)
-            else:
-                ylabel = 'Y-position [{ypos}]'.format(ypos=self[i].spatial_units.axis2)
-
-            axes.set_xlabel(xlabel)
-            axes.set_ylabel(ylabel)
+            axes.set_xlabel(axis_labels_from_ctype(self[i].coordinate_system[0],
+                                                   self[i].spatial_units[0]))
+            axes.set_ylabel(axis_labels_from_ctype(self[i].coordinate_system[1],
+                                                   self[i].spatial_units[1]))
 
         if resample:
             # This assumes that the maps are homogeneous!
@@ -555,7 +544,7 @@ Scale:\t\t {scale}
             if wcsaxes_compat.is_wcsaxes(im.axes):
                 im.axes.reset_wcs(self[i].wcs)
                 wcsaxes_compat.default_wcs_grid(im.axes, self[i].spatial_units,
-                                             self[i].coordinate_system)
+                                                self[i].coordinate_system)
             else:
                 im.set_extent(np.concatenate((self[i].xrange.value,
                                               self[i].yrange.value)))
