@@ -852,32 +852,45 @@ def dustbuster(mc):
     mc: `sunpy.map.MapCube`
         Inpaint-corrected Mapcube
     """
-    image_result = []
-    ndx = len(mc)
-    for i, map in enumerate(mc):
-        image_orig = map.data
-        nx = map.meta.get('NRASTERP')
-        firstpos = range(ndx)[0::nx]
-        #  Create mask with values < 1, excluding frame (-200)
-        m = ma.masked_inside(image_orig, -199, .1)
+    intscale(mc)
+    image_inpaint = (mc.percentile(97).data) #(97th percentile to avoid SAA snow)
+    for i, m in enumerate(mc):
+        image_orig = m.data
 
-        if nx <= 50:  # sparse/coarse raster
-            skip = 1
-            secpos = [-1]
-            thirdpos = [-1]
-        elif nx > 50:  # dense raster
-            skip = 5
-            secpos = range(ndx)[1::nx]
-            thirdpos = range(ndx)[2::nx]
+        # Create mask with values < 10)
+        dustmask = ma.masked_inside(image_orig,-199,0)
+        if dustmask.mask.shape != image_orig.shape:
+            print("Dust not detected")
 
-        if (i in firstpos) or (i in secpos) or (i in thirdpos):
-            image_inpaint = mc[i + skip].data.copy()  # grab next frame
         else:
-            image_inpaint = mc[i - skip].data.copy()  # grab prev frame
+            # Dilate dust spots by 1 pixel
+            dilate = generate_binary_structure(2, 2)
+            dustmask.mask = binary_dilation(dustmask.mask, structure=dilate)
+            image_orig[dustmask.mask] = image_inpaint[dustmask.mask]
+            # Add dustmask to map mask
+            m.mask[dustmask.mask] = True
+            m.meta.add_history('Dustbuster correction applied, dustmask added to map mask')
+            
+    return mc
 
-        # Inpaint mask onto image
-        image_orig[m.mask] = image_inpaint[m.mask]
-
-        map.data = image_orig
-
+def intscale(mc):
+    """
+    Checks if SJICube was read using memory mapping and return scale-corrected SJICube.
+    Parameters
+    ----------
+    mc: `irispy.sji.SJICube`
+        SJICube to read
+    Returns
+    -------
+    mc: `irispy.sji.SJICube`
+        Scale-corrected SJICube
+    """
+    BZERO = 31968
+    BSCALE = mc[0].meta['bscale']
+    for m in mc:
+        imdata=m.data
+        if imdata.min() == BAD_PIXEL_VALUE_UNSCALED:
+            imdata[:, :] = (imdata[:, :]+BZERO) * BSCALE
+            m.meta.add_history('Intscale applied')
+            
     return mc
