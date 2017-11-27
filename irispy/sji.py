@@ -852,7 +852,11 @@ def dustbuster(mc):
     mc: `sunpy.map.MapCube`
         Inpaint-corrected Mapcube
     """
-    intscale(mc)
+    imdata=mc[0].data
+    if imdata.min() == BAD_PIXEL_VALUE_UNSCALED:
+        print('Cannot use dustbuster with unscaled data')
+        return
+    
     image_inpaint = (mc.percentile(97).data) #(97th percentile to avoid SAA snow)
     for i, m in enumerate(mc):
         image_orig = m.data
@@ -870,27 +874,5 @@ def dustbuster(mc):
             # Add dustmask to map mask
             m.mask[dustmask.mask] = True
             m.meta.add_history('Dustbuster correction applied, dustmask added to map mask')
-            
-    return mc
-
-def intscale(mc):
-    """
-    Checks if SJICube was read using memory mapping and return scale-corrected SJICube.
-    Parameters
-    ----------
-    mc: `irispy.sji.SJICube`
-        SJICube to read
-    Returns
-    -------
-    mc: `irispy.sji.SJICube`
-        Scale-corrected SJICube
-    """
-    BZERO = 31968
-    BSCALE = mc[0].meta['bscale']
-    for m in mc:
-        imdata=m.data
-        if imdata.min() == BAD_PIXEL_VALUE_UNSCALED:
-            imdata[:, :] = (imdata[:, :]+BZERO) * BSCALE
-            m.meta.add_history('Intscale applied')
             
     return mc
