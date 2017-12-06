@@ -199,8 +199,8 @@ class IRISSpectrograph(object):
                "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
                "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
                "Instance period: {0} -- {1}\n".format(
-                   self.data[spectral_window][0]._extra_coords["time"]["value"],
-                   self.data[spectral_window][-1]._extra_coords["time"]["value"]) + \
+                   self.data[spectral_window][0].extra_coords["time"]["value"],
+                   self.data[spectral_window][-1].extra_coords["time"]["value"]) + \
                "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
                "Spectral windows{0}>".format(spectral_windows_info)
 
@@ -279,8 +279,8 @@ Axis Types: {axis_types}
 Sequence Shape: {seq_shape}
 
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
-           inst_start=self[0]._extra_coords["time"]["value"],
-           inst_end=self[-1]._extra_coords["time"]["value"],
+           inst_start=self[0].extra_coords["time"]["value"],
+           inst_end=self[-1].extra_coords["time"]["value"],
            n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
            axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
 
@@ -426,19 +426,19 @@ class IRISSpectrogram(NDCube):
         result = super(IRISSpectrogram, self).__getitem__(item)
         return IRISSpectrogram(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            _extra_coords_to_input_format(result._extra_coords, result.missing_axis),
+            _extra_coords_to_input_format(result.extra_coords, result.missing_axis),
             mask=result.mask, missing_axis=result.missing_axis)
 
     def __repr__(self):
-        if self._extra_coords["time"]["axis"] is None:
+        if self.extra_coords["time"]["axis"] is None:
             axis_missing = True
         else:
-            axis_missing = self.missing_axis[::-1][self._extra_coords["time"]["axis"]]
+            axis_missing = self.missing_axis[::-1][self.extra_coords["time"]["axis"]]
         if axis_missing is True:
-            instance_start = instance_end = self._extra_coords["time"]["value"]
+            instance_start = instance_end = self.extra_coords["time"]["value"]
         else:
-            instance_start = self._extra_coords["time"]["value"][0],
-            instance_end = self._extra_coords["time"]["value"][-1]
+            instance_start = self.extra_coords["time"]["value"][0],
+            instance_end = self.extra_coords["time"]["value"][-1]
         return """IRISSpectrogram
 ---------------------
 {obs_repr}
@@ -501,7 +501,7 @@ Axis Types: {axis_types}
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogram(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
+                    _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
                     mask=self.mask, missing_axis=self.missing_axis)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
@@ -533,7 +533,7 @@ Axis Types: {axis_types}
         else:
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogram(new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                               _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
+                               _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
                                mask=self.mask, missing_axis=self.missing_axis)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
@@ -565,8 +565,8 @@ Axis Types: {axis_types}
         """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
-        exposure_time_s = self._extra_coords["exposure time"]["value"].to(u.s).value
-        if not self._extra_coords["exposure time"]["value"].isscalar:
+        exposure_time_s = self.extra_coords["exposure time"]["value"].to(u.s).value
+        if not self.extra_coords["exposure time"]["value"].isscalar:
             if len(self.dimensions.shape) == 1:
                 pass
             elif len(self.dimensions.shape) == 2:
@@ -587,7 +587,7 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogram with correction applied/undone.
         return IRISSpectrogram(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            _extra_coords_to_input_format(self._extra_coords, self.missing_axis),
+            _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
             mask=self.mask, missing_axis=self.missing_axis)
 
 
