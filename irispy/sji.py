@@ -146,7 +146,7 @@ class SJICube(object):
         """Creates a new instance"""
         if isinstance(input, str):
             hdulist = fits.open(input, memmap=memmap, do_not_scale_image_data=memmap)
-            self.data = fits[0].data
+            self.data = hdulist[0].data
             if memmap:
                 self.mask = np.ma.masked_equal(hdulist[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
             else:
