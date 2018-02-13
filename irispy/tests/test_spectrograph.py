@@ -12,6 +12,8 @@ from astropy.io import fits
 import astropy.units as u
 from ndcube.wcs_util import WCS
 from ndcube.cube_utils import assert_cubes_equal, assert_cubesequences_equal
+#from ndcube.utils.wcs import WCS
+#from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
 from irispy.spectrograph import IRISSpectrogram, IRISSpectrogramSequence, IRISSpectrograph
 import irispy.data.test
@@ -62,43 +64,43 @@ extra_coords1 = [("time", 0,
 spectrogram_DN0 = IRISSpectrogram(SOURCE_DATA_DN, wcs0,
                                   SOURCE_UNCERTAINTY_DN,
                                   iris_tools.DN_UNIT["FUV"], meta0, extra_coords0)
-spectrogram_ct0 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV, wcs0,
+spectrogram_photon0 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV, wcs0,
                                   SOURCE_UNCERTAINTY_PHOTONS_FUV,
-                                  u.ct, meta0, extra_coords0)
+                                  u.photon, meta0, extra_coords0)
 spectrogram_DN_per_s0 = IRISSpectrogram(SOURCE_DATA_DN/single_exposure_time, wcs0,
                                         SOURCE_UNCERTAINTY_DN/single_exposure_time,
                                         iris_tools.DN_UNIT["FUV"]/u.s, meta0, extra_coords0)
-spectrogram_ct_per_s0 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
+spectrogram_photon_per_s0 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
                                         SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time,
-                                        u.ct/u.s, meta0, extra_coords0)
+                                        u.photon/u.s, meta0, extra_coords0)
 spectrogram_DN1 = IRISSpectrogram(SOURCE_DATA_DN, wcs0,
                                   SOURCE_UNCERTAINTY_DN,
                                   iris_tools.DN_UNIT["FUV"], meta0, extra_coords1)
-spectrogram_ct1 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV, wcs0,
+spectrogram_photon1 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV, wcs0,
                                   SOURCE_UNCERTAINTY_PHOTONS_FUV,
-                                  u.ct, meta0, extra_coords1)
+                                  u.photon, meta0, extra_coords1)
 spectrogram_DN_per_s1 = IRISSpectrogram(SOURCE_DATA_DN/single_exposure_time, wcs0,
                                         SOURCE_UNCERTAINTY_DN/single_exposure_time,
                                         iris_tools.DN_UNIT["FUV"]/u.s, meta0, extra_coords1)
-spectrogram_ct_per_s1 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
+spectrogram_photon_per_s1 = IRISSpectrogram(SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
                                         SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time,
-                                        u.ct/u.s, meta0, extra_coords1)
-spectrogram_ct_per_s_per_s0 = IRISSpectrogram(
+                                        u.photon/u.s, meta0, extra_coords1)
+spectrogram_photon_per_s_per_s0 = IRISSpectrogram(
     SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
     SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
-    u.ct/u.s/u.s, meta0, extra_coords0)
-spectrogram_ct_s0 = IRISSpectrogram(
+    u.photon/u.s/u.s, meta0, extra_coords0)
+spectrogram_photon_s0 = IRISSpectrogram(
     SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
     SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
-    u.ct*u.s, meta0, extra_coords0)
-spectrogram_ct_per_s_per_s1 = IRISSpectrogram(
+    u.photon*u.s, meta0, extra_coords0)
+spectrogram_photon_per_s_per_s1 = IRISSpectrogram(
     SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
     SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
-    u.ct/u.s/u.s, meta0, extra_coords1)
-spectrogram_ct_s1 = IRISSpectrogram(
+    u.photon/u.s/u.s, meta0, extra_coords1)
+spectrogram_photon_s1 = IRISSpectrogram(
     SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
     SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
-    u.ct*u.s, meta0, extra_coords1)
+    u.photon*u.s, meta0, extra_coords1)
 
 # Define meta dict for an IRISSpectrogramSequence
 meta_seq = {"detector type": "FUV", "spectral window": "C II 1336",
@@ -106,16 +108,16 @@ meta_seq = {"detector type": "FUV", "spectral window": "C II 1336",
 # Define IRISSpectrogramSequences
 sequence_DN = IRISSpectrogramSequence([spectrogram_DN0, spectrogram_DN1], 0,
                                        SOURCE_DATA_DN.shape[0], 0, meta_seq)
-sequence_ct = IRISSpectrogramSequence([spectrogram_ct0, spectrogram_ct1], 0,
+sequence_photon = IRISSpectrogramSequence([spectrogram_photon0, spectrogram_photon1], 0,
                                        SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
 sequence_DN_per_s = IRISSpectrogramSequence([spectrogram_DN_per_s0, spectrogram_DN_per_s1], 0,
                                              SOURCE_DATA_DN.shape[0], 0, meta_seq)
-sequence_ct_per_sec = IRISSpectrogramSequence([spectrogram_ct_per_s0, spectrogram_ct_per_s1], 0,
+sequence_photon_per_s = IRISSpectrogramSequence([spectrogram_photon_per_s0, spectrogram_photon_per_s1], 0,
                                                SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
-sequence_ct_per_sec_per_sec = IRISSpectrogramSequence(
-    [spectrogram_ct_per_s_per_s0, spectrogram_ct_per_s1], 0,
+sequence_photon_per_s_per_s = IRISSpectrogramSequence(
+    [spectrogram_photon_per_s_per_s0, spectrogram_photon_per_s1], 0,
     SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
-sequence_ct_s = IRISSpectrogramSequence([spectrogram_ct_s0, spectrogram_ct_s1], 0,
+sequence_photon_s = IRISSpectrogramSequence([spectrogram_photon_s0, spectrogram_photon_s1], 0,
                                         SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
 
 @pytest.fixture
@@ -128,6 +130,10 @@ def test_fits_data_comparison(iris_l2_test_raster):
     """Make sure the data is the same in pyfits and irispy"""
     hdulist = fits.open(os.path.join(
         testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
+    spectral_window1 = hdulist[0].header["TDESC1"]
+    spectral_window2 = hdulist[0].header["TDESC2"]
+    spectral_window3 = hdulist[0].header["TDESC3"]
+
     data1 = copy.deepcopy(hdulist[1].data)
     data2 = copy.deepcopy(hdulist[2].data)
     data3 = copy.deepcopy(hdulist[3].data)
@@ -136,22 +142,23 @@ def test_fits_data_comparison(iris_l2_test_raster):
     data2[hdulist[2].data == -200.] = np.nan
     data3[hdulist[3].data == -200.] = np.nan
 
-    spectral_windows = iris_l2_test_raster.spectral_windows['name']
-
-    np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[0]][0].data, data1)
-    np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[1]][0].data, data2)
-    np.testing.assert_allclose(iris_l2_test_raster.data[spectral_windows[2]][0].data, data3)
+    np.testing.assert_array_almost_equal(
+        iris_l2_test_raster.data[spectral_window1].data[0].data, data1)
+    np.testing.assert_array_almost_equal(
+        iris_l2_test_raster.data[spectral_window2].data[0].data, data2)
+    np.testing.assert_array_almost_equal(
+        iris_l2_test_raster.data[spectral_window3].data[0].data, data3)
 
 
 @pytest.mark.parametrize("input_cube, new_unit, expected_cube", [
     (spectrogram_DN0, "DN", spectrogram_DN0),
-    (spectrogram_DN0, "photons", spectrogram_ct0),
+    (spectrogram_DN0, "photons", spectrogram_photon0),
     (spectrogram_DN_per_s0, "DN", spectrogram_DN_per_s0),
-    (spectrogram_DN_per_s0, "photons", spectrogram_ct_per_s0),
-    (spectrogram_ct0, "DN", spectrogram_DN0),
-    (spectrogram_ct0, "photons", spectrogram_ct0),
-    (spectrogram_ct_per_s0, "DN", spectrogram_DN_per_s0),
-    (spectrogram_ct_per_s0, "photons", spectrogram_ct_per_s0)
+    (spectrogram_DN_per_s0, "photons", spectrogram_photon_per_s0),
+    (spectrogram_photon0, "DN", spectrogram_DN0),
+    (spectrogram_photon0, "photons", spectrogram_photon0),
+    (spectrogram_photon_per_s0, "DN", spectrogram_DN_per_s0),
+    (spectrogram_photon_per_s0, "photons", spectrogram_photon_per_s0)
 ])
 def test_irisspectrogram_convert_to(input_cube, new_unit, expected_cube):
     output_cube = input_cube.convert_to(new_unit)
@@ -161,10 +168,10 @@ def test_irisspectrogram_convert_to(input_cube, new_unit, expected_cube):
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
     (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
     (spectrogram_DN_per_s0, True, False, spectrogram_DN0),
-    (spectrogram_ct0, False, False, spectrogram_ct_per_s0),
-    (spectrogram_ct_per_s0, True, False, spectrogram_ct0),
-    (spectrogram_ct_per_s0, False, True, spectrogram_ct_per_s_per_s0),
-    (spectrogram_ct0, True, True, spectrogram_ct_s0)
+    (spectrogram_photon0, False, False, spectrogram_photon_per_s0),
+    (spectrogram_photon_per_s0, True, False, spectrogram_photon0),
+    (spectrogram_photon_per_s0, False, True, spectrogram_photon_per_s_per_s0),
+    (spectrogram_photon0, True, True, spectrogram_photon_s0)
 ])
 def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo,
                                                         force, expected_cube):
@@ -174,26 +181,26 @@ def test_irisspectrogram_apply_exposure_time_correction(input_cube, undo,
 
 @pytest.mark.parametrize("input_sequence, new_unit, expected_sequence", [
     (sequence_DN, "DN", sequence_DN),
-    (sequence_DN, "photons", sequence_ct),
-    (sequence_ct, "DN", sequence_DN),
-    (sequence_ct, "photons", sequence_ct),
+    (sequence_DN, "photons", sequence_photon),
+    (sequence_photon, "DN", sequence_DN),
+    (sequence_photon, "photons", sequence_photon),
     (sequence_DN_per_s, "DN", sequence_DN_per_s),
-    (sequence_DN_per_s, "photons", sequence_ct_per_sec),
-    (sequence_ct_per_sec, "DN", sequence_DN_per_s),
-    (sequence_ct_per_sec, "photons", sequence_ct_per_sec)
-)]
+    (sequence_DN_per_s, "photons", sequence_photon_per_s),
+    (sequence_photon_per_s, "DN", sequence_DN_per_s),
+    (sequence_photon_per_s, "photons", sequence_photon_per_s)
+])
 def test_irisspectrogramsequence_convert_to(input_sequence, new_unit, expected_sequence):
-    output_sequence = input_sequence.to(new_unit, copy=True)
+    output_sequence = input_sequence.convert_to(new_unit, copy=True)
     assert_cubesequences_equal(output_sequence, expected_sequence)
 
 
 @pytest.mark.parametrize("input_sequence, undo, force, expected_sequence", [
     (sequence_DN, False, False, sequence_DN_per_s),
     (sequence_DN_per_s, True, False, sequence_DN),
-    (sequence_ct, False, False, sequence_ct_per_s),
-    (sequence_ct, True, True, sequence_ct_s),
-    (sequence_ct_per_s, False, True, sequence_ct_per_s_per_s),
-    (sequence_ct_per_s, True, True, sequence_ct)
+    (sequence_photon, False, False, sequence_photon_per_s),
+    (sequence_photon, True, True, sequence_photon_s),
+    (sequence_photon_per_s, False, True, sequence_photon_per_s_per_s),
+    (sequence_photon_per_s, True, True, sequence_photon)
 ])
 def test_irisspectrogramsequence_apply_exposure_time_correction(
         input_sequence, undo, force, expected_sequence):
