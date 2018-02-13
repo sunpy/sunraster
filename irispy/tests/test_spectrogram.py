@@ -4,7 +4,7 @@ import numpy as np
 import astropy.units as u
 import ndcube
 from ndcube import NDCube, NDCubeSequence
-from ndcube.wcs_util import WCS
+from ndcube.utils.wcs import WCS
 from ndcube import SequenceDimensionPair
 
 from irispy.spectrogram import SpectrogramSequence

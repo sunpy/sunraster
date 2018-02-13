@@ -8,8 +8,9 @@ import numpy as np
 import astropy.units as u
 from astropy.io import fits
 from astropy.table import Table
-from ndcube import NDCube, NDCubeSequence, _extra_coords_to_input_format
-from ndcube.wcs_util import WCS
+from ndcube import NDCube, NDCubeSequence
+from ndcube.utils.wcs import WCS
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 from sunpy.time import parse_time
 
 from irispy.spectrogram import SpectrogramSequence
@@ -76,8 +77,8 @@ class IRISSpectrograph(object):
                              "DATA_LEV": hdulist[0].header["DATA_LEV"],
                              "OBSID": hdulist[0].header["OBSID"],
                              "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                             "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
-                             "ENDOBS": parse_time(hdulist[0].header["ENDOBS"]),
+                             "STARTOBS": _try_parse_time_on_meta(hdulist[0].header["STARTOBS"]),
+                             "ENDOBS": _try_parse_time_on_meta(hdulist[0].header["ENDOBS"]),
                              "SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
                              "AECNOBS": int(hdulist[0].header["AECNOBS"]),
                              "FOVX": hdulist[0].header["FOVX"] * u.arcsec,
@@ -153,8 +154,8 @@ class IRISSpectrograph(object):
                 window_extra_coords.append(("exposure time", 0, exposure_times))
                 # Collect metadata relevant to single files.
                 meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
-                        "DATE_OBS": parse_time(hdulist[0].header["DATE_OBS"]),
-                        "DATE_END": parse_time(hdulist[0].header["DATE_END"]),
+                        "DATE_OBS": _try_parse_time_on_meta(hdulist[0].header["DATE_OBS"]),
+                        "DATE_END": _try_parse_time_on_meta(hdulist[0].header["DATE_END"]),
                         "HLZ": bool(int(hdulist[0].header["HLZ"])),
                         "SAA": bool(int(hdulist[0].header["SAA"])),
                         "DSUN_OBS": hdulist[0].header["DSUN_OBS"] * u.m,
@@ -167,8 +168,8 @@ class IRISSpectrograph(object):
                         "spectral window": window_name,
                         "OBSID": hdulist[0].header["OBSID"],
                         "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                        "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
-                        "ENDOBS": parse_time(hdulist[0].header["ENDOBS"])
+                        "STARTOBS": _try_parse_time_on_meta(hdulist[0].header["STARTOBS"]),
+                        "ENDOBS": _try_parse_time_on_meta(hdulist[0].header["ENDOBS"])
                         }
                 # Derive uncertainty of data
                 uncertainty = u.Quantity(np.sqrt(
@@ -426,7 +427,7 @@ class IRISSpectrogram(NDCube):
         result = super(IRISSpectrogram, self).__getitem__(item)
         return IRISSpectrogram(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            _extra_coords_to_input_format(result.extra_coords, result.missing_axis),
+            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axis),
             mask=result.mask, missing_axis=result.missing_axis)
 
     def __repr__(self):
@@ -448,7 +449,7 @@ Data shape: {shape}
 Axis Types: {axis_types}
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
            inst_start=instance_start, inst_end=instance_end,
-           shape=self.dimensions, axis_types=self.dimensions.axis_types[::])
+           shape=self.dimensions, axis_types=self.world_axis_physical_types)
 
     def convert_to(self, new_unit_type):
         """
@@ -501,7 +502,7 @@ Axis Types: {axis_types}
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogram(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
+                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
                     mask=self.mask, missing_axis=self.missing_axis)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
@@ -533,7 +534,7 @@ Axis Types: {axis_types}
         else:
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogram(new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                               _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
+                               convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
                                mask=self.mask, missing_axis=self.missing_axis)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
@@ -567,11 +568,11 @@ Axis Types: {axis_types}
         # it can be broadcast with data and uncertainty arrays.
         exposure_time_s = self.extra_coords["exposure time"]["value"].to(u.s).value
         if not self.extra_coords["exposure time"]["value"].isscalar:
-            if len(self.dimensions.shape) == 1:
+            if len(self.dimensions) == 1:
                 pass
-            elif len(self.dimensions.shape) == 2:
+            elif len(self.dimensions) == 2:
                 exposure_time_s = exposure_time_s[:, np.newaxis]
-            elif len(self.dimensions.shape) == 3:
+            elif len(self.dimensions) == 3:
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
@@ -587,7 +588,7 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogram with correction applied/undone.
         return IRISSpectrogram(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            _extra_coords_to_input_format(self.extra_coords, self.missing_axis),
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
             mask=self.mask, missing_axis=self.missing_axis)
 
 
@@ -597,4 +598,17 @@ def _produce_obs_repr_string(meta):
 OBS Description: {obs_desc}
 OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_info[1],
                                                obs_start=obs_info[2], obs_end=obs_info[3])
+
+
+def _try_parse_time_on_meta(meta):
+    result = None
+    try:
+        result = parse_time(meta)
+    except ValueError as err:
+        if "not a valid time string!" not in err.args[0]:
+            raise err
+        else:
+            pass
+    return result
+
 

@@ -10,10 +10,8 @@ import numpy as np
 import astropy.wcs as wcs
 from astropy.io import fits
 import astropy.units as u
-from ndcube.wcs_util import WCS
-from ndcube.cube_utils import assert_cubes_equal, assert_cubesequences_equal
-#from ndcube.utils.wcs import WCS
-#from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
+from ndcube.utils.wcs import WCS
+from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
 from irispy.spectrograph import IRISSpectrogram, IRISSpectrogramSequence, IRISSpectrograph
 import irispy.data.test

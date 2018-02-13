@@ -4,7 +4,7 @@
 import numpy as np
 import astropy.units as u
 from ndcube import NDCube, NDCubeSequence
-import ndcube.cube_utils as cu
+import ndcube.utils.cube as cu
 from ndcube import SequenceDimensionPair
 
 from irispy import iris_tools
