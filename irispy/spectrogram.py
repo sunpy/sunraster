@@ -4,7 +4,7 @@
 import numpy as np
 import astropy.units as u
 from ndcube import NDCube, NDCubeSequence
-import ndcube.utils.cube as cu
+import ndcube.utils.sequence
 from ndcube import SequenceDimensionPair
 
 from irispy import iris_tools
@@ -44,7 +44,7 @@ class SpectrogramSequence(NDCubeSequence):
         super(SpectrogramSequence, self).__init__(
             data_list, meta=meta, common_axis=common_axis)
         self.exposure_axis_extra_coords = self.common_axis_extra_coords
-
+"""
     def __getitem__(self, item):
         if item is None or (isinstance(item, tuple) and None in item):
             raise IndexError("None indices not supported")
@@ -58,23 +58,27 @@ class SpectrogramSequence(NDCubeSequence):
     @property
     def dimensions(self):
         return SequenceDimensionPair(
-            shape=tuple([int(sum([d.dimensions.shape[0].value for d in self.data]))] + \
-                        list(self.data[0].dimensions.shape[1::])),
-            axis_types=tuple(self.data[0].dimensions.axis_types))
+            shape=tuple([int(sum([d.dimensions[0].value for d in self.data]))] + \
+                        list(self.data[0].dimensions[1::])),
+            axis_types=tuple(self.data[0].world_axis_physical_types))
+
+    @property
+    def world_axis_physical_types(self):
+        pass
 
     def __repr__(self):
         return(
-            """SpectrogramSequence
+            SpectrogramSequence
 ---------------------
 Rasters:  {n_rasters}
 Exposures per Raster: {n_steps}
 Axis Types: {axis_types}
 Sequence Shape: {seq_shape}\n
-""".format(n_rasters=int((self.dimensions.shape[0]+self.first_exposure_raster_position)/ \
+.format(n_rasters=int((self.dimensions.shape[0]+self.first_exposure_raster_position)/ \
                          self.raster_positions_per_scan),
            n_steps=self.raster_positions_per_scan, axis_types=self.dimensions.axis_types[::],
            seq_shape=self.dimensions.shape))
-
+"""
 class _IndexByRasterSlicer(object):
     """
     Helper class to make slicing in index_as_cube more pythonic.
@@ -96,4 +100,4 @@ class _IndexByRasterSlicer(object):
 
     def __getitem__(self, item):
         # slice time here
-        return cu.get_cube_from_sequence(self.seq, item)
+        return ndcube.utils.sequence.slice_sequence(self.seq, item)
