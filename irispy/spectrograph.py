@@ -13,7 +13,6 @@ from ndcube.utils.wcs import WCS
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 from sunpy.time import parse_time
 
-from irispy.spectrogram import SpectrogramSequence
 from irispy import iris_tools
 
 __all__ = ['IRISSpectrograph']
@@ -183,10 +182,9 @@ class IRISSpectrograph(object):
         # Attach dictionary containing level 1 and wcs info for each file used.
         # making a NDCubeSequence of every dictionary key window.
         self.data = dict([(window_name,
-                           IRISSpectrogramSequence(data_dict[window_name], common_axis,
-                                               raster_positions_per_scan,
-                                               first_exposure_raster_position=0,
-                                               meta=window_metas[window_name]))
+                           IRISSpectrogramSequence(data_dict[window_name],
+                                                   meta=window_metas[window_name],
+                                                   common_axis=common_axis))
                           for window_name in spectral_windows_req])
 
     def __repr__(self):
@@ -216,7 +214,7 @@ class IRISSpectrograph(object):
                 spectral_window_list.append([self.data[key].meta[colname] for colname in colnames])
         return Table(rows=spectral_window_list, names=colnames)
 
-class IRISSpectrogramSequence(SpectrogramSequence):
+class IRISSpectrogramSequence(NDCubeSequence):
     """Class for holding, slicing and plotting IRIS spectrogram data.
 
     This class contains all the functionality of its super class with
@@ -245,8 +243,7 @@ class IRISSpectrogramSequence(SpectrogramSequence):
         Metadata associated with the sequence.
 
     """
-    def __init__(self, data_list, common_axis, raster_positions_per_scan,
-                 first_exposure_raster_position, meta):
+    def __init__(self, data_list, meta, common_axis=0):
         detector_type_key = "detector type"
         # Check that meta contains required keys.
         required_meta_keys = [detector_type_key, "spectral window",
@@ -262,28 +259,21 @@ class IRISSpectrogramSequence(SpectrogramSequence):
                              "value of 'spectral window' in its meta.")
         # Initialize Sequence.
         super(IRISSpectrogramSequence, self).__init__(
-            data_list, common_axis, raster_positions_per_scan,
-            first_exposure_raster_position, meta=meta)
+            data_list, meta=meta, common_axis=common_axis)
 
     def __repr__(self):
-        number_of_rasters = int(
-            (self.dimensions.shape[0] + self.first_exposure_raster_position) / \
-                self.raster_positions_per_scan)
         return """IRISSpectrogramSequence
 ---------------------
 {obs_repr}
 
 Sequence period: {inst_start} -- {inst_end}
-Rasters:  {n_rasters}
-Exposures per Raster: {n_steps}
-Axis Types: {axis_types}
 Sequence Shape: {seq_shape}
+Axis Types: {axis_types}
 
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
            inst_start=self[0].extra_coords["time"]["value"],
            inst_end=self[-1].extra_coords["time"]["value"],
-           n_rasters=number_of_rasters, n_steps=self.raster_positions_per_scan,
-           axis_types=self.dimensions.axis_types[::], seq_shape=self.dimensions.shape)
+           seq_shape=self.dimensions, axis_types=self.world_axis_physical_types)
 
     def convert_to(self, new_unit_type, copy=False):
         """
@@ -308,8 +298,7 @@ Sequence Shape: {seq_shape}
             converted_data_list.append(cube.convert_to(new_unit_type))
         if copy is True:
             return IRISSpectrogramSequence(
-                converted_data_list, self._common_axis, self.raster_positions_per_scan,
-                self.first_exposure_raster_position, meta=self.meta)
+                converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
 
@@ -354,8 +343,7 @@ Sequence Shape: {seq_shape}
                                                                            force=force))
         if copy is True:
             return IRISSpectrogramSequence(
-                converted_data_list, self._common_axis, self.raster_positions_per_scan,
-                self.first_exposure_raster_position, meta=self.meta)
+                converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
 

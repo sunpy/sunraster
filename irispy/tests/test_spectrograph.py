@@ -104,19 +104,16 @@ spectrogram_photon_s1 = IRISSpectrogram(
 meta_seq = {"detector type": "FUV", "spectral window": "C II 1336",
             "brightest wavelength": 100, "min wavelength": 90, "max wavelength": 110}
 # Define IRISSpectrogramSequences
-sequence_DN = IRISSpectrogramSequence([spectrogram_DN0, spectrogram_DN1], 0,
-                                       SOURCE_DATA_DN.shape[0], 0, meta_seq)
-sequence_photon = IRISSpectrogramSequence([spectrogram_photon0, spectrogram_photon1], 0,
-                                       SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
-sequence_DN_per_s = IRISSpectrogramSequence([spectrogram_DN_per_s0, spectrogram_DN_per_s1], 0,
-                                             SOURCE_DATA_DN.shape[0], 0, meta_seq)
-sequence_photon_per_s = IRISSpectrogramSequence([spectrogram_photon_per_s0, spectrogram_photon_per_s1], 0,
-                                               SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
+sequence_DN = IRISSpectrogramSequence([spectrogram_DN0, spectrogram_DN1], meta_seq)
+sequence_photon = IRISSpectrogramSequence([spectrogram_photon0, spectrogram_photon1], meta_seq)
+sequence_DN_per_s = IRISSpectrogramSequence(
+    [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta_seq)
+sequence_photon_per_s = IRISSpectrogramSequence(
+    [spectrogram_photon_per_s0, spectrogram_photon_per_s1], meta_seq)
 sequence_photon_per_s_per_s = IRISSpectrogramSequence(
-    [spectrogram_photon_per_s_per_s0, spectrogram_photon_per_s1], 0,
-    SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
-sequence_photon_s = IRISSpectrogramSequence([spectrogram_photon_s0, spectrogram_photon_s1], 0,
-                                        SOURCE_DATA_PHOTONS_FUV.shape[0], 0, meta_seq)
+    [spectrogram_photon_per_s_per_s0, spectrogram_photon_per_s1], meta_seq)
+sequence_photon_s = IRISSpectrogramSequence(
+    [spectrogram_photon_s0, spectrogram_photon_s1], meta_seq)
 
 @pytest.fixture
 def iris_l2_test_raster():
