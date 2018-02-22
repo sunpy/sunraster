@@ -13,7 +13,7 @@ import astropy.units as u
 from ndcube.utils.wcs import WCS
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
-from irispy.spectrograph import IRISSpectrogram, IRISSpectrogramSequence, IRISSpectrograph
+from irispy.spectrograph import IRISSpectrogram, IRISSpectrogramSequence, IRISSpectrograph, read_iris_spectrograph_level2_fits
 import irispy.data.test
 from irispy import iris_tools
 
@@ -117,7 +117,7 @@ sequence_photon_s = IRISSpectrogramSequence(
 
 @pytest.fixture
 def iris_l2_test_raster():
-    return IRISSpectrograph(
+    return read_iris_spectrograph_level2_fits(
         os.path.join(testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
 
 
