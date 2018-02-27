@@ -41,7 +41,7 @@ RESPONSE_VERSION_FILENAMES = {"1": "iris_sra_20130211.geny", "2": "iris_sra_2013
 APPLY_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
     "been applied since the unit already includes inverse time.  " + \
     "To apply exposure time correction anyway, set 'force' kwarg to True."
-UNDONE_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
+UNDO_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
     "been undone since the unit does not include inverse time.  " + \
     "To undo exposure time correction anyway, set 'force' kwarg to True."
 
