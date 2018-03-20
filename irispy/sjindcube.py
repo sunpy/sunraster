@@ -8,10 +8,12 @@ from ndcube import NDCube
 from ndcube.utils.wcs import WCS
 import numpy as np
 from sunpy.time import parse_time
-
+from sunpy import config
 from irispy import iris_tools
 
 __all__ = ['SJI_NDCube']
+
+TIME_FORMAT = config.get("general", "time_format")
 
 # the following value is only appropriate for byte scaled images
 BAD_PIXEL_VALUE = -200.
@@ -89,28 +91,23 @@ class SJI_NDCube(NDCube):
 
     def __repr__(self):
         return (
-            """SJI_NDCube {dtype!s}
+            """
+    SJI_NDCube
     ---------
-    Observatory:\t {obs}
-    Instrument:\t {inst}
-    Detector:\t {det}
-    Measurement:\t {meas}
-    Wavelength:\t {wave}
-    Obs. Start:\t {date_start:{tmf}}
-    Obs. End:\t {date_end:{tmf}}
-    Num. of Frames:\t {frame_num}
-    IRIS Obs. id:\t {obs_id}
+    Observatory:\t\t {obs}
+    Instrument:\t\t\t {inst}
+    Wavelength:\t\t\t {wave} {unit}
+    Obs. Start:\t\t\t {date_start:{tmf}}
+    Obs. End:\t\t\t {date_end:{tmf}}
+    Num. of Frames:\t\t {frame_num}
+    IRIS Obs. id:\t\t {obs_id}
     IRIS Obs. Description:\t {obs_desc}
-    Dimensions:\t {dim}
-    Scale:\t\t {scale}
-    """.format(dtype=self.__class__.__name__,
-               obs=self.observatory, inst=self.instrument,
-               det=self.detector, meas=self.measurement,
-               wave=self.wavelength, date_start=self.date[0],
-               date_end=self.date[-1], frame_num=len(self),
-               dim=u.Quantity(self.dimensions), scale=u.Quantity(self.scale),
-               obs_id=self.iris_obs_id, obs_desc=self.iris_obs_description,
-               tmf=TIME_FORMAT) + self.data.__repr__())
+    """.format(obs=self.meta["OBSRVTRY"], inst=self.meta["DETECTOR"],
+               wave=self.meta["WAVElNTH"], unit=self.meta["WAVEUNIT"],
+               date_start=self.meta["DATE_OBS"], date_end=self.meta["DATE_END"],
+               frame_num=self.meta["NBFRAMES"],
+               obs_id=self.meta["OBSERVID"], obs_desc=self.meta["OBS_DESC"],
+               tmf=TIME_FORMAT))
 
 
 def read_fits(fitsfile):
@@ -150,7 +147,6 @@ def read_fits(fitsfile):
                       for s in my_file[1].data[:, my_file[1].header["TIME"]]])
     extra_coords = [('TIME', 0, times), ("EXPOSURE TIME", 0, exposure_times)]
     # Extraction of meta for NDCube from fits file.
-    number_of_images = my_file[0].data.shape[0]
     try:
         date_obs = parse_time(my_file[0].header["DATE_OBS"])
     except ValueError:
@@ -159,25 +155,17 @@ def read_fits(fitsfile):
         date_end = parse_time(my_file[0].header["DATE_END"])
     except ValueError:
         date_end = None
-    #for i in range(number_of_images):
-        meta = {'WAVElNTH': my_file[0].header.get('TWAVE1'),
-                'DETECTOR': my_file[0].header.get('INSTRUME'),
-                'WAVEUNIT': "Angstrom",
-                'OBSRVTRY': my_file[0].header.get('TELESCOP'),
-                'DATE_OBS': date_obs,
-                'DATE_END': date_end,}
-    #    for item in my_file[1].header[7:]:
-    #        meta[item] = my_file[1].data[i, my_file[1].header[item]]
-    #        if item.count('EXPTIMES'):
-    #            meta['EXPTIME'] = my_file[1].data[i, my_file[1].header[item]]
-
+    meta = {'OBSRVTRY': my_file[0].header.get('TELESCOP'),
+            'DETECTOR': my_file[0].header.get('INSTRUME'),
+            'WAVElNTH': my_file[0].header.get('TWAVE1'),
+            'WAVEUNIT': "Angstrom",
+            'DATE_OBS': date_obs,
+            'DATE_END': date_end,
+            'NBFRAMES': my_file[0].data.shape[0],
+            'OBSERVID': my_file[0].header.get('OBSID'),
+            'OBS_DESC': my_file[0].header.get('OBS_DESC')}
 
     my_file.close()
 
     return SJI_NDCube(data_nan_masked, wcs, uncertainty=uncertainty, unit=unit,
-                      mask=mask, extra_coords=extra_coords)
-    #return data_nan_masked
-    #return extra_coords
-    #return NDCube(data, wcs)
-    #return mask
-    #return meta
+                      meta=meta, mask=mask, extra_coords=extra_coords)
