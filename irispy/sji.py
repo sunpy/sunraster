@@ -5,6 +5,7 @@ This module provides movie tools for level 2 IRIS SJI fits file
 from copy import deepcopy
 from datetime import timedelta
 
+from ndcube import NDCube
 import numpy as np
 import numpy.ma as ma
 import matplotlib.colors as colors
@@ -878,3 +879,73 @@ def dustbuster(mc):
         map.data = image_orig
 
     return mc
+
+
+def read_iris_sji_level2_fits(filename):
+    """
+    Read IRIS level 2 SJI FITS from an OBS into an NDCube instance
+
+    Parameters
+    ----------
+    fitsfile : `str`
+        The fits file path
+
+    Returns
+    -------
+    result: 'ndcube.NDCube'
+
+    """
+
+    # Open a fits file
+    my_file = pyfits.open(filename)
+    # Derive WCS, data and mask for NDCube from fits file.
+    wcs = WCS(my_file[0].header)
+    data = my_file[0].data
+    data_nan_masked = my_file[0].data
+    data_nan_masked[data == BAD_PIXEL_VALUE] = np.nan
+    mask = data_nan_masked == BAD_PIXEL_VALUE
+    # Derive unit and readout noise from detector.
+    exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
+    unit = iris_tools.DN_UNIT["SJI"]
+    readout_noise = iris_tools.READOUT_NOISE["SJI"]
+    # Derive uncertainty of data for NDCube from fits file.
+    uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+                                     + readout_noise.to(u.photon).value**2),
+                             unit=u.photon).to(unit).value
+    # Derive extra coordinates for NDCube from fits file.
+    times = np.array([parse_time(my_file[0].header["STARTOBS"])
+                      + timedelta(seconds=s)
+                      for s in my_file[1].data[:, my_file[1].header["TIME"]]])
+    pztx = my_file[1].data[:, my_file[1].header["PZTX"]] * u.arcsec
+    pzty = my_file[1].data[:, my_file[1].header["PZTY"]] * u.arcsec
+    xcenix = my_file[1].data[:, my_file[1].header["XCENIX"]] * u.arcsec
+    ycenix = my_file[1].data[:, my_file[1].header["YCENIX"]] * u.arcsec
+    obs_vrix = my_file[1].data[:, my_file[1].header["OBS_VRIX"]] * u.m/u.s
+    ophaseix = my_file[1].data[:, my_file[1].header["OPHASEIX"]]
+    extra_coords = [('TIME', 0, times), ("pztx", 0, pztx), ("pzty", 0, pzty),
+                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix),
+                    ("EXPOSURE TIME", 0, exposure_times)]
+    # Extraction of meta for NDCube from fits file.
+    try:
+        date_obs = parse_time(my_file[0].header["DATE_OBS"])
+    except ValueError:
+        date_obs = None
+    try:
+        date_end = parse_time(my_file[0].header["DATE_END"])
+    except ValueError:
+        date_end = None
+    meta = {'TELESCOP': my_file[0].header.get('TELESCOP'),
+            'INSTRUME': my_file[0].header.get('INSTRUME'),
+            'TWAVE1': my_file[0].header.get('TWAVE1'),
+            'WAVEUNIT': "Angstrom",
+            'DATE_OBS': date_obs,
+            'DATE_END': date_end,
+            'NBFRAMES': my_file[0].data.shape[0],
+            'OBSID': my_file[0].header.get('OBSID'),
+            'OBS_DESC': my_file[0].header.get('OBS_DESC')}
+
+    my_file.close()
+
+    return NDCube(data_nan_masked, wcs, uncertainty=uncertainty, unit=unit,
+                  meta=meta, mask=mask, extra_coords=extra_coords)
