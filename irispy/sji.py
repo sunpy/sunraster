@@ -887,8 +887,8 @@ def read_iris_sji_level2_fits(filename):
 
     Parameters
     ----------
-    fitsfile : `str`
-        The fits file path
+    filename : `str`
+        File name to be read
 
     Returns
     -------
@@ -922,9 +922,9 @@ def read_iris_sji_level2_fits(filename):
     ycenix = my_file[1].data[:, my_file[1].header["YCENIX"]] * u.arcsec
     obs_vrix = my_file[1].data[:, my_file[1].header["OBS_VRIX"]] * u.m/u.s
     ophaseix = my_file[1].data[:, my_file[1].header["OPHASEIX"]]
-    extra_coords = [('TIME', 0, times), ("pztx", 0, pztx), ("pzty", 0, pzty),
-                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
-                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix),
+    extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
+                    ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
+                    ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
                     ("EXPOSURE TIME", 0, exposure_times)]
     # Extraction of meta for NDCube from fits file.
     try:
