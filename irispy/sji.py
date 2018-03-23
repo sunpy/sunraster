@@ -12,7 +12,7 @@ import matplotlib.colors as colors
 import matplotlib.animation
 from pandas import DataFrame
 from astropy.table import Table
-from astropy.io import fits as pyfits
+from astropy.io import fits
 import astropy.units as u
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy import visualization
@@ -143,7 +143,7 @@ class SJICube(object):
     def __init__(self, input):
         """Creates a new instance"""
         if isinstance(input, str):
-            fits = pyfits.open(input, memmap=True, do_not_scale_image_data=True)
+            fits = fits.open(input, memmap=True, do_not_scale_image_data=True)
             # TODO find a new masking value for unscaled data
             #self.data = np.ma.masked_less_equal(fits[0].data, 0)
             self.data = fits[0].data
@@ -897,7 +897,7 @@ def read_iris_sji_level2_fits(filename):
     """
 
     # Open a fits file
-    my_file = pyfits.open(filename)
+    my_file = fits.open(filename)
     # Derive WCS, data and mask for NDCube from fits file.
     wcs = WCS(my_file[0].header)
     data = my_file[0].data
@@ -927,14 +927,10 @@ def read_iris_sji_level2_fits(filename):
                     ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
                     ("EXPOSURE TIME", 0, exposure_times)]
     # Extraction of meta for NDCube from fits file.
-    try:
-        date_obs = parse_time(my_file[0].header["DATE_OBS"])
-    except ValueError:
-        date_obs = None
-    try:
-        date_end = parse_time(my_file[0].header["DATE_END"])
-    except ValueError:
-        date_end = None
+    date_obs = my_file[0].header.get('DATE_OBS', None)
+    date_obs = parse_time(date_obs) if date_obs else None
+    date_end = my_file[0].header.get('DATE_END', None)
+    date_end = parse_time(date_end) if date_end else None
     meta = {'TELESCOP': my_file[0].header.get('TELESCOP'),
             'INSTRUME': my_file[0].header.get('INSTRUME'),
             'TWAVE1': my_file[0].header.get('TWAVE1'),
