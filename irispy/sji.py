@@ -143,13 +143,13 @@ class SJICube(object):
     def __init__(self, input):
         """Creates a new instance"""
         if isinstance(input, str):
-            fits = fits.open(input, memmap=True, do_not_scale_image_data=True)
+            my_file = fits.open(input, memmap=True, do_not_scale_image_data=True)
             # TODO find a new masking value for unscaled data
             #self.data = np.ma.masked_less_equal(fits[0].data, 0)
-            self.data = fits[0].data
-            self.mask = np.ma.masked_equal(fits[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
-            reference_header = deepcopy(fits[0].header)
-            table_header = deepcopy(fits[1].header)
+            self.data = my_file[0].data
+            self.mask = np.ma.masked_equal(my_file[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
+            reference_header = deepcopy(my_file[0].header)
+            table_header = deepcopy(my_file[1].header)
             # fix reference header
             if reference_header.get('lvl_num') == 2:
                 reference_header['wavelnth'] = reference_header.get('twave1')
@@ -162,12 +162,12 @@ class SJICube(object):
 
             number_of_images = self.data.shape[0]
             metas = []
-            dts = fits[1].data[:, fits[1].header['TIME']]
-            file_wcs = WCS(fits[0].header)
+            dts = my_file[1].data[:, my_file[1].header['TIME']]
+            file_wcs = WCS(my_file[0].header)
             # Caution!! This has not been confirmed for non-zero roll
             # angles.
-            self.slit_center_sji_indices_x = fits[1].data[:, fits[1].header['SLTPX1IX']]
-            self.slit_center_sji_indices_y = fits[1].data[:, fits[1].header['SLTPX2IX']]
+            self.slit_center_sji_indices_x = my_file[1].data[:, my_file[1].header['SLTPX1IX']]
+            self.slit_center_sji_indices_y = my_file[1].data[:, my_file[1].header['SLTPX2IX']]
             slit_center_positions = file_wcs.celestial.all_pix2world(
                 self.slit_center_sji_indices_x, self.slit_center_sji_indices_y,
                 iris_tools.WCS_ORIGIN)
@@ -180,10 +180,10 @@ class SJICube(object):
                 metas[i]['DATE_OBS'] = str(parse_time(
                     reference_header['STARTOBS']) + timedelta(seconds=dts[i]))
                 # copy over the individual header fields
-                for item in fits[1].header[7:]:
-                    metas[i][item] = fits[1].data[i, fits[1].header[item]]
+                for item in my_file[1].header[7:]:
+                    metas[i][item] = my_file[1].data[i, my_file[1].header[item]]
                     if item.count('EXPTIMES'):
-                        metas[i]['EXPTIME'] = fits[1].data[i, fits[1].header[item]]
+                        metas[i]['EXPTIME'] = my_file[1].data[i, my_file[1].header[item]]
 
             self._meta = metas
         elif len(input) > 1:
