@@ -934,7 +934,6 @@ def read_iris_sji_level2_fits(filename):
     meta = {'TELESCOP': my_file[0].header.get('TELESCOP'),
             'INSTRUME': my_file[0].header.get('INSTRUME'),
             'TWAVE1': my_file[0].header.get('TWAVE1'),
-            'WAVEUNIT': "Angstrom",
             'DATE_OBS': date_obs,
             'DATE_END': date_end,
             'NBFRAMES': my_file[0].data.shape[0],
