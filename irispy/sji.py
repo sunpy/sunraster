@@ -5,13 +5,14 @@ This module provides movie tools for level 2 IRIS SJI fits file
 from copy import deepcopy
 from datetime import timedelta
 
+from ndcube import NDCube
 import numpy as np
 import numpy.ma as ma
 import matplotlib.colors as colors
 import matplotlib.animation
 from pandas import DataFrame
 from astropy.table import Table
-from astropy.io import fits as pyfits
+from astropy.io import fits
 import astropy.units as u
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy import visualization
@@ -142,13 +143,13 @@ class SJICube(object):
     def __init__(self, input):
         """Creates a new instance"""
         if isinstance(input, str):
-            fits = pyfits.open(input, memmap=True, do_not_scale_image_data=True)
+            my_file = fits.open(input, memmap=True, do_not_scale_image_data=True)
             # TODO find a new masking value for unscaled data
             #self.data = np.ma.masked_less_equal(fits[0].data, 0)
-            self.data = fits[0].data
-            self.mask = np.ma.masked_equal(fits[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
-            reference_header = deepcopy(fits[0].header)
-            table_header = deepcopy(fits[1].header)
+            self.data = my_file[0].data
+            self.mask = np.ma.masked_equal(my_file[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
+            reference_header = deepcopy(my_file[0].header)
+            table_header = deepcopy(my_file[1].header)
             # fix reference header
             if reference_header.get('lvl_num') == 2:
                 reference_header['wavelnth'] = reference_header.get('twave1')
@@ -161,12 +162,12 @@ class SJICube(object):
 
             number_of_images = self.data.shape[0]
             metas = []
-            dts = fits[1].data[:, fits[1].header['TIME']]
-            file_wcs = WCS(fits[0].header)
+            dts = my_file[1].data[:, my_file[1].header['TIME']]
+            file_wcs = WCS(my_file[0].header)
             # Caution!! This has not been confirmed for non-zero roll
             # angles.
-            self.slit_center_sji_indices_x = fits[1].data[:, fits[1].header['SLTPX1IX']]
-            self.slit_center_sji_indices_y = fits[1].data[:, fits[1].header['SLTPX2IX']]
+            self.slit_center_sji_indices_x = my_file[1].data[:, my_file[1].header['SLTPX1IX']]
+            self.slit_center_sji_indices_y = my_file[1].data[:, my_file[1].header['SLTPX2IX']]
             slit_center_positions = file_wcs.celestial.all_pix2world(
                 self.slit_center_sji_indices_x, self.slit_center_sji_indices_y,
                 iris_tools.WCS_ORIGIN)
@@ -179,10 +180,10 @@ class SJICube(object):
                 metas[i]['DATE_OBS'] = str(parse_time(
                     reference_header['STARTOBS']) + timedelta(seconds=dts[i]))
                 # copy over the individual header fields
-                for item in fits[1].header[7:]:
-                    metas[i][item] = fits[1].data[i, fits[1].header[item]]
+                for item in my_file[1].header[7:]:
+                    metas[i][item] = my_file[1].data[i, my_file[1].header[item]]
                     if item.count('EXPTIMES'):
-                        metas[i]['EXPTIME'] = fits[1].data[i, fits[1].header[item]]
+                        metas[i]['EXPTIME'] = my_file[1].data[i, my_file[1].header[item]]
 
             self._meta = metas
         elif len(input) > 1:
@@ -878,3 +879,68 @@ def dustbuster(mc):
         map.data = image_orig
 
     return mc
+
+
+def read_iris_sji_level2_fits(filename):
+    """
+    Read IRIS level 2 SJI FITS from an OBS into an NDCube instance
+
+    Parameters
+    ----------
+    filename : `str`
+        File name to be read
+
+    Returns
+    -------
+    result: 'ndcube.NDCube'
+
+    """
+
+    # Open a fits file
+    my_file = fits.open(filename)
+    # Derive WCS, data and mask for NDCube from fits file.
+    wcs = WCS(my_file[0].header)
+    data = my_file[0].data
+    data_nan_masked = my_file[0].data
+    data_nan_masked[data == BAD_PIXEL_VALUE] = np.nan
+    mask = data_nan_masked == BAD_PIXEL_VALUE
+    # Derive unit and readout noise from detector.
+    exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
+    unit = iris_tools.DN_UNIT["SJI"]
+    readout_noise = iris_tools.READOUT_NOISE["SJI"]
+    # Derive uncertainty of data for NDCube from fits file.
+    uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+                                     + readout_noise.to(u.photon).value**2),
+                             unit=u.photon).to(unit).value
+    # Derive extra coordinates for NDCube from fits file.
+    times = np.array([parse_time(my_file[0].header["STARTOBS"])
+                      + timedelta(seconds=s)
+                      for s in my_file[1].data[:, my_file[1].header["TIME"]]])
+    pztx = my_file[1].data[:, my_file[1].header["PZTX"]] * u.arcsec
+    pzty = my_file[1].data[:, my_file[1].header["PZTY"]] * u.arcsec
+    xcenix = my_file[1].data[:, my_file[1].header["XCENIX"]] * u.arcsec
+    ycenix = my_file[1].data[:, my_file[1].header["YCENIX"]] * u.arcsec
+    obs_vrix = my_file[1].data[:, my_file[1].header["OBS_VRIX"]] * u.m/u.s
+    ophaseix = my_file[1].data[:, my_file[1].header["OPHASEIX"]]
+    extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
+                    ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
+                    ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
+                    ("EXPOSURE TIME", 0, exposure_times)]
+    # Extraction of meta for NDCube from fits file.
+    date_obs = my_file[0].header.get('DATE_OBS', None)
+    date_obs = parse_time(date_obs) if date_obs else None
+    date_end = my_file[0].header.get('DATE_END', None)
+    date_end = parse_time(date_end) if date_end else None
+    meta = {'TELESCOP': my_file[0].header.get('TELESCOP'),
+            'INSTRUME': my_file[0].header.get('INSTRUME'),
+            'TWAVE1': my_file[0].header.get('TWAVE1'),
+            'DATE_OBS': date_obs,
+            'DATE_END': date_end,
+            'NBFRAMES': my_file[0].data.shape[0],
+            'OBSID': my_file[0].header.get('OBSID'),
+            'OBS_DESC': my_file[0].header.get('OBS_DESC')}
+
+    my_file.close()
+
+    return NDCube(data_nan_masked, wcs, uncertainty=uncertainty, unit=unit,
+                  meta=meta, mask=mask, extra_coords=extra_coords)
