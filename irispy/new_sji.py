@@ -84,10 +84,9 @@ class SJICube(NDCube):
         """
 
         # Initialize SJI_NDCube.
-        super(SJICube, self).__init__(data, wcs, uncertainty=uncertainty,
-                                      mask=mask, meta=meta, unit=unit,
-                                      extra_coords=extra_coords, copy=copy,
-                                      missing_axis=missing_axis)
+        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
+                         meta=meta, unit=unit, extra_coords=extra_coords,
+                         copy=copy, missing_axis=missing_axis)
 
     def __repr__(self):
         return (
@@ -95,26 +94,34 @@ class SJICube(NDCube):
     SJICube
     ---------
     Observatory:\t\t {obs}
-    Instrument:\t\t\t {inst}
-    Bandpass:\t\t\t {wave}
+    Instrument:\t\t\t {instrument}
+    Bandpass:\t\t\t {bandpass}
     Obs. Start:\t\t\t {date_start:{tmf}}
     Obs. End:\t\t\t {date_end:{tmf}}
-    Num. of Frames:\t\t {frame_num}
+    Instance Start:\t\t {instance_start:{tmf}}
+    Instance End:\t\t {instance_end:{tmf}}
+    Total Frames in Obs.:\t {frame_num}
     IRIS Obs. id:\t\t {obs_id}
     IRIS Obs. Description:\t {obs_desc}
     Cube dimensions:\t\t {dimensions}
     Axis Types:\t\t\t {axis_types}
-    """.format(obs=self.meta["TELESCOP"], inst=self.meta["INSTRUME"],
-               wave=self.meta["TWAVE1"], date_start=self.meta["DATE_OBS"],
-               date_end=self.meta["DATE_END"], frame_num=self.meta["NBFRAMES"],
-               obs_id=self.meta["OBSID"], obs_desc=self.meta["OBS_DESC"],
+    """.format(obs=self.meta["TELESCOP"],
+               instrument=self.meta["INSTRUME"],
+               bandpass=self.meta["TWAVE1"],
+               date_start=self.meta["DATE_OBS"],
+               date_end=self.meta["DATE_END"],
+               instance_start=self.meta["STARTOBS"],
+               instance_end=self.meta["ENDOBS"],
+               frame_num=self.meta["NBFRAMES"],
+               obs_id=self.meta["OBSID"],
+               obs_desc=self.meta["OBS_DESC"],
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions, tmf=TIME_FORMAT))
 
 
 def read_iris_sji_level2_fits(filename):
     """
-    Read IRIS level 2 SJI FITS from an OBS into an NDCube instance
+    Read IRIS level 2 SJI FITS from an OBS into an SJICube instance
 
     Parameters
     ----------
@@ -123,7 +130,7 @@ def read_iris_sji_level2_fits(filename):
 
     Returns
     -------
-    result: 'ndcube.NDCube'
+    result: 'irispy.sji.SJICube'
 
     """
 
@@ -162,14 +169,20 @@ def read_iris_sji_level2_fits(filename):
     date_obs = parse_time(date_obs) if date_obs else None
     date_end = my_file[0].header.get('DATE_END', None)
     date_end = parse_time(date_end) if date_end else None
-    meta = {'TELESCOP': my_file[0].header.get('TELESCOP'),
-            'INSTRUME': my_file[0].header.get('INSTRUME'),
-            'TWAVE1': my_file[0].header.get('TWAVE1'),
+    startobs = my_file[0].header.get('STARTOBS', None)
+    startobs = parse_time(startobs) if startobs else None
+    endobs = my_file[0].header.get('ENDOBS', None)
+    endobs = parse_time(endobs) if endobs else None
+    meta = {'TELESCOP': my_file[0].header.get('TELESCOP', "Unknown"),
+            'INSTRUME': my_file[0].header.get('INSTRUME', "Unknown"),
+            'TWAVE1': my_file[0].header.get('TWAVE1', "Unknown"),
             'DATE_OBS': date_obs,
             'DATE_END': date_end,
+            'STARTOBS': startobs,
+            'ENDOBS': endobs,
             'NBFRAMES': my_file[0].data.shape[0],
-            'OBSID': my_file[0].header.get('OBSID'),
-            'OBS_DESC': my_file[0].header.get('OBS_DESC')}
+            'OBSID': my_file[0].header.get('OBSID', "Unknown"),
+            'OBS_DESC': my_file[0].header.get('OBS_DESC', "Unknown")}
 
     my_file.close()
 
