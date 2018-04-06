@@ -77,17 +77,6 @@ class SJICube(NDCube):
     >>> sji = read_iris_sji_level2_fits(sample.SJI_CUBE_1400)
     """
 
-    def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
-                 extra_coords=None, mask=None, copy=False, missing_axis=None):
-        """
-        Initialization of Slit Jaw Imager
-        """
-
-        # Initialize SJI_NDCube.
-        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
-                         meta=meta, unit=unit, extra_coords=extra_coords,
-                         copy=copy, missing_axis=missing_axis)
-
     def __repr__(self):
         return (
             """
@@ -110,8 +99,8 @@ class SJICube(NDCube):
                bandpass=self.meta["TWAVE1"],
                date_start=self.meta["DATE_OBS"],
                date_end=self.meta["DATE_END"],
-               instance_start=self.meta["STARTOBS"],
-               instance_end=self.meta["ENDOBS"],
+               instance_start=self.extra_coords["TIME"]["value"][0],
+               instance_end=self.extra_coords["TIME"]["value"][-1],
                frame_num=self.meta["NBFRAMES"],
                obs_id=self.meta["OBSID"],
                obs_desc=self.meta["OBS_DESC"],
@@ -135,13 +124,13 @@ def read_iris_sji_level2_fits(filename):
     """
 
     # Open a fits file
-    my_file = fits.open(filename)
+    my_file = fits.open(filename, memmap=True, do_not_scale_image_data=True)
     # Derive WCS, data and mask for NDCube from fits file.
     wcs = WCS(my_file[0].header)
     data = my_file[0].data
     data_nan_masked = my_file[0].data
-    data_nan_masked[data == BAD_PIXEL_VALUE] = np.nan
-    mask = data_nan_masked == BAD_PIXEL_VALUE
+    data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = BAD_PIXEL_VALUE
+    mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
     # Derive unit and readout noise from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
     unit = iris_tools.DN_UNIT["SJI"]
