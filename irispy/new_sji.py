@@ -13,7 +13,6 @@ from sunpy.time import parse_time
 from sunpy import config
 from irispy import iris_tools
 
-
 __all__ = ['SJICube']
 
 TIME_FORMAT = config.get("general", "time_format")
@@ -71,6 +70,9 @@ class SJICube(NDCube):
         input as reference.
         Default is False.
 
+    scaled : `bool`, optional
+        Indicates if datas has been scaled.
+
     Examples
     --------
     >>> from irispy import sji
@@ -108,16 +110,16 @@ class SJICube(NDCube):
     IRIS Obs. Description:\t {obs_desc}
     Cube dimensions:\t\t {dimensions}
     Axis Types:\t\t\t {axis_types}
-    """.format(obs=self.meta["TELESCOP"],
-               instrument=self.meta["INSTRUME"],
-               bandpass=self.meta["TWAVE1"],
+    """.format(obs=self.meta.get('TELESCOP', None),
+               instrument=self.meta.get('INSTRUME', None),
+               bandpass=self.meta.get('TWAVE1', None),
                date_start=self.meta["DATE_OBS"],
                date_end=self.meta["DATE_END"],
                instance_start=self.extra_coords["TIME"]["value"][0],
                instance_end=self.extra_coords["TIME"]["value"][-1],
-               frame_num=self.meta["NBFRAMES"],
-               obs_id=self.meta["OBSID"],
-               obs_desc=self.meta["OBS_DESC"],
+               frame_num=self.meta.get("NBFRAMES", None),
+               obs_id=self.meta.get('OBSID', None),
+               obs_desc=self.meta.get('OBS_DESC', None),
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions, tmf=TIME_FORMAT))
 
@@ -130,6 +132,10 @@ def read_iris_sji_level2_fits(filename, memmap=False):
     ----------
     filename : `str`
         File name to be read
+
+    memmap : `bool`
+        Default value is `False`.
+        If the user wants to use it, he has to set `True`
 
     Returns
     -------
