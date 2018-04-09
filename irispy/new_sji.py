@@ -13,6 +13,7 @@ from sunpy.time import parse_time
 from sunpy import config
 from irispy import iris_tools
 
+
 __all__ = ['SJICube']
 
 TIME_FORMAT = config.get("general", "time_format")
@@ -77,6 +78,19 @@ class SJICube(NDCube):
     >>> sji = read_iris_sji_level2_fits(sample.SJI_CUBE_1400)
     """
 
+    def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
+                 mask=None, extra_coords=None, copy=False, missing_axis=None,
+                 scaled=None):
+        """
+        Initialization of Slit Jaw Imager
+        """
+        # Set whether SJI data is scaled or not.
+        self.scaled = scaled
+        # Initialize SJI_NDCube.
+        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
+                         meta=meta, unit=unit, extra_coords=extra_coords,
+                         copy=copy, missing_axis=missing_axis)
+
     def __repr__(self):
         return (
             """
@@ -108,7 +122,7 @@ class SJICube(NDCube):
                dimensions=self.dimensions, tmf=TIME_FORMAT))
 
 
-def read_iris_sji_level2_fits(filename):
+def read_iris_sji_level2_fits(filename, memmap=False):
     """
     Read IRIS level 2 SJI FITS from an OBS into an SJICube instance
 
@@ -124,16 +138,25 @@ def read_iris_sji_level2_fits(filename):
     """
 
     # Open a fits file
-    my_file = fits.open(filename, memmap=True, do_not_scale_image_data=True)
+    my_file = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
     # Derive WCS, data and mask for NDCube from fits file.
     wcs = WCS(my_file[0].header)
     data = my_file[0].data
     data_nan_masked = my_file[0].data
-    data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = BAD_PIXEL_VALUE
-    mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
+    if memmap:
+        data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = 0
+        mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
+        scaled = False
+    elif not memmap:
+        data_nan_masked[data == BAD_PIXEL_VALUE] = np.nan
+        mask = data_nan_masked == BAD_PIXEL_VALUE
+        scaled = True
     # Derive unit and readout noise from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
+    #if scaled:
     unit = iris_tools.DN_UNIT["SJI"]
+    #else:
+    #    unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
     readout_noise = iris_tools.READOUT_NOISE["SJI"]
     # Derive uncertainty of data for NDCube from fits file.
     uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
@@ -162,18 +185,19 @@ def read_iris_sji_level2_fits(filename):
     startobs = parse_time(startobs) if startobs else None
     endobs = my_file[0].header.get('ENDOBS', None)
     endobs = parse_time(endobs) if endobs else None
-    meta = {'TELESCOP': my_file[0].header.get('TELESCOP', "Unknown"),
-            'INSTRUME': my_file[0].header.get('INSTRUME', "Unknown"),
-            'TWAVE1': my_file[0].header.get('TWAVE1', "Unknown"),
+    meta = {'TELESCOP': my_file[0].header.get('TELESCOP', None),
+            'INSTRUME': my_file[0].header.get('INSTRUME', None),
+            'TWAVE1': my_file[0].header.get('TWAVE1', None),
             'DATE_OBS': date_obs,
             'DATE_END': date_end,
             'STARTOBS': startobs,
             'ENDOBS': endobs,
             'NBFRAMES': my_file[0].data.shape[0],
-            'OBSID': my_file[0].header.get('OBSID', "Unknown"),
-            'OBS_DESC': my_file[0].header.get('OBS_DESC', "Unknown")}
+            'OBSID': my_file[0].header.get('OBSID', None),
+            'OBS_DESC': my_file[0].header.get('OBS_DESC', None)}
 
     my_file.close()
 
-    return SJICube(data_nan_masked, wcs, uncertainty=uncertainty, unit=unit,
-                   meta=meta, mask=mask, extra_coords=extra_coords)
+    return SJICube(data_nan_masked, wcs, uncertainty=uncertainty,
+                   unit=unit, meta=meta, mask=mask, extra_coords=extra_coords,
+                   scaled=scaled)
