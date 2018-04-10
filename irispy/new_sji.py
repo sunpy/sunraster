@@ -93,11 +93,11 @@ class SJICube(NDCube):
 
     def __repr__(self):
         #Conversion of the start date of OBS
-        date_start = self.meta.get("DATE_OBS", None)
-        date_start = date_start.isoformat() if date_start else None
+        startobs = self.meta.get("STARTOBS", None)
+        startobs = startobs.isoformat() if startobs else None
         #Conversion of the end date of OBS
-        date_end = self.meta.get("DATE_END", None)
-        date_end = date_end.isoformat() if date_end else None
+        endobs = self.meta.get("ENDOBS", None)
+        endobs = endobs.isoformat() if endobs else None
         #Representation of SJICube object
         return (
             """
@@ -106,8 +106,8 @@ class SJICube(NDCube):
     Observatory:\t\t {obs}
     Instrument:\t\t\t {instrument}
     Bandpass:\t\t\t {bandpass}
-    Obs. Start:\t\t\t {date_start}
-    Obs. End:\t\t\t {date_end}
+    Obs. Start:\t\t\t {startobs}
+    Obs. End:\t\t\t {endobs}
     Instance Start:\t\t {instance_start}
     Instance End:\t\t {instance_end}
     Total Frames in Obs.:\t {frame_num}
@@ -118,8 +118,8 @@ class SJICube(NDCube):
     """.format(obs=self.meta.get('TELESCOP', None),
                instrument=self.meta.get('INSTRUME', None),
                bandpass=self.meta.get('TWAVE1', None),
-               date_start=date_start,
-               date_end=date_end,
+               startobs=startobs,
+               endobs=endobs,
                instance_start=self.extra_coords["TIME"]["value"][0].isoformat(),
                instance_end=self.extra_coords["TIME"]["value"][-1].isoformat(),
                frame_num=self.meta.get("NBFRAMES", None),
@@ -188,15 +188,15 @@ def read_iris_sji_level2_fits(filename, memmap=False):
                     ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
                     ("EXPOSURE TIME", 0, exposure_times)]
     # Extraction of meta for NDCube from fits file.
-    date_obs = my_file[0].header.get('DATE_OBS', None)
-    date_obs = parse_time(date_obs) if date_obs else None
-    date_end = my_file[0].header.get('DATE_END', None)
-    date_end = parse_time(date_end) if date_end else None
+    startobs = my_file[0].header.get('STARTOBS', None)
+    startobs = parse_time(startobs) if startobs else None
+    endobs = my_file[0].header.get('ENDOBS', None)
+    endobs = parse_time(endobs) if endobs else None
     meta = {'TELESCOP': my_file[0].header.get('TELESCOP', None),
             'INSTRUME': my_file[0].header.get('INSTRUME', None),
             'TWAVE1': my_file[0].header.get('TWAVE1', None),
-            'DATE_OBS': date_obs,
-            'DATE_END': date_end,
+            'STARTOBS': startobs,
+            'ENDOBS': endobs,
             'NBFRAMES': my_file[0].data.shape[0],
             'OBSID': my_file[0].header.get('OBSID', None),
             'OBS_DESC': my_file[0].header.get('OBS_DESC', None)}
