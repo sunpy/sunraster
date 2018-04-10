@@ -15,10 +15,8 @@ from irispy import iris_tools
 
 __all__ = ['SJICube']
 
-TIME_FORMAT = config.get("general", "time_format")
-
 # the following value is only appropriate for byte scaled images
-BAD_PIXEL_VALUE = -200
+BAD_PIXEL_VALUE_SCALED = -200
 # the following value is only appropriate for unscaled images
 BAD_PIXEL_VALUE_UNSCALED = -32768
 
@@ -94,6 +92,13 @@ class SJICube(NDCube):
                          copy=copy, missing_axis=missing_axis)
 
     def __repr__(self):
+        #Conversion of the start date of OBS
+        date_start = self.meta.get("DATE_OBS", None)
+        date_start = date_start.isoformat() if date_start else None
+        #Conversion of the end date of OBS
+        date_end = self.meta.get("DATE_END", None)
+        date_end = date_end.isoformat() if date_end else None
+        #Representation of SJICube object
         return (
             """
     SJICube
@@ -101,10 +106,10 @@ class SJICube(NDCube):
     Observatory:\t\t {obs}
     Instrument:\t\t\t {instrument}
     Bandpass:\t\t\t {bandpass}
-    Obs. Start:\t\t\t {date_start:{tmf}}
-    Obs. End:\t\t\t {date_end:{tmf}}
-    Instance Start:\t\t {instance_start:{tmf}}
-    Instance End:\t\t {instance_end:{tmf}}
+    Obs. Start:\t\t\t {date_start}
+    Obs. End:\t\t\t {date_end}
+    Instance Start:\t\t {instance_start}
+    Instance End:\t\t {instance_end}
     Total Frames in Obs.:\t {frame_num}
     IRIS Obs. id:\t\t {obs_id}
     IRIS Obs. Description:\t {obs_desc}
@@ -113,15 +118,15 @@ class SJICube(NDCube):
     """.format(obs=self.meta.get('TELESCOP', None),
                instrument=self.meta.get('INSTRUME', None),
                bandpass=self.meta.get('TWAVE1', None),
-               date_start=self.meta["DATE_OBS"],
-               date_end=self.meta["DATE_END"],
-               instance_start=self.extra_coords["TIME"]["value"][0],
-               instance_end=self.extra_coords["TIME"]["value"][-1],
+               date_start=date_start,
+               date_end=date_end,
+               instance_start=self.extra_coords["TIME"]["value"][0].isoformat(),
+               instance_end=self.extra_coords["TIME"]["value"][-1].isoformat(),
                frame_num=self.meta.get("NBFRAMES", None),
                obs_id=self.meta.get('OBSID', None),
                obs_desc=self.meta.get('OBS_DESC', None),
                axis_types=self.world_axis_physical_types,
-               dimensions=self.dimensions, tmf=TIME_FORMAT))
+               dimensions=self.dimensions))
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
@@ -154,8 +159,8 @@ def read_iris_sji_level2_fits(filename, memmap=False):
         mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
         scaled = False
     elif not memmap:
-        data_nan_masked[data == BAD_PIXEL_VALUE] = np.nan
-        mask = data_nan_masked == BAD_PIXEL_VALUE
+        data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
+        mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
         scaled = True
     # Derive unit and readout noise from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
@@ -187,17 +192,11 @@ def read_iris_sji_level2_fits(filename, memmap=False):
     date_obs = parse_time(date_obs) if date_obs else None
     date_end = my_file[0].header.get('DATE_END', None)
     date_end = parse_time(date_end) if date_end else None
-    startobs = my_file[0].header.get('STARTOBS', None)
-    startobs = parse_time(startobs) if startobs else None
-    endobs = my_file[0].header.get('ENDOBS', None)
-    endobs = parse_time(endobs) if endobs else None
     meta = {'TELESCOP': my_file[0].header.get('TELESCOP', None),
             'INSTRUME': my_file[0].header.get('INSTRUME', None),
             'TWAVE1': my_file[0].header.get('TWAVE1', None),
             'DATE_OBS': date_obs,
             'DATE_END': date_end,
-            'STARTOBS': startobs,
-            'ENDOBS': endobs,
             'NBFRAMES': my_file[0].data.shape[0],
             'OBSID': my_file[0].header.get('OBSID', None),
             'OBS_DESC': my_file[0].header.get('OBS_DESC', None)}
