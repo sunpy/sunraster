@@ -10,7 +10,6 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
-from sunpy import config
 from irispy import iris_tools
 
 __all__ = ['SJICube']
@@ -80,12 +79,13 @@ class SJICube(NDCube):
 
     def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
                  mask=None, extra_coords=None, copy=False, missing_axis=None,
-                 scaled=None):
+                 scaled=None, header=None):
         """
         Initialization of Slit Jaw Imager
         """
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
+        self.header = header
         # Initialize SJI_NDCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -98,6 +98,12 @@ class SJICube(NDCube):
         #Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
         endobs = endobs.isoformat() if endobs else None
+        #Conversion of the instance start of OBS
+        instance_start = self.extra_coords["TIME"]["value"][0]
+        instance_start = instance_start.isoformat() if instance_start else None
+        #Conversion of the instance end of OBS
+        instance_end = self.extra_coords["TIME"]["value"][-1]
+        instance_end = instance_end.isoformat() if instance_end else None
         #Representation of SJICube object
         return (
             """
@@ -120,13 +126,100 @@ class SJICube(NDCube):
                bandpass=self.meta.get('TWAVE1', None),
                startobs=startobs,
                endobs=endobs,
-               instance_start=self.extra_coords["TIME"]["value"][0].isoformat(),
-               instance_end=self.extra_coords["TIME"]["value"][-1].isoformat(),
+               instance_start=instance_start,
+               instance_end=instance_end,
                frame_num=self.meta.get("NBFRAMES", None),
                obs_id=self.meta.get('OBSID', None),
                obs_desc=self.meta.get('OBS_DESC', None),
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions))
+
+    def crop_by_coords(self, bottom_left, top_right, frames=None):
+        """
+        This function allows the user to see a part of the loading data in
+        a SJICube instance.
+
+        Parameters
+        ----------
+        bottom_left : 'list of int' or 'list of float'
+            This is the coordinates of the point which have the lowest values
+            on X and Y axis. The coordinates have to be set as (X, Y) where the
+            values are in arcmin.
+
+        top_right : 'list of int' or 'list of float'
+            This is the coordinates of the point which have the highest values
+            on X and Y axis. The coordinates have to be set as (X, Y) where the
+            values are in arcmin.
+
+        frames : list of int, optional
+            This is representing the time of the data. The user can set manually
+            these values by giving (t_start, t_end) where t_start represents the
+            frame number to start the slicing and t_end the end of the slicing.
+
+        Returns
+        -------
+        result : 'irispy.sji.SJICube'
+
+        """
+
+        # Extracting data from inputs
+        if frames:
+            low_t = frames[0]*self.header["CDELT3"]
+            high_t = (frames[1]+1)*self.header["CDELT3"]
+        else:
+            low_t = 0
+            high_t = self.header["CDELT3"]*(self.data.shape[0]+1)
+        low_x = bottom_left[0]
+        low_y = bottom_left[1]
+        high_x = top_right[0]
+        high_y = top_right[1]
+        # Initialization of points coordinates
+        t = [0, 0, 0, 0, self.data.shape[0]]
+        y = [0, 0, 0, 0, self.data.shape[1]]
+        x = [0, 0, 0, 0, self.data.shape[2]]
+        # Convert points coordinates to pixels unit
+        (t[0], y[0], x[0]) = self.world_to_pixel(u.Quantity(low_t, unit='s'),
+                                                 u.Quantity(high_y, unit='arcmin'),
+                                                 u.Quantity(low_x, unit='arcmin'))
+        (t[1], y[1], x[1]) = self.world_to_pixel(u.Quantity(low_t, unit='s'),
+                                                 u.Quantity(low_y, unit='arcmin'),
+                                                 u.Quantity(high_x, unit='arcmin'))
+        (t[2], y[2], x[2]) = self.world_to_pixel(u.Quantity(low_t, unit='s'),
+                                                 u.Quantity(low_y, unit='arcmin'),
+                                                 u.Quantity(low_x, unit='arcmin'))
+        (t[3], y[3], x[3]) = self.world_to_pixel(u.Quantity(high_t, unit='s'),
+                                                 u.Quantity(high_y, unit='arcmin'),
+                                                 u.Quantity(high_x, unit='arcmin'))
+        # Create an array with the pixels values
+        t_pixels = u.Quantity([t[i] for i in range(4)]).value
+        t_pixels = np.append(t_pixels, t[4])
+        y_pixels = u.Quantity([y[i] for i in range(4)]).value
+        y_pixels = np.append(y_pixels, y[4])
+        x_pixels = u.Quantity([x[i] for i in range(4)]).value
+        x_pixels = np.append(x_pixels, x[4])
+        # According to boundary conditions
+        t_pixels[np.less(t_pixels, 0)] = 0
+        t_pixels[np.greater(t_pixels, t[4])] = t[4]
+        y_pixels[np.less(y_pixels, 0)] = 0
+        y_pixels[np.greater(y_pixels, y[4])] = y[4]
+        x_pixels[np.less(x_pixels, 0)] = 0
+        x_pixels[np.greater(x_pixels, x[4])] = x[4]
+        # Sorting the data by values
+        t_pixels.sort()
+        y_pixels.sort()
+        x_pixels.sort()
+        # Slicing the data by pixels values
+        #new_data = self.data[int(t_pixels[0]):int(t_pixels[3]),
+        #                     (int(y_pixels[0]))*2:(int(y_pixels[3])+int(y_pixels[0])),
+        #                     (int(x_pixels[0]))*2:(int(x_pixels[3])+int(x_pixels[0]))]
+        # Masking the data
+        new_data = self.data[int(t_pixels[0]):int(t_pixels[3])]
+        new_data[:, :, 0:int(x_pixels[0])] = np.nan
+        new_data[:, :, int(x_pixels[3]):int(x_pixels[4])] = np.nan
+        new_data[:, 0:int(y_pixels[0]), : ] = np.nan
+        new_data[:, int(y_pixels[3]):int(x_pixels[4]), :] = np.nan
+
+        return SJICube(new_data, self.wcs)
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
@@ -152,6 +245,7 @@ def read_iris_sji_level2_fits(filename, memmap=False):
     my_file = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
     # Derive WCS, data and mask for NDCube from fits file.
     wcs = WCS(my_file[0].header)
+    head = my_file[0].header
     data = my_file[0].data
     data_nan_masked = my_file[0].data
     if memmap:
@@ -162,13 +256,16 @@ def read_iris_sji_level2_fits(filename, memmap=False):
         data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
         scaled = True
-    # Derive unit and readout noise from detector.
+    # Derive exposure time from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
-    #if scaled:
-    unit = iris_tools.DN_UNIT["SJI"]
-    #else:
-    #    unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
-    readout_noise = iris_tools.READOUT_NOISE["SJI"]
+    # Derive unit and readout noise from detector
+    if scaled:
+        unit = iris_tools.DN_UNIT["SJI"]
+        readout_noise = iris_tools.READOUT_NOISE["SJI"]
+    else:
+        unit = iris_tools.DN_UNIT["SJI"]*my_file[0].header["BSCALE"]
+        unit += my_file[0].header["BZERO"]*u.photon
+        readout_noise = 1.2*unit
     # Derive uncertainty of data for NDCube from fits file.
     uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
                                      + readout_noise.to(u.photon).value**2),
@@ -205,4 +302,4 @@ def read_iris_sji_level2_fits(filename, memmap=False):
 
     return SJICube(data_nan_masked, wcs, uncertainty=uncertainty,
                    unit=unit, meta=meta, mask=mask, extra_coords=extra_coords,
-                   scaled=scaled)
+                   scaled=scaled, header=head)
