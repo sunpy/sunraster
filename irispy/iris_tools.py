@@ -24,14 +24,20 @@ from ndcube import NDCube
 # paper.
 DETECTOR_GAIN = {"NUV": 18., "FUV": 6., "SJI": 18.}
 DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
-BSCALE = 0.25
-BZERO = 7992
+SJI_DEFAULT_BSCALE = 0.25
+SJI_DEFAULT_BZERO = 7992.0
 DN_UNIT = {
     "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"]/DETECTOR_YIELD["NUV"]*u.photon),
     "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
     "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon),
     "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED",
-                               (DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*BSCALE + BZERO)*u.photon)}
+                               (DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*SJI_DEFAULT_BSCALE
+                                + SJI_DEFAULT_BZERO)*u.photon)}
+SJI_SCALING = ((DN_UNIT["SJI"],
+                DN_UNIT["SJI_UNSCALED"],
+                lambda x: (x - SJI_DEFAULT_BZERO) / SJI_DEFAULT_BSCALE,
+                lambda x: x * SJI_DEFAULT_BSCALE + SJI_DEFAULT_BZERO))
+
 READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
                  "SJI": 1.2*DN_UNIT["SJI"], "SJI_UNSCALED" : 1.2*DN_UNIT["SJI_UNSCALED"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom

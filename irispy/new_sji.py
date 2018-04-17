@@ -3,14 +3,16 @@ This module provides movie tools for level 2 IRIS SJI fits file
 '''
 
 from datetime import timedelta
+import warnings
 
 import numpy as np
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
-from irispy import iris_tools
 from ndcube import NDCube
+
+from irispy import iris_tools
 
 __all__ = ['SJICube']
 
@@ -83,6 +85,8 @@ class SJICube(NDCube):
         """
         Initialization of Slit Jaw Imager
         """
+        warnings.warn("This class is still in early stages of development.\
+                      API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
         # Initialize SJI_NDCube.
@@ -163,15 +167,16 @@ def read_iris_sji_level2_fits(filename, memmap=False):
         data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = 0
         mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
         scaled = False
+        unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
+        readout_noise = iris_tools.READOUT_NOISE["SJI_UNSCALED"]
     elif not memmap:
         data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
         scaled = True
+        unit = iris_tools.DN_UNIT["SJI"]
+        readout_noise = iris_tools.READOUT_NOISE["SJI"]
     # Derive exposure time from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
-    # Derive unit and readout noise from detector
-    unit = iris_tools.DN_UNIT["SJI"]
-    readout_noise = iris_tools.READOUT_NOISE["SJI"]
     # Derive uncertainty of data for NDCube from fits file.
     uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
                                      + readout_noise.to(u.photon).value**2),
