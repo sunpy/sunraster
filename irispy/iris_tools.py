@@ -33,7 +33,7 @@ DN_UNIT = {
                       DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
     "SJI": u.def_unit("DN_IRIS_SJI",
                       DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon),
-    "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED")}
+    "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED", u.ct)}
 # Define an equivalency between SJI and SJI_UNSCALED units
 SJI_SCALING = [(DN_UNIT["SJI"],
                 DN_UNIT["SJI_UNSCALED"],
@@ -42,8 +42,7 @@ SJI_SCALING = [(DN_UNIT["SJI"],
 
 READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"],
                  "FUV": 3.1*DN_UNIT["FUV"],
-                 "SJI": 1.2*DN_UNIT["SJI"],
-                 "SJI_UNSCALED" : 1.2*DN_UNIT["SJI_UNSCALED"]}
+                 "SJI": 1.2*DN_UNIT["SJI"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 SLIT_WIDTH = 0.33*u.arcsec
 
@@ -113,7 +112,6 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     if response_file is not None:
         if not(os.path.isfile(response_file)):
             raise KeyError("Not a valid file path")
-
 
     # Ensure conflicting kwargs are not set.
     if response_file:

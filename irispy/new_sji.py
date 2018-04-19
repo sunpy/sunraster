@@ -164,12 +164,10 @@ def read_iris_sji_level2_fits(filename, memmap=False):
     data_nan_masked = my_file[0].data
     if memmap:
         data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = 0
-        mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
+        mask = None
         scaled = False
-        # The three next lines are still in development, values are false
         unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
-        readout_noise = iris_tools.READOUT_NOISE["SJI_UNSCALED"]
-        uncertainty = 0
+        uncertainty = None
     elif not memmap:
         data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
