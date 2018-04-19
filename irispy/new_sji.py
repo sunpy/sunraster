@@ -166,20 +166,23 @@ def read_iris_sji_level2_fits(filename, memmap=False):
         data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = 0
         mask = data_nan_masked == BAD_PIXEL_VALUE_UNSCALED
         scaled = False
+        # The three next lines are still in development, values are false
         unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
         readout_noise = iris_tools.READOUT_NOISE["SJI_UNSCALED"]
+        uncertainty = 0
     elif not memmap:
         data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
         scaled = True
+        # Derive unit and readout noise from the detector
         unit = iris_tools.DN_UNIT["SJI"]
         readout_noise = iris_tools.READOUT_NOISE["SJI"]
+        # Derive uncertainty of data for NDCube from fits file.
+        uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+                                         + readout_noise.to(u.photon).value**2),
+                                 unit=u.photon).to(unit).value
     # Derive exposure time from detector.
     exposure_times = my_file[1].data[:, my_file[1].header["EXPTIMES"]]
-    # Derive uncertainty of data for NDCube from fits file.
-    uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
-                                     + readout_noise.to(u.photon).value**2),
-                             unit=u.photon).to(unit).value
     # Derive extra coordinates for NDCube from fits file.
     times = np.array([parse_time(my_file[0].header["STARTOBS"])
                       + timedelta(seconds=s)

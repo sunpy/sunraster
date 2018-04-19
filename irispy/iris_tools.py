@@ -33,7 +33,7 @@ DN_UNIT = {
                       DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
     "SJI": u.def_unit("DN_IRIS_SJI",
                       DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon),
-    "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED", u.photon)}
+    "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED")}
 # Define an equivalency between SJI and SJI_UNSCALED units
 SJI_SCALING = [(DN_UNIT["SJI"],
                 DN_UNIT["SJI_UNSCALED"],
