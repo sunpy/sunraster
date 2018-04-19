@@ -24,26 +24,43 @@ from ndcube import NDCube
 # paper.
 DETECTOR_GAIN = {"NUV": 18., "FUV": 6., "SJI": 18.}
 DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
+SJI_DEFAULT_BSCALE = 0.25
+SJI_DEFAULT_BZERO = 7992.0
 DN_UNIT = {
-    "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"]/DETECTOR_YIELD["NUV"]*u.photon),
-    "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
-    "SJI": u.def_unit("DN_IRIS_SJI", DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon)}
-READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"], "FUV": 3.1*DN_UNIT["FUV"],
+    "NUV": u.def_unit("DN_IRIS_NUV",
+                      DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"]*u.photon),
+    "FUV": u.def_unit("DN_IRIS_FUV",
+                      DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
+    "SJI": u.def_unit("DN_IRIS_SJI",
+                      DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon),
+    "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED", u.ct)}
+# Define an equivalency between SJI and SJI_UNSCALED units
+SJI_SCALING = [(DN_UNIT["SJI"],
+                DN_UNIT["SJI_UNSCALED"],
+                lambda x: (x - SJI_DEFAULT_BZERO) / SJI_DEFAULT_BSCALE,
+                lambda x: x * SJI_DEFAULT_BSCALE + SJI_DEFAULT_BZERO)]
+
+READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"],
+                 "FUV": 3.1*DN_UNIT["FUV"],
                  "SJI": 1.2*DN_UNIT["SJI"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
 SLIT_WIDTH = 0.33*u.arcsec
 
 IRIS_RESPONSE_REMOTE_PATH = "https://sohowww.nascom.nasa.gov/solarsoft/iris/response/"
-RESPONSE_VERSION_FILENAMES = {"1": "iris_sra_20130211.geny", "2": "iris_sra_20130715.geny",
-                              "3": "iris_sra_c_20150331.geny", "4": "iris_sra_c_20161022.geny"}
+RESPONSE_VERSION_FILENAMES = {"1": "iris_sra_20130211.geny",
+                              "2": "iris_sra_20130715.geny",
+                              "3": "iris_sra_c_20150331.geny",
+                              "4": "iris_sra_c_20161022.geny"}
 
 # Define some custom error messages.
-APPLY_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
-    "been applied since the unit already includes inverse time.  " + \
-    "To apply exposure time correction anyway, set 'force' kwarg to True."
-UNDO_EXPOSURE_TIME_ERROR = "Exposure time correction has probably already " + \
-    "been undone since the unit does not include inverse time.  " + \
-    "To undo exposure time correction anyway, set 'force' kwarg to True."
+APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
+                             "been applied since the unit already includes "
+                             "inverse time. To apply exposure time correction "
+                             "anyway, set 'force' kwarg to True.")
+UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
+                            "been undone since the unit does not include "
+                            "inverse time. To undo exposure time correction "
+                            "anyway, set 'force' kwarg to True.")
 
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
@@ -96,7 +113,6 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         if not(os.path.isfile(response_file)):
             raise KeyError("Not a valid file path")
 
-    
     # Ensure conflicting kwargs are not set.
     if response_file:
         response_file_set = True
