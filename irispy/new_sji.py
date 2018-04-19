@@ -85,8 +85,7 @@ class SJICube(NDCube):
         """
         Initialization of Slit Jaw Imager
         """
-        warnings.warn("This class is still in early stages of development.\
-                      API not stable.")
+        warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
         # Initialize SJI_NDCube.
