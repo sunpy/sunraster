@@ -11,6 +11,7 @@ import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
 from ndcube import NDCube
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
 from irispy import iris_tools
 
@@ -135,6 +136,78 @@ class SJICube(NDCube):
                obs_desc=self.meta.get('OBS_DESC', None),
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions))
+
+    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
+
+        copy: `bool`
+            If True a new instance with the converted data values is returned.
+            If False, the current instance is overwritten.
+            Default=False
+
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `None` or `SJICube`
+            If copy=False, the original SJICube is modified with the exposure
+            time correction applied (undone).
+            If copy=True, a new SJICube is returned with the correction
+            applied (undone).
+
+        """
+        # Get exposure time in seconds and change array's shape so that
+        # it can be broadcast with data and uncertainty arrays.
+        exposure_time_s = u.Quantity(self.extra_coords["EXPOSURE TIME"]["value"], unit='s').value
+        if not isinstance(self.extra_coords["EXPOSURE TIME"]["value"], float):
+            if self.data.ndim == 1:
+                pass
+            elif self.data.ndim == 2:
+                exposure_time_s = exposure_time_s[:, np.newaxis]
+            elif self.data.ndim == 3:
+                exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
+            else:
+                raise ValueError(
+                    "SJICube dimensions must be 2 or 3. Dimensions={0}".format(
+                        self.data.ndim))
+        # Based on value on undo kwarg, apply or remove exposure time correction.
+        if undo is True:
+            new_data_arrays, new_unit = iris_tools.uncalculate_exposure_time_correction(
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+        else:
+            new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+        # Return new instance of SJICube with correction applied/undone.
+        if copy is True:
+            return SJICube(
+                data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
+                unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+                extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
+                                                                       self.missing_axis))
+        else:
+            for i in range(self.data.shape[0]):
+                for j in range(self.data.shape[1]):
+                    for k in range(self.data.shape[2]):
+                        if not self.data[i, j, k] == np.nan:
+                            self.data[i, j, k] = new_data_arrays[0][i, j, k]
+                        if not self.uncertainty.array[i, j, k] == np.nan:
+                            self.uncertainty.array[i, j, k] = new_data_arrays[1][i, j, k]
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
