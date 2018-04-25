@@ -137,7 +137,7 @@ class SJICube(NDCube):
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions))
 
-    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
+    def apply_exposure_time_correction(self, undo=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
 
@@ -172,10 +172,13 @@ class SJICube(NDCube):
             applied (undone).
 
         """
+        # Raise an error if this method is called while memmap is used
+        if not self.scaled:
+            raise ValueError("This method is not available as you are using memmap")
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         exposure_time_s = u.Quantity(self.extra_coords["EXPOSURE TIME"]["value"], unit='s').value
-        if not isinstance(self.extra_coords["EXPOSURE TIME"]["value"], float):
+        if not np.isscalar(self.extra_coords["EXPOSURE TIME"]["value"]):
             if self.data.ndim == 1:
                 pass
             elif self.data.ndim == 2:
@@ -194,20 +197,11 @@ class SJICube(NDCube):
             new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
         # Return new instance of SJICube with correction applied/undone.
-        if copy is True:
-            return SJICube(
-                data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
-                unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
-                extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
-                                                                       self.missing_axis))
-        else:
-            for i in range(self.data.shape[0]):
-                for j in range(self.data.shape[1]):
-                    for k in range(self.data.shape[2]):
-                        if not self.data[i, j, k] == np.nan:
-                            self.data[i, j, k] = new_data_arrays[0][i, j, k]
-                        if not self.uncertainty.array[i, j, k] == np.nan:
-                            self.uncertainty.array[i, j, k] = new_data_arrays[1][i, j, k]
+        return SJICube(
+            data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
+            unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+            extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
+                                                                   self.missing_axis))
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
