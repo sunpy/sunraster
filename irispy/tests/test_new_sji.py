@@ -7,13 +7,9 @@ import numpy as np
 from ndcube.utils.wcs import WCS
 
 from irispy import iris_tools
-from irispy.new_sji import SJICube, read_iris_sji_level2_fits
+from irispy.new_sji import SJICube
 
 # Sample data for tests
-private_fits_path = '/mn/stornext/u3/baptistp/iris/level2/2014/12/11/20141211_191222_3803105278/'
-file_name = 'iris_l2_20141211_191222_3803105278_SJI_1330_t000.fits'
-file_path = private_fits_path + file_name
-
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],
                  [[2, 4, 5, 1], [10, 5, 2, 2], [10, 3, 3, 0]]])
 data_2D = np.array([[1, 2, 3, 4], [2, 4, 5, 3]])
@@ -77,12 +73,6 @@ cube_4D = SJICube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, unit=u
                   extra_coords=extra_coords, scaled=scaled_T)
 
 # Tests
-@pytest.mark.parametrize("sji_file", [
-    (file_path, False),
-    (file_path, True)])
-def test_read_iris_sji_level2_fits(sji_file):
-    assert isinstance(read_iris_sji_level2_fits(sji_file[0], sji_file[1]), SJICube)
-
 @pytest.mark.parametrize("test_input,expected", [
     (cube, data/exposure_times[0]),
     (cube_2D, data_2D/exposure_times[0]),
