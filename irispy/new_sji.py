@@ -10,6 +10,7 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
+from scipy import ndimage
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
@@ -202,6 +203,16 @@ class SJICube(NDCube):
             unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axis))
+
+    def set_dust_mask(self):
+        """
+        Docstring will be available as soon as possible
+        """
+        dust = self.data < 0.5
+        struct = ndimage.generate_binary_structure(2, 2)
+        for i in range(self.data.shape[0]):
+            dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
+        self.data[dust] = np.nan
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
