@@ -1,32 +1,27 @@
-********************
-IRISPy Documentation
-********************
+************
+IRISPy Guide
+************
+
+Welcome to the IRISpy User Guide. IRISpy is a SunPy-affiliated
+package designed for reading, manipulating and visualizing data taken
+with the Interface Region Imaging Spectrometer (IRIS).
 
 .. warning::
     
     IRISPy is still under heavy development and has not yet seen its first
-    release. If you want to help test IRISPy follow these `installation
-    instructions
-    <https://github.com/sunpy/irispy/wiki/IRISpy-Installation-Instructions>`__.
+    release.  The API can change at any time and so should not be
+    relied upon.  However, we are striving towards releasing a stable
+    version.  If you would like to help by providing user feedback,
+    reporting bugs, or contributing code, install the development
+    version as outlined in :ref:`dev_install`.
 
-IRISPy is a SunPy-affiliated package that provides the tools to read in and
-analyze data from the `IRIS <http://iris.lmsal.com>`__ solar-observing
-satellite in Python.
-
-The Interface Region Imaging Spectrograph is a NASA-funded Small Explorer which
-uses a high-frame-rate ultraviolet imaging spectrometer to make observations of
-the Sun. It provides 0.3 arcsec angular resolution and sub-angstrom spectral
-resolution.
-
-For more information see the mission/instrument paper which is available
-`online for free
-<https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0196&file_type=pdf>`__.
 
 Contents
 ========
 
 .. toctree::
 
-    irispy
-    spectrograph
-    sji
+   introduction
+   installation
+   getting_help
+   api
