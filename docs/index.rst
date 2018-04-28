@@ -1,6 +1,6 @@
-************
-IRISPy Guide
-************
+***************************
+Welcome to the IRISPy Guide
+***************************
 
 Welcome to the IRISpy User Guide. IRISpy is a SunPy-affiliated
 package designed for reading, manipulating and visualizing data taken
@@ -21,6 +21,7 @@ Contents
 
 .. toctree::
 
+   index
    introduction
    installation
    getting_help
