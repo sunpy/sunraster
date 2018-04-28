@@ -13,6 +13,6 @@ Contents
 .. toctree::
 
    introduction
-   sji
-   spectrograph
+   installation
+   getting_help
    api
