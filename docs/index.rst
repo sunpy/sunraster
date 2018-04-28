@@ -21,7 +21,6 @@ Contents
 
 .. toctree::
 
-   index
    introduction
    installation
    getting_help
