@@ -20,12 +20,12 @@ Installing the Development Version
 ----------------------------------
 
 This section outlines how to install the development version of
-IRISpy. The two primary packages on which IRISpy relies are ndcube and
-SunPy. Both of these have stable released versions that work with
-IRISpy. However, some developers may want to use the latest updates of
-these packages in their work on IRISpy. Below we will first outline
-how to install IRISpy with its stable dependencies, and then with the
-development versions of ndcube and SunPy.
+IRISpy. The two primary packages on which IRISpy relies are `ndcube`_
+and `SunPy`_. Both of these have stable released versions that work
+with IRISpy. However, some developers may want to use the latest
+updates of these packages in their work on IRISpy. Below we will first
+outline how to install IRISpy with its stable dependencies, and then
+with the development versions of ndcube and SunPy.
 
 To install these packages we will use a combination of conda, conda
 environments, pip and git. We will assume these are all installed on
@@ -67,7 +67,7 @@ while Linux and MacOS users should type:
 Clone IRISpy Repository
 """""""""""""""""""""""
 
-The second step is to clone the IRISpy repository from `GitHub`_ into
+The second step is to clone the `IRISpy repository`_ from `GitHub`_ into
 a directory called ``irispy-git``. From the directory in which you
 want ``irispy-git`` to reside, type:
 
@@ -89,7 +89,7 @@ an Python/IPython/Jupyter Notebook session from any directory and try:
 
 .. code-block:: python
 
-		>>> import irispy
+		import irispy
 
 To make sure you have the latest updates, regularly do
 
@@ -132,7 +132,7 @@ Remove Stable Versions of SunPy and ndcube
 """"""""""""""""""""""""""""""""""""""""""
 
 We installed the stable versions of SunPy and ndcube above in
-order to get get all its dependencies. Now that is done, the second
+order to get get all their dependencies. Now that is done, the second
 step is to remove the stable versions of SunPy and ndcube, leaving the
 dependencies intact.
 CAUTION: Make sure you are in (have activated) the ``irispy-dev``
@@ -151,10 +151,10 @@ Clone Development Versions of SunPy, ndcube and IRISpy
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Let's make a directory and then clone (download) the
-development versions of the SunPy, ndcube and IRISpy from GitHub into
-subdirectories.  Let's call them ``sunpy-git``, ``ndcube-git``,
-``irispy-git``.  On the command line from the directory in which you
-want your repos to live, type:
+development versions of `SunPy,`_ `ndcube,`_ and `IRISpy,`_ from
+`GitHub`_ into subdirectories.  Let's call them ``sunpy-git``,
+``ndcube-git``, ``irispy-git``.  On the command line from the
+directory in which you want your repos to live, type:
 
 .. code-block:: console
 
@@ -205,8 +205,11 @@ N.B. To ensure you continue to have the latest version of IRISpy, be
 sure to regularly update the sunpy, ndcube and irispy git repos as
 discussed at the end of :ref:`clone_repos`.
 
-.. _ndcube: https://github.com/sunpy/ndcube
-.. _SunPy: https://github.com/sunpy/sunpy
+.. _ndcube: http://docs.sunpy.org/projects/ndcube/en/stable/
+.. _SunPy: http://sunpy.org
 .. _anaconda website: https://docs.anaconda.com/anaconda/install.html
+.. _IRISpy repository: https://github.com/sunpy/irispy
 .. _GitHub: https://github.com/
-.. _ndcube GitHub repository: https://github.com/sunpy/ndcube
+.. _SunPy,: https://github.com/sunpy/sunpy
+.. _ndcube,: https://github.com/sunpy/ndcube
+.. _IRISpy,: https://github.com/sunpy/irispy
