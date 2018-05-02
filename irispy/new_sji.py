@@ -15,7 +15,7 @@ from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
 from irispy import iris_tools
 
-__all__ = ['SJICube']
+__all__ = ['IRISMapCube']
 
 # the following value is only appropriate for byte scaled images
 BAD_PIXEL_VALUE_SCALED = -200
@@ -23,9 +23,9 @@ BAD_PIXEL_VALUE_SCALED = -200
 BAD_PIXEL_VALUE_UNSCALED = -32768
 
 
-class SJICube(NDCube):
+class IRISMapCube(NDCube):
     """
-    SJICube
+    IRISMapCube
 
     Class representing SJI Images described by a single WCS
 
@@ -89,7 +89,7 @@ class SJICube(NDCube):
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
-        # Initialize SJI_NDCube.
+        # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
                          copy=copy, missing_axis=missing_axis)
@@ -107,10 +107,10 @@ class SJICube(NDCube):
         #Conversion of the instance end of OBS
         instance_end = self.extra_coords["TIME"]["value"][-1]
         instance_end = instance_end.isoformat() if instance_end else None
-        #Representation of SJICube object
+        #Representation of IRISMapCube object
         return (
             """
-    SJICube
+    IRISMapCube
     ---------
     Observatory:\t\t {obs}
     Instrument:\t\t\t {instrument}
@@ -165,10 +165,10 @@ class SJICube(NDCube):
 
         Returns
         -------
-        result: `None` or `SJICube`
-            If copy=False, the original SJICube is modified with the exposure
+        result: `None` or `IRISMapCube`
+            If copy=False, the original IRISMapCube is modified with the exposure
             time correction applied (undone).
-            If copy=True, a new SJICube is returned with the correction
+            If copy=True, a new IRISMapCube is returned with the correction
             applied (undone).
 
         """
@@ -187,7 +187,7 @@ class SJICube(NDCube):
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "SJICube dimensions must be 2 or 3. Dimensions={0}".format(
+                    "IRISMapCube dimensions must be 2 or 3. Dimensions={0}".format(
                         self.data.ndim))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -196,8 +196,8 @@ class SJICube(NDCube):
         else:
             new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of SJICube with correction applied/undone.
-        return SJICube(
+        # Return new instance of IRISMapCube with correction applied/undone.
+        return IRISMapCube(
             data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
             unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
@@ -206,7 +206,7 @@ class SJICube(NDCube):
 
 def read_iris_sji_level2_fits(filename, memmap=False):
     """
-    Read IRIS level 2 SJI FITS from an OBS into an SJICube instance
+    Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance
 
     Parameters
     ----------
@@ -219,7 +219,7 @@ def read_iris_sji_level2_fits(filename, memmap=False):
 
     Returns
     -------
-    result: 'irispy.sji.SJICube'
+    result: 'irispy.sji.IRISMapCube'
 
     """
 
@@ -278,6 +278,6 @@ def read_iris_sji_level2_fits(filename, memmap=False):
 
     my_file.close()
 
-    return SJICube(data_nan_masked, wcs, uncertainty=uncertainty,
-                   unit=unit, meta=meta, mask=mask, extra_coords=extra_coords,
-                   scaled=scaled)
+    return IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
+                       unit=unit, meta=meta, mask=mask, extra_coords=extra_coords,
+                       scaled=scaled)
