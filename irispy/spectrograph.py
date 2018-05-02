@@ -32,8 +32,8 @@ class IRISSpectrograph(object):
 
     Parameters
     ----------
-    data: `dict` of `irispy.spectrograph.IRISSpectrogramSequence`.
-        Spectral data from same OBS in IRISSpectrogramSequence objects, one for each
+    data: `dict` of `irispy.spectrograph.IRISSpectrogramCubeSequence`.
+        Spectral data from same OBS in IRISSpectrogramCubeSequence objects, one for each
         spectral window. Dict keys give names of spectral windows.
 
     meta: `dict` (Optional)
@@ -74,12 +74,12 @@ class IRISSpectrograph(object):
                     "max wavelength")
         spectral_window_list = []
         for key in list(self.data.keys()):
-            if type(self.data[key]) == IRISSpectrogramSequence:
+            if type(self.data[key]) == IRISSpectrogramCubeSequence:
                 spectral_window_list.append([self.data[key].meta[colname] for colname in colnames])
         return Table(rows=spectral_window_list, names=colnames)
 
 
-class IRISSpectrogramSequence(NDCubeSequence):
+class IRISSpectrogramCubeSequence(NDCubeSequence):
     """Class for holding, slicing and plotting IRIS spectrogram data.
 
     This class contains all the functionality of its super class with
@@ -88,7 +88,7 @@ class IRISSpectrogramSequence(NDCubeSequence):
     Parameters
     ----------
     data_list: `list`
-        List of `IRISSpectrogram` objects from the same spectral window and OBS ID.
+        List of `IRISSpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
     meta: `dict` or header object
@@ -107,17 +107,17 @@ class IRISSpectrogramSequence(NDCubeSequence):
             raise ValueError("Meta must contain following keys: {0}".format(required_meta_keys))
         # Check that all spectrograms are from same specral window and OBS ID.
         if len(np.unique([cube.meta["OBSID"] for cube in data_list])) != 1:
-            raise ValueError("Constituent IRISSpectrogram objects must have same "
+            raise ValueError("Constituent IRISSpectrogramCube objects must have same "
                              "value of 'OBSID' in its meta.")
         if len(np.unique([cube.meta["spectral window"] for cube in data_list])) != 1:
-            raise ValueError("Constituent IRISSpectrogram objects must have same "
+            raise ValueError("Constituent IRISSpectrogramCube objects must have same "
                              "value of 'spectral window' in its meta.")
         # Initialize Sequence.
-        super(IRISSpectrogramSequence, self).__init__(
+        super(IRISSpectrogramCubeSequence, self).__init__(
             data_list, meta=meta, common_axis=common_axis)
 
     def __repr__(self):
-        return """IRISSpectrogramSequence
+        return """IRISSpectrogramCubeSequence
 ---------------------
 {obs_repr}
 
@@ -152,7 +152,7 @@ Axis Types: {axis_types}
         for cube in self.data:
             converted_data_list.append(cube.convert_to(new_unit_type))
         if copy is True:
-            return IRISSpectrogramSequence(
+            return IRISSpectrogramCubeSequence(
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
@@ -185,10 +185,10 @@ Axis Types: {axis_types}
 
         Returns
         -------
-        result: `None` or `IRISSpectrogramSequence`
-            If copy=False, the original IRISSpectrogramSequence is modified with the
+        result: `None` or `IRISSpectrogramCubeSequence`
+            If copy=False, the original IRISSpectrogramCubeSequence is modified with the
             exposure time correction applied (undone).
-            If copy=True, a new IRISSpectrogramSequence is returned with the correction
+            If copy=True, a new IRISSpectrogramCubeSequence is returned with the correction
             applied (undone).
 
         """
@@ -197,14 +197,14 @@ Axis Types: {axis_types}
             converted_data_list.append(cube.apply_exposure_time_correction(undo=undo,
                                                                            force=force))
         if copy is True:
-            return IRISSpectrogramSequence(
+            return IRISSpectrogramCubeSequence(
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
 
-class IRISSpectrogram(NDCube):
+class IRISSpectrogramCube(NDCube):
     """
-    Class representing IRISSpectrogram data described by a single WCS.
+    Class representing IRISSpectrogramCube data described by a single WCS.
 
     Parameters
     ----------
@@ -261,14 +261,14 @@ class IRISSpectrogram(NDCube):
         if not all([key in extra_coords_keys for key in required_extra_coords_keys]):
             raise ValueError("The following extra coords must be supplied: {0} vs. {1} from {2}".format(
                 required_extra_coords_keys, extra_coords_keys, extra_coords))
-        # Initialize IRISSpectrogram.
-        super(IRISSpectrogram, self).__init__(
+        # Initialize IRISSpectrogramCube.
+        super(IRISSpectrogramCube, self).__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
             unit=unit, extra_coords=extra_coords, copy=copy, missing_axis=missing_axis)
 
     def __getitem__(self, item):
-        result = super(IRISSpectrogram, self).__getitem__(item)
-        return IRISSpectrogram(
+        result = super(IRISSpectrogramCube, self).__getitem__(item)
+        return IRISSpectrogramCube(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
             convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axis),
             mask=result.mask, missing_axis=result.missing_axis)
@@ -283,7 +283,7 @@ class IRISSpectrogram(NDCube):
         else:
             instance_start = self.extra_coords["time"]["value"][0],
             instance_end = self.extra_coords["time"]["value"][-1]
-        return """IRISSpectrogram
+        return """IRISSpectrogramCube
 ---------------------
 {obs_repr}
 
@@ -311,8 +311,8 @@ Axis Types: {axis_types}
 
         Returns
         -------
-        result: `IRISSpectrogram`
-            New IRISSpectrogram in new units.
+        result: `IRISSpectrogramCube`
+            New IRISSpectrogramCube in new units.
 
         """
         detector_type = iris_tools.get_detector_type(self.meta)
@@ -343,7 +343,7 @@ Axis Types: {axis_types}
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
-                self = IRISSpectrogram(
+                self = IRISSpectrogramCube(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
                     convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
                     mask=self.mask, missing_axis=self.missing_axis)
@@ -376,9 +376,10 @@ Axis Types: {axis_types}
                 new_unit = new_data_quantities[0].unit
         else:
             raise ValueError("Input unit type not recognized.")
-        return IRISSpectrogram(new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                               convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-                               mask=self.mask, missing_axis=self.missing_axis)
+        return IRISSpectrogramCube(
+            new_data, self.wcs, new_uncertainty, new_unit, self.meta,
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
+            mask=self.mask, missing_axis=self.missing_axis)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -403,8 +404,8 @@ Axis Types: {axis_types}
 
         Returns
         -------
-        result: `IRISSpectrogram`
-            New IRISSpectrogram in new units.
+        result: `IRISSpectrogramCube`
+            New IRISSpectrogramCube in new units.
 
         """
         # Get exposure time in seconds and change array's shape so that
@@ -419,7 +420,7 @@ Axis Types: {axis_types}
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "IRISSpectrogram dimensions must be 2 or 3. Dimensions={0}".format(
+                    "IRISSpectrogramCube dimensions must be 2 or 3. Dimensions={0}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -428,8 +429,8 @@ Axis Types: {axis_types}
         else:
             new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of IRISSpectrogram with correction applied/undone.
-        return IRISSpectrogram(
+        # Return new instance of IRISSpectrogramCube with correction applied/undone.
+        return IRISSpectrogramCube(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
             mask=self.mask, missing_axis=self.missing_axis)
@@ -597,12 +598,13 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                 unit=u.photon).to(DN_unit).value
             # Appending NDCube instance to the corresponding window key in dictionary's list.
             data_dict[window_name].append(
-                IRISSpectrogram(data_nan_masked, wcs_, uncertainty, DN_unit, single_file_meta,
-                                window_extra_coords, mask=data_mask))
+                IRISSpectrogramCube(data_nan_masked, wcs_, uncertainty, DN_unit, single_file_meta,
+                                    window_extra_coords, mask=data_mask))
         hdulist.close()
-    # Construct dictionary of IRISSpectrogramSequences for spectral windows
-    data = dict([(window_name, IRISSpectrogramSequence(data_dict[window_name],
-                                                       window_metas[window_name], common_axis=0))
+    # Construct dictionary of IRISSpectrogramCubeSequences for spectral windows
+    data = dict([(window_name, IRISSpectrogramCubeSequence(data_dict[window_name],
+                                                           window_metas[window_name],
+                                                           common_axis=0))
                  for window_name in spectral_windows_req])
     # Initialize an IRISSpectrograph object.
     return IRISSpectrograph(data, meta=top_meta)
@@ -627,5 +629,3 @@ def _try_parse_time_on_meta(meta):
         else:
             pass
     return result
-
-

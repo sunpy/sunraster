@@ -7,7 +7,7 @@ import numpy as np
 from ndcube.utils.wcs import WCS
 
 from irispy import iris_tools
-from irispy.new_sji import SJICube
+from irispy.new_sji import IRISMapCube
 
 # Sample data for tests
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],
@@ -61,16 +61,16 @@ extra_coords = [('TIME', 0, times),
 scaled_T = True
 scaled_F = False
 
-cube = SJICube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-               extra_coords=extra_coords, scaled=scaled_T)
-cube_2D = SJICube(data_2D, wcs_2D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-                  extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, False, True])
-cube_1D = SJICube(data_1D, wcs_1D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-                  extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, True, True])
-cube_F = SJICube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-                 extra_coords=extra_coords, scaled=scaled_F)
-cube_4D = SJICube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, unit=unit,
-                  extra_coords=extra_coords, scaled=scaled_T)
+cube = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                   extra_coords=extra_coords, scaled=scaled_T)
+cube_2D = IRISMapCube(data_2D, wcs_2D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, False, True])
+cube_1D = IRISMapCube(data_1D, wcs_1D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, True, True])
+cube_F = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                     extra_coords=extra_coords, scaled=scaled_F)
+cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, unit=unit,
+                      extra_coords=extra_coords, scaled=scaled_T)
 
 # Tests
 @pytest.mark.parametrize("test_input,expected", [

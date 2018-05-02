@@ -91,7 +91,7 @@ class IRISMapCube(NDCube):
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
         self.dust_masked = False
-        # Initialize SJI_NDCube.
+        # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
                          copy=copy, missing_axis=missing_axis)
