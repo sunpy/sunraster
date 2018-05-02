@@ -90,6 +90,7 @@ class SJICube(NDCube):
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
+        self.dust_masked = False
         # Initialize SJI_NDCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -204,16 +205,29 @@ class SJICube(NDCube):
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axis))
 
-    def set_dust_mask(self):
+    def set_dust_mask(self, undo=False):
         """
-        Apply a mask on data corresponding to the dust particles positions.
+        Applies or undoes an update of the mask with the dust particles positions.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, dust particles positions mask will be applied.
+            If True, dust particles positions mask will be removed.
+            Default=False
 
         """
-        dust = self.data < 0.5
+        self.data[self.data < 0] = 0
+        dust = self.data == 0
         struct = ndimage.generate_binary_structure(2, 2)
         for i in range(self.data.shape[0]):
             dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
-        self.data[dust] = np.nan
+        if undo:
+            self.mask[dust] = False
+            self.dust_masked = False
+        else:
+            self.mask[dust] = True
+            self.dust_masked = True
 
 
 def read_iris_sji_level2_fits(filename, memmap=False):
@@ -234,7 +248,6 @@ def read_iris_sji_level2_fits(filename, memmap=False):
     result: 'irispy.sji.SJICube'
 
     """
-
     # Open a fits file
     my_file = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
     # Derive WCS, data and mask for NDCube from fits file.
@@ -248,8 +261,8 @@ def read_iris_sji_level2_fits(filename, memmap=False):
         unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
         uncertainty = None
     elif not memmap:
-        data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
+        data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
         scaled = True
         # Derive unit and readout noise from the detector
         unit = iris_tools.DN_UNIT["SJI"]
