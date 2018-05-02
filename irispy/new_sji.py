@@ -217,8 +217,7 @@ class SJICube(NDCube):
             Default=False
 
         """
-        self.data[self.data < 0] = 0
-        dust = self.data == 0
+        dust = self.data < 0.5
         struct = ndimage.generate_binary_structure(2, 2)
         for i in range(self.data.shape[0]):
             dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
