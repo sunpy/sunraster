@@ -206,7 +206,8 @@ class SJICube(NDCube):
 
     def set_dust_mask(self):
         """
-        Docstring will be available as soon as possible
+        Apply a mask on data corresponding to the dust particles positions.
+
         """
         dust = self.data < 0.5
         struct = ndimage.generate_binary_structure(2, 2)
@@ -217,7 +218,7 @@ class SJICube(NDCube):
 
 def read_iris_sji_level2_fits(filename, memmap=False):
     """
-    Read IRIS level 2 SJI FITS from an OBS into an SJICube instance
+    Read IRIS level 2 SJI FITS from an OBS into an SJICube instance.
 
     Parameters
     ----------
