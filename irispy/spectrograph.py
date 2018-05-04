@@ -54,27 +54,18 @@ class IRISSpectrograph(object):
     def __repr__(self):
         spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
-            ["\n{0:>15} : {1}".format(name,
-                [int(dim.value) for dim in self.data[name].dimensions[1::]])
+            ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
+                name,
+                self.data[name].dimensions[1::])
                 for name in self.spectral_windows["spectral window"]])
-        time_start = self.data[spectral_window][0].extra_coords["time"]["value"].min()
-        time_end = self.data[spectral_window][-1].extra_coords["time"]["value"].max()
-        if time_start.strftime("%j") == time_start.strftime("%j"):
-            period_info = "{0} {1} -- {2}".format(
-                time_start.strftime("%Y-%m-%d"), time_start.strftime("%H:%M:%S.%f"),
-                time_end.strftime("%H:%M:%S.%f"))
-        else:
-            period_info = "{0} -- {1}".format(time_start, time_end)
-        return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
-               "OBS Description: {obsdesc}\n"
-               "OBS period: {obs_start} -- {obs_end}\n"
-               "Instance period: {inst_period}\n"
-               "Number unique raster positions: {nraster}\n"
-               "Spectral windows : dimensions [raster axis, slit axis, spectral axis]:"
-               "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
-                   obs_start=self.meta["STARTOBS"], obs_end=self.meta["ENDOBS"],
-                   inst_period=period_info, nraster=self.meta["NRASTERP"],
-                   spec=spectral_windows_info)
+        return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
+               "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
+               "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
+               "Instance period: {0} -- {1}\n".format(
+                   self.data[spectral_window][0].extra_coords["time"]["value"],
+                   self.data[spectral_window][-1].extra_coords["time"]["value"]) + \
+               "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
+               "Spectral windows{0}>".format(spectral_windows_info)
 
     @property
     def spectral_windows(self):
