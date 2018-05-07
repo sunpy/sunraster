@@ -54,34 +54,18 @@ class IRISSpectrograph(object):
     def __repr__(self):
         spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
-            ["\n{0:>15} : {1:16} pix".format(name,
-                str([int(dim.value) for dim in self.data[name].dimensions[1::]]))
+            ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
+                name,
+                self.data[name].dimensions[1::])
                 for name in self.spectral_windows["spectral window"]])
-        obs_start = self.meta["STARTOBS"]
-        obs_end = self.meta["ENDOBS"]
-        time_start = self.data[spectral_window][0].extra_coords["time"]["value"].min()
-        time_end = self.data[spectral_window][-1].extra_coords["time"]["value"].max()
-        result = []
-        # If starting and ending times in same day, print date only once
-        for start, end in zip([obs_start, time_start], [obs_end, time_end]):
-            if start.strftime("%j") == end.strftime("%j"):
-                result.append("{0} {1} -- {2}".format(
-                    start.strftime("%Y-%m-%d"), start.strftime("%H:%M:%S.%f"),
-                    end.strftime("%H:%M:%S.%f")))
-            else:
-                result.append("{0} -- {1}".format(start, end))
-        obs_period, instance_period = result
-        return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
-               "OBS Description: {obsdesc}\n"
-               "OBS period: {obs_period}\n"
-               "Instance period: {inst_period}\n"
-               "Number unique raster positions: {nraster}\n"
-               "Number of repeats: {repeats}\n"
-               "Spectral windows : dimensions [raster axis, slit axis, spectral axis]:"
-               "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
-                   obs_period=obs_period,inst_period=instance_period,
-                   repeats=int(self.data[spectral_window].dimensions[0].value),
-                   nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
+        return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
+               "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
+               "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
+               "Instance period: {0} -- {1}\n".format(
+                   self.data[spectral_window][0].extra_coords["time"]["value"],
+                   self.data[spectral_window][-1].extra_coords["time"]["value"]) + \
+               "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
+               "Spectral windows{0}>".format(spectral_windows_info)
 
     @property
     def spectral_windows(self):
