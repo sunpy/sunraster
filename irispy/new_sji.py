@@ -226,7 +226,7 @@ class IRISMapCubeSequence(NDCubeSequence):
     """
     def __init__(self, data_list, meta=None, common_axis=0):
         # Check that all SJI data are coming from the same OBS ID.
-        if len(np.unique([cube.meta["OBSID"] for cube in data_list])) != 1:
+        if np.any([cube.meta["OBSID"] != data_list[0].meta["OBSID"] for cube in data_list]):
             raise ValueError("Constituent IRISMapCube objects must have same "
                              "value of 'OBSID' in its meta.")
         # Initialize Sequence.
@@ -353,4 +353,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                                          extra_coords=extra_coords, scaled=scaled))
         hdulist.close()
 
-    return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
+    if len(filenames) == 1:
+        return list_of_cubes[0]
+    else:
+        return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
