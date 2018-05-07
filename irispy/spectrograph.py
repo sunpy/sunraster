@@ -54,8 +54,8 @@ class IRISSpectrograph(object):
     def __repr__(self):
         spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
-            ["\n{0:>15} : {1:16} pix".format(name,
-                str([int(dim.value) for dim in self.data[name].dimensions[1::]]))
+            ["\n{0:>15} : {1:20} pix".format(name,
+                str([int(dim.value) for dim in self.data[name].dimensions]))
                 for name in self.spectral_windows["spectral window"]])
         obs_start = self.meta["STARTOBS"]
         obs_end = self.meta["ENDOBS"]
@@ -73,11 +73,11 @@ class IRISSpectrograph(object):
         obs_period, instance_period = result
         return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
                "OBS Description: {obsdesc}\n"
-               "OBS period: {obs_period}\n"
+               "OBS Period: {obs_period}\n"
                "Instance period: {inst_period}\n"
-               "Number unique raster positions: {nraster}\n"
-               "Number of repeats: {repeats}\n"
-               "Spectral windows : dimensions [raster axis, slit axis, spectral axis]:"
+               "OBS Number unique raster positions: {nraster}\n"
+               "OBS Number of repeats: {repeats}\n"
+               "Spectral windows : dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
                "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
                    obs_period=obs_period,inst_period=instance_period,
                    repeats=int(self.data[spectral_window].dimensions[0].value),
