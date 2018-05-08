@@ -72,16 +72,14 @@ class IRISSpectrograph(object):
                 result.append("{0} -- {1}".format(start, end))
         obs_period, instance_period = result
         return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
-               "OBS Description: {obsdesc}\n"
-               "OBS Period: {obs_period}\n"
-               "Instance period: {inst_period}\n"
-               "OBS Number unique raster positions: {nraster}\n"
-               "OBS Number of repeats: {repeats}\n"
-               "Spectral windows : dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
-               "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
-                   obs_period=obs_period,inst_period=instance_period,
-                   repeats=int(self.data[spectral_window].dimensions[0].value),
-                   nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
+           "OBS Description: {obsdesc}\n"
+           "OBS Period: {obs_period}\n"
+           "Instance period: {inst_period}\n"
+           "OBS Number unique raster positions: {nraster}\n"
+           "Spectral windows: dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
+           "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
+                             obs_period=obs_period, inst_period=instance_period,
+                             nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
 
     @property
     def spectral_windows(self):
