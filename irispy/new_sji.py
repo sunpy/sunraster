@@ -271,6 +271,18 @@ Axis Types:\t\t {axis_types}
            seq_shape=self.dimensions,
            axis_types=self.world_axis_physical_types)
 
+    @property
+    def __getitem__(self, item):
+        return self.index_as_cube
+
+    @property
+    def dimensions2(self):
+        return self.cube_like_dimensions
+
+    @property
+    def world_axis_physical_coords(self):
+        return self.cube_like_world_axis_physical_types
+
 
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
@@ -279,7 +291,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     Parameters
     ----------
     filenames: `list` of `str` or `str`
-        Filename of filenames to be read.  They must all be associated with the same
+        Filename or filenames to be read.  They must all be associated with the same
         OBS number.
 
     memmap : `bool`
@@ -352,7 +364,6 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                                          unit=unit, meta=meta, mask=mask,
                                          extra_coords=extra_coords, scaled=scaled))
         hdulist.close()
-
     if len(filenames) == 1:
         return list_of_cubes[0]
     else:
