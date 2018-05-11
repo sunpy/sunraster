@@ -343,10 +343,7 @@ Axis Types: {axis_types}
                           self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
-            obs_wavelength = self.pixel_to_world([
-                np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
-                np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
-                np.arange(int(self.dimensions.shape[spectral_data_index].value)) * u.pix])[-1]
+            obs_wavelength = self.axis_world_coords(2)
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
