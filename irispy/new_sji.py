@@ -274,7 +274,7 @@ Axis Types:\t\t {axis_types}
 
     def __getitem__(self, item):
         return utils.sequence.slice_sequence(self, item)
-        
+
     @property
     def cube_dimensions(self):
         return self.cube_like_dimensions
