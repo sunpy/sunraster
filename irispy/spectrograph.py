@@ -139,7 +139,7 @@ Sequence period: {inst_start} -- {inst_end}
 Sequence Shape: {seq_shape}
 Axis Types: {axis_types}
 
-""".format(obs_repr=_produce_obs_repr_string(self.meta),
+""".format(obs_repr=_produce_obs_repr_string(self.data[0].meta),
            inst_start=self[0].extra_coords["time"]["value"][0],
            inst_end=self[-1].extra_coords["time"]["value"][-1],
            seq_shape=self.dimensions, axis_types=self.world_axis_physical_types)
