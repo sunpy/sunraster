@@ -272,12 +272,9 @@ Axis Types:\t\t {axis_types}
            seq_shape=self.dimensions,
            axis_types=self.world_axis_physical_types)
 
-
     def __getitem__(self, item):
         return utils.sequence.slice_sequence(self, item)
-        #return self.index_as_cube
-        #return utils.sequence._index_sequence_as_cube(self, item)
-
+        
     @property
     def cube_dimensions(self):
         return self.cube_like_dimensions
