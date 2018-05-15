@@ -103,11 +103,14 @@ class IRISMapCube(NDCube):
         #Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
         endobs = endobs.isoformat() if endobs else None
-        #Conversion of the instance start of OBS
-        instance_start = self.extra_coords["TIME"]["value"][0]
+        #Conversion of the instance start and end of OBS
+        if isinstance(self.extra_coords["TIME"]["value"], np.ndarray):
+            instance_start = self.extra_coords["TIME"]["value"][0]
+            instance_end = self.extra_coords["TIME"]["value"][-1]
+        else:
+            instance_start = self.extra_coords["TIME"]["value"]
+            instance_end = self.extra_coords["TIME"]["value"]
         instance_start = instance_start.isoformat() if instance_start else None
-        #Conversion of the instance end of OBS
-        instance_end = self.extra_coords["TIME"]["value"][-1]
         instance_end = instance_end.isoformat() if instance_end else None
         #Representation of IRISMapCube object
         return (
@@ -241,10 +244,10 @@ class IRISMapCubeSequence(NDCubeSequence):
         endobs = self.meta.get("ENDOBS", None)
         endobs = endobs.isoformat() if endobs else None
         #Conversion of the instance start of OBS
-        instance_start = self[0].extra_coords["TIME"]["value"][0]
+        instance_start = self[0].extra_coords["TIME"]["value"]
         instance_start = instance_start.isoformat() if instance_start else None
         #Conversion of the instance end of OBS
-        instance_end = self[-1].extra_coords["TIME"]["value"][-1]
+        instance_end = self[-1].extra_coords["TIME"]["value"]
         instance_end = instance_end.isoformat() if instance_end else None
         #Representation of IRISMapCube object
         return """
@@ -270,13 +273,13 @@ Axis Types:\t\t {axis_types}
            inst_start=instance_start,
            inst_end=instance_end,
            seq_shape=self.dimensions,
-           axis_types=self.world_axis_physical_types)
+           axis_types=self.world_axis_physical_coords)
 
     def __getitem__(self, item):
-        return utils.sequence.slice_sequence(self, item)
+        return self.index_as_cube[item]
 
     @property
-    def cube_dimensions(self):
+    def dimensions(self):
         return self.cube_like_dimensions
 
     @property
