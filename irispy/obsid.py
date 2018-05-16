@@ -6,7 +6,7 @@ from astropy import units as u
 from pkg_resources import resource_filename
 
 
-class Obsid(object):
+class Obsid(dict):
     """A class to convert the IRIS OBS ID to human-readable format.
 
     Parameters
@@ -36,16 +36,16 @@ class Obsid(object):
     Compression:                                Lossless compression
     Linelist:                                       Flare linelist 1
 
-    Access values:
-
+    The data can be accessed as in a dictionary:
+    
     >>> data = obsid.Obsid(3675508564)
-    >>> data.exptime
+    >>> data['exptime']
     <Quantity 8. s>
-    >>> data.linelist
+    >>> data['linelist']
     'Flare linelist 1'
-    >>> data.raster_fov
+    >>> data['raster_fov']
     '31.35x120'
-    >>> data.raster_step
+    >>> data['raster_step']
     0.33
     """
 
@@ -62,15 +62,11 @@ class Obsid(object):
                            'Exposure 1s': 'exptime',
                            'C II   Si IV   Mg II h/k   Mg II w   ': 'sjis'}
         self._versions = [36, 38, 40]
-        for value in self.field_keys.values():
-            setattr(self, value, None)
-        self.read_obsid(obsid)
+        data, options = self.read_obsid(obsid)
+        super().__init__(data)
+        self.options = options
 
     def __repr__(self):
-        quants = {value: getattr(self, value)
-                  for value in (list(self.field_keys.values()) +
-                  ['obsid', 'spec_cadence', 'raster_fov', 'raster_fulldesc',
-                   'sji_fov'])}
         return ("IRIS OBS ID {obsid}\n"
                 "----------------------\n"
                 "Description:       {raster_fulldesc:>45}\n"
@@ -81,7 +77,7 @@ class Obsid(object):
                 "FUV binning:       {fuv_binning:>45}\n"
                 "SJI cadence:       {sji_cadence:>45}\n"
                 "Compression:       {compression:>45}\n"
-                "Linelist:          {linelist:>45}").format(**quants)
+                "Linelist:          {linelist:>45}").format(**self)
 
     @staticmethod
     def __exptime_to_quant(exptime):
@@ -98,6 +94,9 @@ class Obsid(object):
         """
         Reads different fields from OBS ID number.
         """
+        data = {}
+        options = {}
+        data['obsid'] = obsid
         # here choose between tables
         if len(str(obsid)) != 10:
             raise ValueError("Invalid OBS ID: must have 10 digits.")
@@ -117,21 +116,21 @@ class Obsid(object):
             raise ValueError("Invalid OBS ID: last two numbers must be between"
                              " {0} and {1}".format(table1['OBS-ID'].min(),
                                                    table1['OBS-ID'].max()))
-        self.raster_step = meta['Raster step']
-        self.raster_fov = meta['Raster FOV']
-        self.spec_cadence = meta['Spectral cadence']
-        self.sji_fov = meta['SJI FOV']
-        self.raster_desc = meta['Description']
-        self.raster_fulldesc = '%s %s %s' % (self.raster_desc, self.raster_fov,
-                                             self.spec_cadence)
-        self.raster_meta = meta.copy()
+
+        data['raster_step'] = meta['Raster step']
+        data['raster_fov'] = meta['Raster FOV']
+        data['spec_cadence'] = meta['Spectral cadence']
+        data['sji_fov'] = meta['SJI FOV']
+        data['raster_desc'] = meta['Description']
+        data['raster_fulldesc'] = '%s %s %s' % (data['raster_desc'], data['raster_fov'],
+                                                data['spec_cadence'])
         field_ranges = np.concatenate([  # find all dividers between fields
             table2.where(table2['OBS ID'] == 0).dropna(how='all').index,
             np.array([len(table2)])])
         # field indices, start from largest and subtract
-        for ri, rf in zip(field_ranges[-2::-1], field_ranges[:0:-1]):
-            table = table2.iloc[ri:rf]
-            for i in np.arange(ri, rf)[::-1]:
+        for start, end in zip(field_ranges[-2::-1], field_ranges[:0:-1]):
+            table = table2.iloc[start:end]
+            for i in np.arange(start, end)[::-1]:
                 index = i
                 tmp = table['OBS ID'].loc[i]
                 if (obsid - tmp) >= 0:
@@ -142,11 +141,12 @@ class Obsid(object):
             if desc.iloc[0] in self.field_keys:
                 attr_name = self.field_keys[desc.iloc[0]]
                 if attr_name == 'exptime':
-                    options = (self.__exptime_to_quant(a) for a in list(desc.values))
-                    options = dict(zip(options, table['OBS ID']))
+                    opt = (self.__exptime_to_quant(a) for a in list(desc.values))
+                    opt = dict(zip(opt, table['OBS ID']))
                     attr_value = self.__exptime_to_quant(desc.loc[index])
                 else:
-                    options = dict(zip(desc, table['OBS ID']))
+                    opt = dict(zip(desc, table['OBS ID']))
                     attr_value = desc.loc[index].strip()
-                setattr(self, attr_name + '_options', options)
-                setattr(self, attr_name, attr_value)
+                data[attr_name] = attr_value
+                options[attr_name] = opt
+        return data, options
