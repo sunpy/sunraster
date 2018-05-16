@@ -273,7 +273,7 @@ Axis Types:\t\t {axis_types}
            inst_start=instance_start,
            inst_end=instance_end,
            seq_shape=self.dimensions,
-           axis_types=self.world_axis_physical_coords)
+           axis_types=self.world_axis_physical_types)
 
     def __getitem__(self, item):
         return self.index_as_cube[item]
@@ -283,7 +283,7 @@ Axis Types:\t\t {axis_types}
         return self.cube_like_dimensions
 
     @property
-    def world_axis_physical_coords(self):
+    def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
 
