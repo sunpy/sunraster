@@ -199,6 +199,22 @@ class IRISMapCube(NDCube):
             Default=False
         """
         dust = self.data < 0.5
+        # Selecting cosmic rays positions
+        for k in range(3):
+            for i in range(self.data.shape[1]-2):
+                for j in range(self.data.shape[2]-2):
+                    index = 0
+                    if self.data[k, i+1, j+1] > 10*self.data[k, i, j+1]:
+                        index += 1
+                    if self.data[k, i+1, j+1] > 10*self.data[k, i+1, j]:
+                        index += 1
+                    if self.data[k, i+1, j+1] > 10*self.data[k, i+2, j+1]:
+                        index += 1
+                    if self.data[k, i+1, j+1] > 10*self.data[k, i+1, j+2]:
+                        index += 1
+                    if index > 0:
+                        self.mask[k, i+1, j+1] = True
+        # Selecting dust particle positions
         struct = ndimage.generate_binary_structure(2, 2)
         for i in range(self.data.shape[0]):
             dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
