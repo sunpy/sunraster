@@ -286,7 +286,7 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
-def apply_exposure_time_correction(self, undo=False, force=False):
+    def apply_exposure_time_correction(self, undo=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
 
