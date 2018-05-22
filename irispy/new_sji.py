@@ -286,6 +286,12 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
+    def plot(self, axes=None, plot_axis_indices=None, axes_coordinates=None,
+             axes_units=None, data_unit=None, **kwargs):
+        return self.plot_as_cube(axes=axes, plot_axis_indices=plot_axis_indices,
+                                 axes_coordinates=axes_coordinates,
+                                 axes_units=axes_units, data_unit=data_unit, **kwargs)
+
 
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
