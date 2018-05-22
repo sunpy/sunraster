@@ -286,6 +286,42 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
+def apply_exposure_time_correction(self, undo=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
+
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `None` or `IRISMapCube`
+            If copy=False, the original IRISMapCube is modified with the exposure
+            time correction applied (undone).
+            If copy=True, a new IRISMapCube is returned with the correction
+            applied (undone).
+
+        """
+        new_seq = []
+        for cube in self.data:
+            new_seq.append(cube.apply_exposure_time_correction(undo=undo, force=force))
+        return IRISMapCubeSequence(data_list=new_seq, meta=self.meta,
+                                   common_axis=self._common_axis)
+
 
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
