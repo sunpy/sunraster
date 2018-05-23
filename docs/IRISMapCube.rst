@@ -22,6 +22,15 @@ Let assume that we will call our fits file ``my_fits_file`` and IRISMapCube obje
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file)
 
+If you don't have a lot of RAM memory of if you are loading a huge file, we recommend to
+use the memmap kwarg. By using it, you will only load what you need to run but some
+methods that requires all the file will not be accessible:
+
+.. code-block:: python
+
+    >>> from irispy import read_iris_sji_level2_fits
+    >>> my_cube = read_iris_sji_level2_fits(my_fits_file, memmap=True)
+
 So now, ``my_cube`` is an IRISMapCube object and we can access to a lot of information like:
 
 - ``my_cube.data`` : In this attribute, we can find the data array.
@@ -48,8 +57,8 @@ You also can undo the exposure time correction by doing:
 
 The correction is only applied (undone) if the object's unit doesn't (does) already
 include inverse time. This can be overridden so that correction is applied (undone)
-regardless of unit by setting force=True. Use one of the two lines above to apply (undone)
-by using the force kwarg:
+regardless of unit by setting ``force=True``. Use one of the two lines above to apply
+(undone) by using the force kwarg:
 
 .. code-block:: python
 
