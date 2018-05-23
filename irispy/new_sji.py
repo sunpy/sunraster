@@ -79,7 +79,9 @@ class IRISMapCube(NDCube):
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
+        # Set the dust mask for the data
         self.dust_masked = False
+        self.dust_mask = iris_tools.calculate_dust_mask(self.data)
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -188,41 +190,27 @@ class IRISMapCube(NDCube):
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axis))
 
-    def set_dust_mask(self, undo=False):
+    def apply_dust_mask(self, undo=False):
         """
         Applies or undoes an update of the mask with the dust particles positions.
+
         Parameters
         ----------
         undo: `bool`
             If False, dust particles positions mask will be applied.
             If True, dust particles positions mask will be removed.
             Default=False
+
+        Returns
+        -------
+        result :
+            Rewrite self.mask with/without the dust positions.
         """
-        dust = self.data < 0.5
-        # Selecting cosmic rays positions
-        for k in range(3):
-            for i in range(self.data.shape[1]-2):
-                for j in range(self.data.shape[2]-2):
-                    index = 0
-                    if self.data[k, i+1, j+1] > 10*self.data[k, i, j+1]:
-                        index += 1
-                    if self.data[k, i+1, j+1] > 10*self.data[k, i+1, j]:
-                        index += 1
-                    if self.data[k, i+1, j+1] > 10*self.data[k, i+2, j+1]:
-                        index += 1
-                    if self.data[k, i+1, j+1] > 10*self.data[k, i+1, j+2]:
-                        index += 1
-                    if index > 0:
-                        self.mask[k, i+1, j+1] = True
-        # Selecting dust particle positions
-        struct = ndimage.generate_binary_structure(2, 2)
-        for i in range(self.data.shape[0]):
-            dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
         if undo:
-            self.mask[dust] = False
+            self.mask[self.dust_mask] = False
             self.dust_masked = False
         else:
-            self.mask[dust] = True
+            self.mask[self.dust_mask] = True
             self.dust_masked = True
 
 

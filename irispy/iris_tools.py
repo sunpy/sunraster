@@ -14,6 +14,7 @@ from astropy.modeling import fitting
 from astropy.modeling.models import custom_model
 from astropy import constants
 import scipy.io
+from scipy import ndimage
 from scipy import interpolate
 from sunpy.time import parse_time
 import sunpy.util.config
@@ -802,3 +803,25 @@ def _apply_or_undo_exposure_time_correction(sequence, correction_function):
         else:
             converted_data_list.append(cube)
     return converted_data_list
+
+def calculate_dust_mask(data_array):
+    """Calculate a mask with the dust positions in a given arrayself.
+
+    Parameters
+    ----------
+    data_array : `numpy.ndarray`
+        This array contains some dust poisition that will be calculated. The array
+        must have scaled values.
+
+    Returns
+    -------
+    dust : `numpy.ndarray` of `bool`
+        This array has the same shape than data_array and contains the dust positions
+        when the value is True.
+
+    """
+    dust = (data_array < 0.5) & (data_array > -200)
+    struct = ndimage.generate_binary_structure(2, 2)
+    for i in range(data_array.shape[0]):
+        dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
+    return dust
