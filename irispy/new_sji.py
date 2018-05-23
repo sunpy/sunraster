@@ -157,11 +157,6 @@ class IRISMapCube(NDCube):
             If True, exposure time correction is removed.
             Default=False
 
-        copy: `bool`
-            If True a new instance with the converted data values is returned.
-            If False, the current instance is overwritten.
-            Default=False
-
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
@@ -170,11 +165,8 @@ class IRISMapCube(NDCube):
 
         Returns
         -------
-        result: `None` or `IRISMapCube`
-            If copy=False, the original IRISMapCube is modified with the exposure
-            time correction applied (undone).
-            If copy=True, a new IRISMapCube is returned with the correction
-            applied (undone).
+        result: `IRISMapCube`
+            A new IRISMapCube is returned with the correction applied (undone).
 
         """
         # Raise an error if this method is called while memmap is used
@@ -286,7 +278,7 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
-    def apply_exposure_time_correction(self, undo=False, force=False):
+    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
 
@@ -301,6 +293,11 @@ Axis Types:\t\t {axis_types}
             If True, exposure time correction is removed.
             Default=False
 
+        copy: `bool`
+            If True a new instance with the converted data values is returned.
+            If False, the current instance is overwritten.
+            Default=False
+
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
@@ -309,19 +306,21 @@ Axis Types:\t\t {axis_types}
 
         Returns
         -------
-        result: `None` or `IRISMapCube`
-            If copy=False, the original IRISMapCube is modified with the exposure
+        result: `IRISMapCubeSequence`
+            If copy=False, the original IRISMapCubeSequence is modified with the exposure
             time correction applied (undone).
-            If copy=True, a new IRISMapCube is returned with the correction
+            If copy=True, a new IRISMapCubeSequence is returned with the correction
             applied (undone).
 
         """
-        new_seq = []
-        for cube in self.data:
-            new_seq.append(cube.apply_exposure_time_correction(undo=undo, force=force))
-        return IRISMapCubeSequence(data_list=new_seq, meta=self.meta,
-                                   common_axis=self._common_axis)
-
+        corrected_data = []
+        corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
+                          for cube in self.data]
+        if copy is True:
+            return IRISMapCubeSequence(data_list=corrected_data, meta=self.meta,
+                                       common_axis=self._common_axis)
+        else:
+            self.data = corrected_data
 
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
