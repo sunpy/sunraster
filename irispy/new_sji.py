@@ -81,7 +81,7 @@ class IRISMapCube(NDCube):
         self.scaled = scaled
         # Set the dust mask for the data
         self.dust_masked = False
-        self.dust_mask = iris_tools.calculate_dust_mask(self.data)
+        self.dust_mask = None
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -206,6 +206,8 @@ class IRISMapCube(NDCube):
         result :
             Rewrite self.mask with/without the dust positions.
         """
+        if  not isinstance(self.dust_mask, np.ndarray):
+            self.dust_mask = iris_tools.calculate_dust_mask(self.data)
         if undo:
             self.mask[self.dust_mask] = False
             self.dust_masked = False
