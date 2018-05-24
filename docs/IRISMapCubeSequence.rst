@@ -19,9 +19,7 @@ IRISMapCubeSequence object.
 Let assume that we will build an IRISMapCubeSequence with two fits files that we will
 call ``my_fits_file_0`` and ``my_fits_file_1``. We can create an IRISMapCubeSequence
 with as much fits files as we want but from the same observation ! Next, we will call
-our IRISMapCubeSequence object as ``my_sequence``:
-
-.. code-block:: python
+our IRISMapCubeSequence object as ``my_sequence``: ::
 
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_fits_files = [my_fits_file_0, my_fits_file_1]
@@ -29,15 +27,13 @@ our IRISMapCubeSequence object as ``my_sequence``:
 
 As for IRISMapCube, if you don't have a lot of RAM memory of if you are loading a huge file,
 we recommend to use the memmap kwarg. By using it, you will only load what you need to run
-but some methods that requires all the file will not be accessible:
-
-.. code-block:: python
+but some methods that requires all the file will not be accessible: ::
 
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_fits_files = [my_fits_file_0, my_fits_file_1]
     >>> my_cube = read_iris_sji_level2_fits(my_fits_files, memmap=True)
 
-So now, ``my_sequence`` is an IRISMapCubeSequence object and we can access to a lot of
+So now, ``my_sequence`` is an IRISMapCubeSequence object and we can access to some
 information like:
 
 - ``my_sequence.data`` : In this attribute, we can find the data array of our sequence.
@@ -53,36 +49,30 @@ objects, we can access to their information by doing:
 - ``my_sequence[2].mask`` : The mask attribute of the third IRISMapCube object.
 
 We can also print a representation of the IRISMapCubeSequence object and we can see
-something like this:
-
-.. code-block:: python
+something like this: ::
 
     >>> my_sequence
     IRISMapCubeSequence
     ---------------------
-    Observatory:		 IRIS
+    Observatory:		IRIS
     Instrument:		 SJI
 
-    OBS ID:			 3690015104
+    OBS ID:			3690015104
     OBS Description:	 Very large sit-and-stare 0.3x175 1s  C II   Si IV   Mg II h/k Deep x
     OBS period:		 2018-04-26T23:07:22.780000 -- 2018-04-27T01:39:47.122000
 
     Sequence period:	 2018-04-26T23:07:22.880000 -- 2018-04-27T01:36:40.490000
-    Sequence Shape:		 [  98. 1095. 1018.] pix
+    Sequence Shape:		[  98. 1095. 1018.] pix
     Axis Types:		 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
 Or we can print the data of our IRISMapCubeSequence object in an image or animation
-by doing that:
-
-.. code-block:: python
+by doing that: ::
 
     >>> my_sequence.plot()
 
 We can upgrade the visualization by using kwargs to set value limits. Here, ``vmin`` is
 the minimum value and every lower value will be considered as the ``vmin`` value.
-This is the same for ``vmax`` that corresponds to the maximum value:
-
-   .. code-block:: python
+This is the same for ``vmax`` that corresponds to the maximum value: ::
 
     >>> my_sequence.plot(vmin=0, vmax=300)
 
