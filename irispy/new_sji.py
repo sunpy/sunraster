@@ -313,7 +313,6 @@ Axis Types:\t\t {axis_types}
             applied (undone).
 
         """
-        corrected_data = []
         corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
                           for cube in self.data]
         if copy is True:
