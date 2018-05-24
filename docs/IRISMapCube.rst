@@ -44,18 +44,18 @@ We can also print a representation of the IRISMapCube object and we can see some
     >>> my_cube
     IRISMapCube
     ---------
-    Observatory:	        	 IRIS
-    Instrument:			         SJI
-    Bandpass:			           1330.0
-    Obs. Start:			         2018-04-26T23:07:22.780000
-    Obs. End:		          	 2018-04-27T01:39:47.122000
-    Instance Start:	         2018-04-26T23:07:22.880000
-    Instance End:	        	 2018-04-27T01:36:40.490000
-    Total Frames in Obs.:	   49
-    IRIS Obs. id:		         3690015104
+    Observatory:		 IRIS
+    Instrument:			 SJI
+    Bandpass:			 1330.0
+    Obs. Start:			 2018-04-26T23:07:22.780000
+    Obs. End:			 2018-04-27T01:39:47.122000
+    Instance Start:		 2018-04-26T23:07:22.880000
+    Instance End:		 2018-04-27T01:36:40.490000
+    Total Frames in Obs.:	 49
+    IRIS Obs. id:		 3690015104
     IRIS Obs. Description:	 Very large sit-and-stare 0.3x175 1s  C II   Si IV   Mg II h/k Deep x
-    Cube dimensions:		     [  49. 1095. 1018.] pix
-    Axis Types:			         ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
+    Cube dimensions:		 [  49. 1095. 1018.] pix
+    Axis Types:			 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
 Or we can print the data of our IRISMapCube object in an image or animation by doing that:
 
