@@ -54,15 +54,15 @@ something like this: ::
     >>> my_sequence
     IRISMapCubeSequence
     ---------------------
-    Observatory:	IRIS
+    Observatory:	 IRIS
     Instrument:		 SJI
 
-    OBS ID:		3690015104
+    OBS ID:		 3690015104
     OBS Description:	 Very large sit-and-stare 0.3x175 1s  C II   Si IV   Mg II h/k Deep x
     OBS period:		 2018-04-26T23:07:22.780000 -- 2018-04-27T01:39:47.122000
 
     Sequence period:	 2018-04-26T23:07:22.880000 -- 2018-04-27T01:36:40.490000
-    Sequence Shape:	[  98. 1095. 1018.] pix
+    Sequence Shape:	 [  98. 1095. 1018.] pix
     Axis Types:		 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
 Or we can print the data of our IRISMapCubeSequence object in an image or animation
