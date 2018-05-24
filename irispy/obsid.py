@@ -6,7 +6,7 @@ from astropy import units as u
 from pkg_resources import resource_filename
 
 
-class Obsid(dict):
+class ObsId(dict):
     """A class to convert the IRIS OBS ID to human-readable format.
 
     Parameters
@@ -23,7 +23,7 @@ class Obsid(dict):
     --------
     Quickly show OBS ID parameters:
 
-    >>> obsid.Obsid(3675508564)
+    >>> obsid.ObsId(3675508564)
     IRIS OBS ID 3675508564
     ----------------------
     Description:            Large dense 96-step raster 31.35x120 96s
@@ -37,8 +37,8 @@ class Obsid(dict):
     Linelist:                                       Flare linelist 1
 
     The data can be accessed as in a dictionary:
-    
-    >>> data = obsid.Obsid(3675508564)
+
+    >>> data = obsid.ObsId(3675508564)
     >>> data['exptime']
     <Quantity 8. s>
     >>> data['linelist']
@@ -51,18 +51,7 @@ class Obsid(dict):
 
     def __init__(self, obsid):
         self.obsid = obsid
-        self.field_keys = {'Large linelist': 'linelist',
-                           'Default compression': 'compression',
-                           'Lossy compression': 'compression',
-                           'Non-simultaneous readout': 'readout',
-                           'SJI cadence default': 'sji_cadence',
-                           'SJI cadence 10s': 'sji_cadence',
-                           'FUV binned same as NUV': 'fuv_binning',
-                           'Spatial x 1, Spectral x 1': 'binning',
-                           'Exposure 1s': 'exptime',
-                           'C II   Si IV   Mg II h/k   Mg II w   ': 'sjis'}
-        self._versions = [36, 38, 40]
-        data, options = self.read_obsid(obsid)
+        data, options = self._read_obsid(obsid)
         super().__init__(data)
         self.options = options
 
@@ -90,20 +79,31 @@ class Obsid(dict):
         else:
             return float(exptime.split(' x ')[1]) * u.s
 
-    def read_obsid(self, obsid):
+    def _read_obsid(self, obsid):
         """
         Reads different fields from OBS ID number.
         """
         data = {}
         options = {}
         data['obsid'] = obsid
-        # here choose between tables
+        field_keys = {'Large linelist': 'linelist',
+                      'Default compression': 'compression',
+                      'Lossy compression': 'compression',
+                      'Non-simultaneous readout': 'readout',
+                      'SJI cadence default': 'sji_cadence',
+                      'SJI cadence 10s': 'sji_cadence',
+                      'FUV binned same as NUV': 'fuv_binning',
+                      'Spatial x 1, Spectral x 1': 'binning',
+                      'Exposure 1s': 'exptime',
+                      'C II   Si IV   Mg II h/k   Mg II w   ': 'sjis'}
+        versions = [36, 38, 40]
         if len(str(obsid)) != 10:
             raise ValueError("Invalid OBS ID: must have 10 digits.")
+        # here choose between tables
         version = int(str(obsid)[:2])
-        if version not in self._versions:
+        if version not in versions:
             raise ValueError("Invalid OBS ID: two first digits must one of"
-                             " {0}".format(self._versions))
+                             " {0}".format(versions))
         obsid = int(str(obsid)[2:])  # version digits are no longer needed
         table1 = pd.read_csv(resource_filename('irispy',
                                                'data/v%i-table10.csv' % version))
@@ -138,8 +138,8 @@ class Obsid(dict):
                     break
             desc = table['Size + description']
             # Save values for attributes but also table options as function of OBS ID
-            if desc.iloc[0] in self.field_keys:
-                attr_name = self.field_keys[desc.iloc[0]]
+            if desc.iloc[0] in field_keys:
+                attr_name = field_keys[desc.iloc[0]]
                 if attr_name == 'exptime':
                     opt = (self.__exptime_to_quant(a) for a in list(desc.values))
                     opt = dict(zip(opt, table['OBS ID']))
