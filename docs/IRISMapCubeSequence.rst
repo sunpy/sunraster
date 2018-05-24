@@ -19,7 +19,7 @@ IRISMapCubeSequence object.
 Let assume that we will build an IRISMapCubeSequence with two fits files that we will
 call ``my_fits_file_0`` and ``my_fits_file_1``. We can create an IRISMapCubeSequence
 with as much fits files as we want but from the same observation ! Next, we will call
-our IRISMapCubeSequence object as ``my_sequence``: ::
+our IRISMapCubeSequence object as ``my_sequence``. ::
 
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_fits_files = [my_fits_file_0, my_fits_file_1]
@@ -27,11 +27,12 @@ our IRISMapCubeSequence object as ``my_sequence``: ::
 
 As for IRISMapCube, if you don't have a lot of RAM memory of if you are loading a huge file,
 we recommend to use the memmap kwarg. By using it, you will only load what you need to run
-but some methods that requires all the file will not be accessible: ::
+but some methods that requires all the file will not be accessible. You can use the memmap
+kwarg by doing: ::
 
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_fits_files = [my_fits_file_0, my_fits_file_1]
-    >>> my_cube = read_iris_sji_level2_fits(my_fits_files, memmap=True)
+    >>> my_sequence = read_iris_sji_level2_fits(my_fits_files, memmap=True)
 
 So now, ``my_sequence`` is an IRISMapCubeSequence object and we can access to some
 information like:
@@ -72,7 +73,7 @@ by doing that: ::
 
 We can upgrade the visualization by using kwargs to set value limits. Here, ``vmin`` is
 the minimum value and every lower value will be considered as the ``vmin`` value.
-This is the same for ``vmax`` that corresponds to the maximum value: ::
+This is the same for ``vmax`` that corresponds to the maximum value. ::
 
     >>> my_sequence.plot(vmin=0, vmax=300)
 
@@ -82,6 +83,21 @@ to correct the data.
 Exposure Time Correction
 ------------------------
 
-Waiting the incoming PR
+We can apply the exposure time correction to data and to the uncertainty and
+this method adjusts the unit for each IRISMapCube objects inside our IRISMapCubeSequence. ::
+
+    >>> my_sequence.apply_exposure_time_correction()
+
+We also can undo the exposure time correction by doing: ::
+
+    >>> my_sequence.apply_exposure_time_correction(undo=True)
+
+The correction is only applied (undone) if the object's unit doesn't (does) already
+include inverse time. This can be overridden so that correction is applied (undone)
+regardless of unit by setting ``force=True``. Use one of the two lines above to apply
+(undone) by using the force kwarg. ::
+
+    >>> my_sequence.apply_exposure_time_correction(force=True)
+    >>> my_sequence.apply_exposure_time_correction(undo=True, force=True)
 
 .. _IRIS: http://iris.lmsal.com/search/
