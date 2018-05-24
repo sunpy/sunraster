@@ -295,7 +295,7 @@ Axis Types:\t\t {axis_types}
         Based on the cube-like dimensionality of the sequence and value of plot_axis_indices
         kwarg, a Line/Image Plot/Animation is produced.
 
-         Parameters
+        Parameters
         ----------
         axes: `astropy.visualization.wcsaxes.core.WCSAxes` or ??? or None.
             The axes to plot onto. If None the current axes will be used.
