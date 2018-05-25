@@ -219,12 +219,11 @@ class IRISMapCube(NDCube):
         result :
             Rewrite self.mask with/without the dust positions.
         """
-        dust_mask = iris_tools.calculate_dust_mask(self.data)
         if undo:
-            self.mask[dust_mask] = False
+            self.mask[iris_tools.calculate_dust_mask(self.data)] = False
             self.dust_masked = False
         else:
-            self.mask[dust_mask] = True
+            self.mask = iris_tools.calculate_dust_mask(self.data, self.mask)
             self.dust_masked = True
 
 
