@@ -245,7 +245,7 @@ class IRISMapCubeSequence(NDCubeSequence):
 
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
-        
+
     """
     def __init__(self, data_list, meta=None, common_axis=0):
         # Check that all SJI data are coming from the same OBS ID.
