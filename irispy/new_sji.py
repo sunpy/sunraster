@@ -116,7 +116,7 @@ class IRISMapCube(NDCube):
         return (
             """
     IRISMapCube
-    ---------
+    -----------
     Observatory:\t\t {obs}
     Instrument:\t\t\t {instrument}
     Bandpass:\t\t\t {bandpass}
@@ -252,7 +252,7 @@ class IRISMapCubeSequence(NDCubeSequence):
         #Representation of IRISMapCube object
         return """
 IRISMapCubeSequence
----------------------
+-------------------
 Observatory:\t\t {obs}
 Instrument:\t\t {instrument}
 

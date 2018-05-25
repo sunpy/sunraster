@@ -39,7 +39,7 @@ like this: ::
 
     >>> my_cube
     IRISMapCube
-    ---------
+    -----------
     Observatory:		 IRIS
     Instrument:			 SJI
     Bandpass:			 1330.0

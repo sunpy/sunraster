@@ -54,7 +54,7 @@ something like this: ::
 
     >>> my_sequence
     IRISMapCubeSequence
-    ---------------------
+    -------------------
     Observatory:	 IRIS
     Instrument:		 SJI
 
