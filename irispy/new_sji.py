@@ -142,10 +142,7 @@ class IRISMapCube(NDCube):
             If False, exposure time correction is applied.
             If True, exposure time correction is removed.
             Default=False
-        copy: `bool`
-            If True a new instance with the converted data values is returned.
-            If False, the current instance is overwritten.
-            Default=False
+
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
@@ -153,11 +150,9 @@ class IRISMapCube(NDCube):
             adjusted accordingly.
         Returns
         -------
-        result: `None` or `IRISMapCube`
-            If copy=False, the original IRISMapCube is modified with the exposure
-            time correction applied (undone).
-            If copy=True, a new IRISMapCube is returned with the correction
-            applied (undone).
+        result: `IRISMapCube`
+            A new IRISMapCube is returned with the correction applied (undone).
+
         """
         # Raise an error if this method is called while memmap is used
         if not self.scaled:
@@ -215,6 +210,48 @@ class IRISMapCube(NDCube):
             self.mask[self.dust_mask] = True
             self.dust_masked = True
 
+    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
+
+        copy: `bool`
+            If True a new instance with the converted data values is returned.
+            If False, the current instance is overwritten.
+            Default=False
+
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `IRISMapCubeSequence`
+            If copy=False, the original IRISMapCubeSequence is modified with the exposure
+            time correction applied (undone).
+            If copy=True, a new IRISMapCubeSequence is returned with the correction
+            applied (undone).
+
+        """
+        corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
+                          for cube in self.data]
+        if copy is True:
+            return IRISMapCubeSequence(data_list=corrected_data, meta=self.meta,
+                                       common_axis=self._common_axis)
+        else:
+            self.data = corrected_data
 
 def read_iris_sji_level2_fits(filename, memmap=False):
     """

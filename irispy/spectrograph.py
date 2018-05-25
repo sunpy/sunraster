@@ -54,18 +54,32 @@ class IRISSpectrograph(object):
     def __repr__(self):
         spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
-            ["\n    {0}\n        (raster axis, slit axis, spectral axis) {1}".format(
-                name,
-                self.data[name].dimensions[1::])
+            ["\n{0:>15} : {1:20} pix".format(name,
+                str([int(dim.value) for dim in self.data[name].dimensions]))
                 for name in self.spectral_windows["spectral window"]])
-        return "<iris.IRISSpectrograph instance\nOBS ID: {0}\n".format(self.meta["OBSID"]) + \
-               "OBS Description: {0}\n".format(self.meta["OBS_DESC"]) + \
-               "OBS period: {0} -- {1}\n".format(self.meta["STARTOBS"], self.meta["ENDOBS"]) + \
-               "Instance period: {0} -- {1}\n".format(
-                   self.data[spectral_window][0].extra_coords["time"]["value"],
-                   self.data[spectral_window][-1].extra_coords["time"]["value"]) + \
-               "Number unique raster positions: {0}\n".format(self.meta["NRASTERP"]) + \
-               "Spectral windows{0}>".format(spectral_windows_info)
+        obs_start = self.meta["STARTOBS"]
+        obs_end = self.meta["ENDOBS"]
+        time_start = self.data[spectral_window][0].extra_coords["time"]["value"].min()
+        time_end = self.data[spectral_window][-1].extra_coords["time"]["value"].max()
+        result = []
+        # If starting and ending times in same day, print date only once
+        for start, end in zip([obs_start, time_start], [obs_end, time_end]):
+            if start.strftime("%j") == end.strftime("%j"):
+                result.append("{0} {1} -- {2}".format(
+                    start.strftime("%Y-%m-%d"), start.strftime("%H:%M:%S.%f"),
+                    end.strftime("%H:%M:%S.%f")))
+            else:
+                result.append("{0} -- {1}".format(start, end))
+        obs_period, instance_period = result
+        return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
+           "OBS Description: {obsdesc}\n"
+           "OBS Period: {obs_period}\n"
+           "Instance period: {inst_period}\n"
+           "OBS Number unique raster positions: {nraster}\n"
+           "Spectral windows: dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
+           "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
+                             obs_period=obs_period, inst_period=instance_period,
+                             nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
 
     @property
     def spectral_windows(self):
@@ -125,7 +139,7 @@ Sequence period: {inst_start} -- {inst_end}
 Sequence Shape: {seq_shape}
 Axis Types: {axis_types}
 
-""".format(obs_repr=_produce_obs_repr_string(self.meta),
+""".format(obs_repr=_produce_obs_repr_string(self.data[0].meta),
            inst_start=self[0].extra_coords["time"]["value"][0],
            inst_end=self[-1].extra_coords["time"]["value"][-1],
            seq_shape=self.dimensions, axis_types=self.world_axis_physical_types)
@@ -329,10 +343,7 @@ Axis Types: {axis_types}
                           self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
-            obs_wavelength = self.pixel_to_world([
-                np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
-                np.zeros(int(self.dimensions.shape[spectral_data_index].value)) * u.pix,
-                np.arange(int(self.dimensions.shape[spectral_data_index].value)) * u.pix])[-1]
+            obs_wavelength = self.axis_world_coords(2)
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
