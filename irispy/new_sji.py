@@ -210,6 +210,76 @@ class IRISMapCube(NDCube):
             self.mask[self.dust_mask] = True
             self.dust_masked = True
 
+
+class IRISMapCubeSequence(NDCubeSequence):
+    """Class for holding, slicing and plotting IRIS SJI data.
+    This class contains all the functionality of its super class with
+    some additional functionalities.
+    Parameters
+    ----------
+    data_list: `list`
+        List of `IRISMapCube` objects from the same OBS ID.
+        Must also contain the 'detector type' in its meta attribute.
+    meta: `dict` or header object
+        Metadata associated with the sequence.
+    common_axis: `int`
+        The axis of the NDCubes corresponding to time.
+    """
+    def __init__(self, data_list, meta=None, common_axis=0):
+        # Check that all SJI data are coming from the same OBS ID.
+        if np.any([cube.meta["OBSID"] != data_list[0].meta["OBSID"] for cube in data_list]):
+            raise ValueError("Constituent IRISMapCube objects must have same "
+                             "value of 'OBSID' in its meta.")
+        # Initialize Sequence.
+        super().__init__(data_list, meta=meta, common_axis=common_axis)
+
+    def __repr__(self):
+        #Conversion of the start date of OBS
+        startobs = self.meta.get("STARTOBS", None)
+        startobs = startobs.isoformat() if startobs else None
+        #Conversion of the end date of OBS
+        endobs = self.meta.get("ENDOBS", None)
+        endobs = endobs.isoformat() if endobs else None
+        #Conversion of the instance start of OBS
+        instance_start = self[0].extra_coords["TIME"]["value"]
+        instance_start = instance_start.isoformat() if instance_start else None
+        #Conversion of the instance end of OBS
+        instance_end = self[-1].extra_coords["TIME"]["value"]
+        instance_end = instance_end.isoformat() if instance_end else None
+        #Representation of IRISMapCube object
+        return """
+IRISMapCubeSequence
+---------------------
+Observatory:\t\t {obs}
+Instrument:\t\t {instrument}
+OBS ID:\t\t\t {obs_id}
+OBS Description:\t {obs_desc}
+OBS period:\t\t {obs_start} -- {obs_end}
+Sequence period:\t {inst_start} -- {inst_end}
+Sequence Shape:\t\t {seq_shape}
+Axis Types:\t\t {axis_types}
+""".format(obs=self.meta.get('TELESCOP', None),
+           instrument=self.meta.get('INSTRUME', None),
+           obs_id=self.meta.get("OBSID", None),
+           obs_desc=self.meta.get("OBS_DESC", None),
+           obs_start=startobs,
+           obs_end=endobs,
+           inst_start=instance_start,
+           inst_end=instance_end,
+           seq_shape=self.dimensions,
+           axis_types=self.world_axis_physical_types)
+
+    def __getitem__(self, item):
+        return self.index_as_cube[item]
+
+    @property
+    def dimensions(self):
+        return self.cube_like_dimensions
+
+    @property
+    def world_axis_physical_types(self):
+return self.cube_like_world_axis_physical_types
+
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
