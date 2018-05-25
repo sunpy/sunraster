@@ -303,12 +303,12 @@ Axis Types:\t\t {axis_types}
         plot_axis_indices: `int` or iterable of one or two `int`.
             If two axis indices are given, the sequence is visualized as an image or
             2D animation, assuming the sequence has at least 2 cube-like dimensions.
-            The cube-like dimension indicated by the 0th index is displayed on the
-            x-axis while the cube-like dimension indicated by the 1st index is
-            displayed on the y-axis. If only one axis index is given (either as an int
-            or a list of one int), then a 1D line animation is produced with the indicated
-            cube-like dimension on the x-axis and other cube-like dimensions represented
-            by animations sliders.
+            The cube-like dimension indicated by the 0th element of plot_axis indices is
+            displayed on the x-axis while the cube-like dimension indicated by the 1st
+            element of plot_axis_indices is displayed on the y-axis. If only one axis
+            index is given (either as an int or a list of one int), then a 1D line
+            animation is produced with the indicated cube-like dimension on the x-axis
+            and other cube-like dimensions represented by animations sliders.
             Default=[-1, -2]. If sequence only has one cube-like dimension,
             plot_axis_indices is ignored and a static 1D line plot is produced.
 
