@@ -804,7 +804,7 @@ def _apply_or_undo_exposure_time_correction(sequence, correction_function):
             converted_data_list.append(cube)
     return converted_data_list
 
-def calculate_dust_mask(data_array):
+def calculate_dust_mask(data_array, mask=None):
     """Calculate a mask with the dust positions in a given arrayself.
 
     Parameters
@@ -820,8 +820,16 @@ def calculate_dust_mask(data_array):
         when the value is True.
 
     """
-    dust = (data_array < 0.5) & (data_array > -200)
+    # Check or set up of the mask array with the same shape than the data array.
+    if mask:
+        if mask.shape != data_array.shape:
+            raise ValueError("The data array and the mask array must have the same shape")
+    else:
+        mask = np.zeros_like(data_array, dtype=bool)
+    # Set the pixel value to True is the pixel is recognized as a dust pixel.
+    mask[(data_array < 0.5) & (data_array > -200)] = True
+    # Extending the mask to avoid the neighbours pixel influenced by the dust pixels.
     struct = ndimage.generate_binary_structure(2, 2)
     for i in range(data_array.shape[0]):
-        dust[i] = ndimage.binary_dilation(dust[i], structure=struct).astype(dust.dtype)
-    return dust
+        mask[i] = ndimage.binary_dilation(mask[i], structure=struct).astype(mask.dtype)
+    return mask

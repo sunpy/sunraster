@@ -94,7 +94,6 @@ class IRISMapCube(NDCube):
         self.scaled = scaled
         # Set the dust mask for the data
         self.dust_masked = False
-        self.dust_mask = None
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -220,13 +219,12 @@ class IRISMapCube(NDCube):
         result :
             Rewrite self.mask with/without the dust positions.
         """
-        if  not isinstance(self.dust_mask, np.ndarray):
-            self.dust_mask = iris_tools.calculate_dust_mask(self.data)
+        dust_mask = iris_tools.calculate_dust_mask(self.data)
         if undo:
-            self.mask[self.dust_mask] = False
+            self.mask[dust_mask] = False
             self.dust_masked = False
         else:
-            self.mask[self.dust_mask] = True
+            self.mask[dust_mask] = True
             self.dust_masked = True
 
 
@@ -247,6 +245,7 @@ class IRISMapCubeSequence(NDCubeSequence):
 
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
+        
     """
     def __init__(self, data_list, meta=None, common_axis=0):
         # Check that all SJI data are coming from the same OBS ID.
@@ -283,6 +282,7 @@ OBS period:\t\t {obs_start} -- {obs_end}
 Sequence period:\t {inst_start} -- {inst_end}
 Sequence Shape:\t\t {seq_shape}
 Axis Types:\t\t {axis_types}
+
 """.format(obs=self.meta.get('TELESCOP', None),
            instrument=self.meta.get('INSTRUME', None),
            obs_id=self.meta.get("OBSID", None),
@@ -354,8 +354,9 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
 
     Parameters
     ----------
-    filename : `str`
-        File name to be read
+    filenames: `list` of `str` or `str`
+        Filename or filenames to be read.  They must all be associated with the same
+        OBS number.
 
     memmap : `bool`
         Default value is `False`.
@@ -364,6 +365,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     Returns
     -------
     result: 'irispy.sji.IRISMapCube'
+
     """
     list_of_cubes = []
     if type(filenames) is str:
