@@ -220,7 +220,7 @@ class IRISMapCube(NDCube):
             Rewrite self.mask with/without the dust positions.
         """
         if undo:
-            self.mask[iris_tools.calculate_dust_mask(self.data)] = False
+            self.mask = self.data == BAD_PIXEL_VALUE_SCALED
             self.dust_masked = False
         else:
             self.mask = iris_tools.calculate_dust_mask(self.data, self.mask)
