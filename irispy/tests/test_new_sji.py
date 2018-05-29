@@ -4,10 +4,12 @@ import datetime
 
 import pytest
 import numpy as np
+from astropy import units as u
 from ndcube.utils.wcs import WCS
+from ndcube.tests.helpers import assert_cubes_equal
 
 from irispy import iris_tools
-from irispy.new_sji import IRISMapCube
+from irispy.new_sji import IRISMapCube, IRISMapCubeSequence
 
 # Sample data for tests
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],
@@ -49,7 +51,7 @@ unit = iris_tools.DN_UNIT["SJI"]
 mask_cube = data >= 0
 mask_4D = data_4D >= 0
 
-uncertainty = 1
+uncertainty = [1]
 
 times = np.array([datetime.datetime(2014, 12, 11, 19, 39, 0, 480000),
                   datetime.datetime(2014, 12, 11, 19, 43, 7, 600000)])
@@ -72,7 +74,16 @@ cube_F = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=un
 cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, unit=unit,
                       extra_coords=extra_coords, scaled=scaled_T)
 
-# Tests
+# Sample of data for IRISMapCubeSequence tests:
+
+meta = {"OBSID":1}
+
+cube_seq= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                      meta=meta, extra_coords=extra_coords, scaled=scaled_T)
+
+sequence = IRISMapCubeSequence(data_list=[cube_seq, cube_seq], meta=meta, common_axis=0)
+
+# Tests for IRISMapCube
 @pytest.mark.parametrize("test_input,expected", [
     (cube, data/exposure_times[0]),
     (cube_2D, data_2D/exposure_times[0]),
@@ -93,3 +104,25 @@ def test_apply_exposure_time_correction_undo(test_input, expected):
 def test_crop_by_coords_error(test_input):
     with pytest.raises(test_input[0]):
         test_input[1].apply_exposure_time_correction()
+
+# Tests for IRISMapCubeSequence
+@pytest.mark.parametrize("test_input,expected", [
+    (sequence, [4, 3, 4]*u.pix)])
+def test_dimensions(test_input, expected):
+    assert np.any(test_input.dimensions == expected)
+
+@pytest.mark.parametrize("test_input,expected", [
+    (sequence, ("time", "custom:pos.helioprojective.lat", "custom:pos.helioprojective.lon"))])
+def test_world_axis_physical_types(test_input, expected):
+    assert test_input.world_axis_physical_types == expected
+
+@pytest.mark.parametrize("test_input,undo,force,expected", [
+    (sequence, False, False, (np.array([data/2, data/2]), np.array([data/2/2, data/2/2]))),
+    (sequence, True, True, (np.array([data*2, data*2]), np.array([data*2*2, data*2*2])))])
+def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, force, expected):
+    output_sequence = test_input.apply_exposure_time_correction(undo=undo, copy=True, force=force)
+    output_data_array = np.array([output_sequence.data[0].data, output_sequence.data[1].data])
+    np.testing.assert_array_equal(output_data_array, expected[0])
+    output_sequence.apply_exposure_time_correction(undo=undo, force=True)
+    output_data_array = np.array([output_sequence.data[0].data, output_sequence.data[1].data])
+    np.testing.assert_array_equal(output_data_array, expected[1])
