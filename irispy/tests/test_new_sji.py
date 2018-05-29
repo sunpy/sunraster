@@ -76,12 +76,15 @@ cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, un
 
 # Sample of data for IRISMapCubeSequence tests:
 
-meta = {"OBSID":1}
+meta_1 = {"OBSID":1}
+meta_2 = {"OBSID":2}
 
 cube_seq= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-                      meta=meta, extra_coords=extra_coords, scaled=scaled_T)
+                      meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
+cube_seq_2= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+                        meta=meta_2, extra_coords=extra_coords, scaled=scaled_T)
 
-sequence = IRISMapCubeSequence(data_list=[cube_seq, cube_seq], meta=meta, common_axis=0)
+sequence = IRISMapCubeSequence(data_list=[cube_seq, cube_seq], meta=meta_1, common_axis=0)
 
 # Tests for IRISMapCube
 @pytest.mark.parametrize("test_input,expected", [
@@ -126,3 +129,9 @@ def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, fo
     output_sequence.apply_exposure_time_correction(undo=undo, force=True)
     output_data_array = np.array([output_sequence.data[0].data, output_sequence.data[1].data])
     np.testing.assert_array_equal(output_data_array, expected[1])
+
+@pytest.mark.parametrize("test_input, cubes", [
+    (ValueError, (cube_seq, cube_seq_2))])
+def test_IRISMapCubeSequence_initializaton(test_input, cubes):
+    with pytest.raises(test_input):
+        IRISMapCubeSequence(data_list=[cubes[0], cubes[1]], meta=meta_1, common_axis=0)
