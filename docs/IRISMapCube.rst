@@ -5,6 +5,8 @@ IRISMapCube
 This class represents Slit Jaw Images from IRIS described by a single World Coordinate
 System (WCS).
 
+This class inherits from the NDCube_, so we can can apply all the methods derived from this class.
+
 Initialization
 --------------
 
@@ -12,9 +14,9 @@ To initialize an IRISMapCube, we will need to open a level 2 fits file. You can 
 of these files in the IRIS_ website by selecting a file either by clicking on the map or by
 setting some information in the left panel. Now that we get a level 2 fits file, we can
 load it into the reading method for fits files. This method will read all the fits file and
-will take every information that it needs to create an IRISMapCube object.
+will take all the information that it needs to create an IRISMapCube object.
 
-Let assume that we will call our fits file ``my_fits_file`` and IRISMapCube object as
+Let's assume that we will call our fits file ``my_fits_file`` and IRISMapCube object as
 ``my_cube``: ::
 
     >>> from irispy import read_iris_sji_level2_fits
@@ -33,6 +35,8 @@ So now, ``my_cube`` is an IRISMapCube object and we can access to a lot of infor
 - ``my_cube.data`` : In this attribute, we can find the data array.
 - ``my_cube.wcs`` : This attribute contains the WCS.
 - ``my_cube.mask`` : This attribute can be used to mask some data (eg. the dust particle).
+- ``my_cube.uncertainty`` : The data uncertainty is calculated as the square root of data
+  plus squared reading noise in photon unit.
 
 We can also print a representation of the IRISMapCube object and we can see something
 like this: ::
@@ -53,18 +57,18 @@ like this: ::
     Cube dimensions:		 [  49. 1095. 1018.] pix
     Axis Types:			 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
-Or we can print the data of our IRISMapCube object in an image or animation by doing that: ::
+Or we can plot the data of our IRISMapCube object in an image or animation by doing that: ::
 
     >>> my_cube.plot()
 
-We can upgrade the visualization by using kwargs to set value limits. Here, ``vmin`` is
-the minimum value and every lower value will be considered as the ``vmin`` value.
-This is the same for ``vmax`` that corresponds to the maximum value: ::
+We can customize the visualization by using standard matplotlib kwargs relevant to the type of
+visualization produces by the plot method. For example, for a 2D image/animation, we can use
+``vmin`` and ``vmax`` to set the floor and ceiling of the color map like so: ::
 
     >>> my_cube.plot(vmin=0, vmax=300)
 
 Now that we have created our IRISMapCube object, we can use one of the followed methods
-to correct the data.
+to manipulate the data.
 
 Exposure Time Correction
 ------------------------
@@ -91,4 +95,5 @@ Dust particle mask
 
 Waiting the incoming PR
 
+.. _NDCube: http://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html
 .. _IRIS: http://iris.lmsal.com/search/

@@ -2,9 +2,11 @@
 IRISMapCubeSequence
 ===================
 
-This class represents Slit Jaw Images from IRIS described by a single World Coordinate
-System (WCS). This class is a list of IRISMapCube objects, one per time step, from the
-same observation.
+This class represents Slit Jaw Images from IRIS as a list of IRISMapCube, where these
+sub-cubes are 2D or 3D described by their own World Coordinate System (WCS).
+
+This class inherits from the NDCubeSequence_, so we can can apply all the methods derived
+from this class.
 
 Initialization
 --------------
@@ -13,12 +15,12 @@ To initialize an IRISMapCubeSequence, we will need to open some level 2 fits fil
 You can find these files in the IRIS_ website by selecting a file either by clicking
 on the map or by setting some information in the left panel. Now that we get some level 2
 fits file, we can load it into the reading method for fits files. This method will read
-all the fits file and will take every information that it needs to create an
+all the fits file and will take all the information that it needs to create an
 IRISMapCubeSequence object.
 
-Let assume that we will build an IRISMapCubeSequence with two fits files that we will
+Let's assume that we will build an IRISMapCubeSequence with two fits files that we will
 call ``my_fits_file_0`` and ``my_fits_file_1``. We can create an IRISMapCubeSequence
-with as much fits files as we want but from the same observation ! Next, we will call
+with as many fits files as we want but from the same observation. Next, we will call
 our IRISMapCubeSequence object as ``my_sequence``. ::
 
     >>> from irispy import read_iris_sji_level2_fits
@@ -48,6 +50,7 @@ objects, we can access to their information by doing:
 - ``my_sequence[0].data`` : The data attribute of the first IRISMapCube object.
 - ``my_sequence[1].wcs`` : The WCS attribute of the second IRISMapCube object.
 - ``my_sequence[2].mask`` : The mask attribute of the third IRISMapCube object.
+- ``my_sequence[3].uncertainty`` : The uncertainty attribute of the fourth IRISMapCube object.
 
 We can also print a representation of the IRISMapCubeSequence object and we can see
 something like this: ::
@@ -66,19 +69,19 @@ something like this: ::
     Sequence Shape:	 [  98. 1095. 1018.] pix
     Axis Types:		 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
-Or we can print the data of our IRISMapCubeSequence object in an image or animation
+Or we can plot the data of our IRISMapCubeSequence object in an image or animation
 by doing that: ::
 
     >>> my_sequence.plot()
 
-We can upgrade the visualization by using kwargs to set value limits. Here, ``vmin`` is
-the minimum value and every lower value will be considered as the ``vmin`` value.
-This is the same for ``vmax`` that corresponds to the maximum value. ::
+We can customize the visualization by using standard matplotlib kwargs relevant to the type of
+visualization produces by the plot method. For example, for a 2D image/animation, we can use
+``vmin`` and ``vmax`` to set the floor and ceiling of the color map like so: ::
 
     >>> my_sequence.plot(vmin=0, vmax=300)
 
 Now that we have created our IRISMapCubeSequence object, we can use one of the followed methods
-to correct the data.
+to manipulate the data.
 
 Exposure Time Correction
 ------------------------
@@ -100,4 +103,5 @@ regardless of unit by setting ``force=True``. Use one of the two lines above to 
     >>> my_sequence.apply_exposure_time_correction(force=True)
     >>> my_sequence.apply_exposure_time_correction(undo=True, force=True)
 
+.. _NDCubeSequence: http://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html
 .. _IRIS: http://iris.lmsal.com/search/
