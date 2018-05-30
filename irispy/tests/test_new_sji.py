@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from astropy import units as u
 from ndcube.utils.wcs import WCS
-from ndcube.tests.helpers import assert_cubes_equal
+from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
 from irispy import iris_tools
 from irispy.new_sji import IRISMapCube, IRISMapCubeSequence
@@ -51,7 +51,10 @@ unit = iris_tools.DN_UNIT["SJI"]
 mask_cube = data >= 0
 mask_4D = data_4D >= 0
 
-uncertainty = [1]
+uncertainty = np.sqrt(data)
+uncertainty_2D = np.sqrt(data_2D)
+uncertainty_1D = np.sqrt(data_1D)
+uncertainty_4D = np.sqrt(data_4D)
 
 times = np.array([datetime.datetime(2014, 12, 11, 19, 39, 0, 480000),
                   datetime.datetime(2014, 12, 11, 19, 43, 7, 600000)])
@@ -65,13 +68,13 @@ scaled_F = False
 
 cube = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                    extra_coords=extra_coords, scaled=scaled_T)
-cube_2D = IRISMapCube(data_2D, wcs_2D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+cube_2D = IRISMapCube(data_2D, wcs_2D, uncertainty=uncertainty_2D, mask=mask_cube, unit=unit,
                       extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, False, True])
-cube_1D = IRISMapCube(data_1D, wcs_1D, uncertainty=uncertainty, mask=mask_cube, unit=unit,
+cube_1D = IRISMapCube(data_1D, wcs_1D, uncertainty=uncertainty_1D, mask=mask_cube, unit=unit,
                       extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, True, True])
 cube_F = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                      extra_coords=extra_coords, scaled=scaled_F)
-cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty, mask=mask_4D, unit=unit,
+cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty_4D, mask=mask_4D, unit=unit,
                       extra_coords=extra_coords, scaled=scaled_T)
 
 # Sample of data for IRISMapCubeSequence tests:
@@ -83,8 +86,26 @@ cube_seq= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=u
                       meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
 cube_seq_2= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                         meta=meta_2, extra_coords=extra_coords, scaled=scaled_T)
+cube_seq_per_s= IRISMapCube(data/2, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit/u.s,
+                            meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
+cube_seq_per_s_per_s= IRISMapCube(data/2/2, wcs, uncertainty=uncertainty, mask=mask_cube,
+                                  unit=unit/u.s/u.s, meta=meta_1, extra_coords=extra_coords,
+                                  scaled=scaled_T)
+cube_seq_s= IRISMapCube(data*2, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit*u.s,
+                        meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
+cube_seq_s_s= IRISMapCube(data*2*2, wcs, uncertainty=uncertainty, mask=mask_cube,
+                          unit=unit*u.s*u.s, meta=meta_1, extra_coords=extra_coords,
+                          scaled=scaled_T)
 
 sequence = IRISMapCubeSequence(data_list=[cube_seq, cube_seq], meta=meta_1, common_axis=0)
+sequence_1 = IRISMapCubeSequence(data_list=[cube_seq, cube_seq], meta=meta_1, common_axis=0)
+sequence_per_s = IRISMapCubeSequence(data_list=[cube_seq_per_s, cube_seq_per_s],
+                                     meta=meta_1, common_axis=0)
+sequence_per_s_per_s = IRISMapCubeSequence(data_list=[cube_seq_per_s_per_s, cube_seq_per_s_per_s],
+                                           meta=meta_1, common_axis=0)
+sequence_s = IRISMapCubeSequence(data_list=[cube_seq_s, cube_seq_s], meta=meta_1, common_axis=0)
+sequence_s_s = IRISMapCubeSequence(data_list=[cube_seq_s_s, cube_seq_s_s], meta=meta_1,
+                                   common_axis=0)
 
 # Tests for IRISMapCube
 @pytest.mark.parametrize("test_input,expected", [
@@ -119,16 +140,26 @@ def test_dimensions(test_input, expected):
 def test_world_axis_physical_types(test_input, expected):
     assert test_input.world_axis_physical_types == expected
 
-@pytest.mark.parametrize("test_input,undo,force,expected", [
-    (sequence, False, False, (np.array([data/2, data/2]), np.array([data/2/2, data/2/2]))),
-    (sequence, True, True, (np.array([data*2, data*2]), np.array([data*2*2, data*2*2])))])
-def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, force, expected):
-    output_sequence = test_input.apply_exposure_time_correction(undo=undo, copy=True, force=force)
-    output_data_array = np.array([output_sequence.data[0].data, output_sequence.data[1].data])
-    np.testing.assert_array_equal(output_data_array, expected[0])
-    output_sequence.apply_exposure_time_correction(undo=undo, force=True)
-    output_data_array = np.array([output_sequence.data[0].data, output_sequence.data[1].data])
-    np.testing.assert_array_equal(output_data_array, expected[1])
+@pytest.mark.parametrize("test_input,undo,copy,force,expected", [
+    (sequence_s_s, False, True, True, sequence_s),
+    (sequence, False, True, False, sequence_per_s),
+    (sequence_per_s_per_s, True, True, True, sequence_per_s),
+    (sequence_per_s, True, True, False, sequence_1),
+    (sequence_s_s, False, False, True, sequence_s),
+    (sequence, False, False, False, sequence_per_s),
+    (sequence_per_s_per_s, True, False, True, sequence_per_s),
+    (sequence_per_s, True, False, False, sequence_1)])
+def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, copy, force, expected):
+    if copy:
+        output_sequence = test_input.apply_exposure_time_correction(undo=undo, copy=copy,
+                                                                    force=force)
+    else:
+        test_input.apply_exposure_time_correction(undo=undo, copy=copy, force=force)
+        output_sequence = test_input
+    #for i, cube_data in enumerate(output_sequence.data):
+    #    np.testing.assert_array_equal(cube_data.data, expected.data[i].data)
+    for i in range(len(output_sequence.data)):
+        np.testing.assert_array_equal(output_sequence.data[i].data, expected.data[i].data)
 
 @pytest.mark.parametrize("test_input, cubes", [
     (ValueError, (cube_seq, cube_seq_2))])
