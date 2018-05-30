@@ -156,8 +156,6 @@ def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, co
     else:
         test_input.apply_exposure_time_correction(undo=undo, copy=copy, force=force)
         output_sequence = test_input
-    #for i, cube_data in enumerate(output_sequence.data):
-    #    np.testing.assert_array_equal(cube_data.data, expected.data[i].data)
     for i in range(len(output_sequence.data)):
         np.testing.assert_array_equal(output_sequence.data[i].data, expected.data[i].data)
 
