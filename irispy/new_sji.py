@@ -219,11 +219,15 @@ class IRISMapCube(NDCube):
         result :
             Rewrite self.mask with/without the dust positions.
         """
+        # Calculate position of dust pixels
+        dust_mask = iris_tools.calculate_dust_mask(self.data)
         if undo:
-            self.mask = self.data == BAD_PIXEL_VALUE_SCALED
+            # If undo kwarg IS set, unmask dust pixels.
+            self.mask[dust_mask] = False
             self.dust_masked = False
         else:
-            self.mask = iris_tools.calculate_dust_mask(self.data, self.mask)
+            # If undo kwarg is NOT set, unmask dust pixels.
+            self.mask[dust_mask] = True
             self.dust_masked = True
 
 

@@ -25,6 +25,12 @@ SOURCE_DATA_PHOTONS_SJI_1 = np.array([[18, 36, 54], [72, 90, 108]])
 single_exposure_time = 2.
 EXPOSURE_TIME = np.zeros(3)+single_exposure_time
 
+# Arrays for the calcuate_dust_mask method.
+data_dust = np.array([[[-1, 2, -3, 4], [2, -200, 5, 3], [0, 1, 2, -300]],
+                      [[2, -200, 5, 1], [10, -5, 2, 2], [10, -3, 3, 0]]])
+dust_mask_expected = np.array(
+    [[[True, True, True, True], [True, True, True, True], [True, True, False, False]],
+     [[True, True, True, False], [True, True, True, True], [True, True, True, True]]])
 
 @pytest.mark.parametrize("test_input, expected_output", [
     ({DETECTOR_TYPE_KEY: "FUV1"}, "FUV"),
@@ -137,3 +143,8 @@ def test_gaussian1d_on_linear_bg():
 
 def test_calculate_orbital_wavelength_variation():
     pass
+
+@pytest.mark.parametrize("input_array, expected_array", [
+    (data_dust, dust_mask_expected)])
+def test_calculate_dust_mask(input_array, expected_array):
+    np_test.assert_array_equal(iris_tools.calculate_dust_mask(input_array), expected_array)
