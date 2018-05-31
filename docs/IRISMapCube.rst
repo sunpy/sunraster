@@ -22,7 +22,7 @@ Let's assume that we will call our fits file ``my_fits_file`` and IRISMapCube ob
     >>> from irispy import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file)
 
-If you don't have a lot of RAM memory of if you are loading a huge file, we recommend to
+If you don't have a lot of RAM memory or if you are loading a huge file, we recommend to
 use the memmap kwarg. By using it, you will only load what you need to run but some
 methods that requires all the file will not be accessible. You can use the memmap
 kwarg by doing: ::
