@@ -308,6 +308,83 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
+    def plot(self, axes=None, plot_axis_indices=None, axes_coordinates=None,
+             axes_units=None, data_unit=None, **kwargs):
+        """
+        Visualizes data in the IRISMapCubeSequence with the sequence axis folded
+        into the common axis.
+
+        Based on the cube-like dimensionality of the sequence and value of plot_axis_indices
+        kwarg, a Line/Image Plot/Animation is produced.
+
+        Parameters
+        ----------
+        axes: `astropy.visualization.wcsaxes.core.WCSAxes` or ??? or None.
+            The axes to plot onto. If None the current axes will be used.
+
+        plot_axis_indices: `int` or iterable of one or two `int`.
+            If two axis indices are given, the sequence is visualized as an image or
+            2D animation, assuming the sequence has at least 2 cube-like dimensions.
+            The cube-like dimension indicated by the 0th element of plot_axis indices is
+            displayed on the x-axis while the cube-like dimension indicated by the 1st
+            element of plot_axis_indices is displayed on the y-axis. If only one axis
+            index is given (either as an int or a list of one int), then a 1D line
+            animation is produced with the indicated cube-like dimension on the x-axis
+            and other cube-like dimensions represented by animations sliders.
+            Default=[-1, -2]. If sequence only has one cube-like dimension,
+            plot_axis_indices is ignored and a static 1D line plot is produced.
+
+        axes_coordinates: `None` or `list` of `None` `astropy.units.Quantity` `numpy.ndarray` `str`
+            Denotes physical coordinates for plot and slider axes.
+            If None coordinates derived from the WCS objects will be used for all axes.
+            If a list, its length should equal either the number cube-like dimensions or
+            the length of plot_axis_indices.
+            If the length equals the number of cube-like dimensions, each element describes
+            the coordinates of the corresponding cube-like dimension.
+            If the length equals the length of plot_axis_indices,
+            the 0th entry describes the coordinates of the x-axis
+            while (if length is 2) the 1st entry describes the coordinates of the y-axis.
+            Slider axes are implicitly set to None.
+            If the number of cube-like dimensions equals the length of plot_axis_indices,
+            the latter convention takes precedence.
+            The value of each entry should be either
+            `None` (implies derive the coordinates from the WCS objects),
+            an `astropy.units.Quantity` or a `numpy.ndarray` of coordinates for each pixel,
+            or a `str` denoting a valid extra coordinate.
+
+        axes_units: `None or `list` of `None`, `astropy.units.Unit` and/or `str`
+            If None units derived from the WCS objects will be used for all axes.
+            If a list, its length should equal either the number cube-like dimensions or
+            the length of plot_axis_indices.
+            If the length equals the number of cube-like dimensions, each element gives the
+            unit in which the coordinates along the corresponding cube-like dimension should
+            displayed whether they be a plot axes or a slider axes.
+            If the length equals the length of plot_axis_indices,
+            the 0th entry describes the unit in which the x-axis coordinates should be displayed
+            while (if length is 2) the 1st entry describes the unit in which the y-axis should
+            be displayed.  Slider axes are implicitly set to None.
+            If the number of cube-like dimensions equals the length of plot_axis_indices,
+            the latter convention takes precedence.
+            The value of each entry should be either
+            `None` (implies derive the unit from the WCS object of the 0th sub-cube),
+            `astropy.units.Unit` or a valid unit `str`.
+
+        data_unit: `astropy.unit.Unit` or valid unit `str` or None
+            Unit in which data be displayed.  If the length of plot_axis_indices is 2,
+            a 2D image/animation is produced and data_unit determines the unit represented by
+            the color table.  If the length of plot_axis_indices is 1,
+            a 1D plot/animation is produced and data_unit determines the unit in which the
+            y-axis is displayed.
+
+        Returns
+        -------
+        return : ndcube.mixins.sequence_plotting.plot_as_cube
+
+        """
+        return self.plot_as_cube(axes=axes, plot_axis_indices=plot_axis_indices,
+                                 axes_coordinates=axes_coordinates,
+                                 axes_units=axes_units, data_unit=data_unit, **kwargs)
+
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
