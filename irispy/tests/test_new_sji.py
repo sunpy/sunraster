@@ -7,7 +7,7 @@ import numpy as np
 from ndcube.utils.wcs import WCS
 
 from irispy import iris_tools
-from irispy.new_sji import IRISMapCube
+from irispy.new_sji import IRISMapCube, IRISMapCubeSequence
 
 # Sample data for tests
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],
@@ -104,8 +104,12 @@ extra_coords = [('TIME', 0, times),
 
 scaled_T = True
 
+meta = {"OBSID":1}
+
 cube_dust = IRISMapCube(data_dust, wcs, uncertainty=uncertainty, mask=mask_dust, unit=unit,
-                        extra_coords=extra_coords, scaled=scaled_T)
+                        extra_coords=extra_coords, scaled=scaled_T, meta=meta)
+
+seq_dust = IRISMapCubeSequence(data_list=[cube_dust, cube_dust])
 
 # Tests
 @pytest.mark.parametrize("test_input,expected", [
@@ -136,3 +140,13 @@ def test_apply_dust_mask(test_input, expected):
     np.testing.assert_array_equal(test_input.mask, expected)
     test_input.apply_dust_mask(undo=True)
     np.testing.assert_array_equal(test_input.mask, mask_dust)
+
+@pytest.mark.parametrize("test_input,expected", [
+    (seq_dust, dust_mask_expected)])
+def test_IRISMapCubeSequence_apply_dust_mask(test_input, expected):
+    test_input.apply_dust_mask()
+    for cube_test in seq_dust.data:
+        np.testing.assert_array_equal(cube_test.mask, expected)
+    test_input.apply_dust_mask(undo=True)
+    for cube_test in seq_dust.data:
+        np.testing.assert_array_equal(cube_test.mask, mask_dust)
