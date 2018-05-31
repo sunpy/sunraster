@@ -351,6 +351,26 @@ Axis Types:\t\t {axis_types}
         else:
             self.data = corrected_data
 
+    def apply_dust_mask(self, undo=False):
+        """
+        Applies or undoes an update of all the masks with the dust particles positions.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, dust particles positions masks will be applied.
+            If True, dust particles positions masks will be removed.
+            Default=False
+
+        Returns
+        -------
+        result :
+            Rewrite all self.data[i]mask with/without the dust positions.
+        """
+        for cube in self.data:
+            cube.apply_dust_mask(undo=undo)
+
+
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
     Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance.
