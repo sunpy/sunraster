@@ -2,880 +2,550 @@
 This module provides movie tools for level 2 IRIS SJI fits file
 '''
 
-from copy import deepcopy
 from datetime import timedelta
+import warnings
 
 import numpy as np
-import numpy.ma as ma
-import matplotlib.colors as colors
-import matplotlib.animation
-from pandas import DataFrame
-from astropy.table import Table
 from astropy.io import fits
 import astropy.units as u
-from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy import visualization
 from astropy.wcs import WCS
-import sunpy.io
-import sunpy.time
-import sunpy.cm as cm
-import sunpy.instr.iris
-import sunpy.map
-from sunpy.map import GenericMap
-from sunpy.map.map_factory import Map
-from sunpy.visualization.mapcubeanimator import MapCubeAnimator
-from sunpy.visualization import wcsaxes_compat
 from sunpy.time import parse_time
-from sunpy.lightcurve import LightCurve
+from scipy import ndimage
+from ndcube import NDCube
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+from ndcube import utils
+from ndcube.ndcube_sequence import NDCubeSequence
 
 from irispy import iris_tools
 
-__all__ = ['SJI_fits_to_cube', 'SJI_to_cube', 'dustbuster',
-           'SJICube', 'SJIMap']
-
-from sunpy import config
-TIME_FORMAT = config.get("general", "time_format")
+__all__ = ['IRISMapCube']
 
 # the following value is only appropriate for byte scaled images
-BAD_PIXEL_VALUE = -200
+BAD_PIXEL_VALUE_SCALED = -200
 # the following value is only appropriate for unscaled images
 BAD_PIXEL_VALUE_UNSCALED = -32768
 
 
-class SJIMap(GenericMap):
+class IRISMapCube(NDCube):
     """
-    A 2D IRIS Slit Jaw Imager Map.
+    IRISMapCube
 
-    The Interface Region Imaging Spectrograph (IRIS) small explorer spacecraft
-    provides simultaneous spectra and images of the photosphere, chromosphere,
-    transition region, and corona with 0.33 to 0.4 arcsec spatial resolution,
-    2-second temporal resolution and 1 km/s velocity resolution over a
-    field-of- view of up to 175 arcsec by 175 arcsec.  IRIS consists of a 19-cm
-    UV telescope that feeds a slit-based dual-bandpass imaging spectrograph.
-
-    Slit-jaw images in four different passbands (C ii 1330, Si iv 1400,
-    Mg ii k 2796 and Mg ii wing 2830  A) can be taken simultaneously with
-    spectral rasters that sample regions up to 130 arcsec by 175 arcsec at a
-    variety of spatial samplings (from 0.33 arcsec and up).
-    IRIS is sensitive to emission from plasma at temperatures between
-    5000 K and 10 MK.
-
-    IRIS was launched into a Sun-synchronous orbit on 27 June 2013.
-
-    References
-    ----------
-    * `IRIS Mission Page <http://iris.lmsal.com>`_
-    * `IRIS Analysis Guide <https://iris.lmsal.com/itn26/itn26.pdf>`_
-    * `IRIS Instrument Paper <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0196&file_type=pdf>`_
-    * `IRIS FITS Header keywords <https://www.lmsal.com/iris_science/doc?cmd=dcur&proj_num=IS0077&file_type=pdf>`_
-    """
-
-    def __init__(self, data, header, **kwargs):
-        GenericMap.__init__(self, data, header, **kwargs)
-        if header.get('lvl_num') == 2:
-            self.meta['wavelnth'] = header.get('twave1')
-            self.meta['detector'] = header.get('instrume')
-            self.meta['waveunit'] = "Angstrom"
-        if header.get('lvl_num') == 1:
-            self.meta['wavelnth'] = int(header.get('img_path').split('_')[1])
-            self.meta['waveunit'] = "Angstrom"
-
-        self.meta['detector'] = "SJI"
-        self.meta['waveunit'] = "Angstrom"
-        palette = cm.get_cmap('irissji' + str(int(self.meta['wavelnth'])))
-        palette.set_bad('black')
-        self.plot_settings['cmap'] = palette
-        self.plot_settings['norm'] = ImageNormalize(stretch=visualization.AsinhStretch(0.1))
-
-    @classmethod
-    def is_datasource_for(cls, data, header, **kwargs):
-        """Determines if header corresponds to an IRIS SJI image"""
-        tele = header.get('TELESCOP', '').startswith('IRIS')
-        obs = header.get('INSTRUME', '').startswith('SJI')
-        level = header.get('lvl_num') == 1
-        return tele and obs
-
-    def draw_slit(self, axes=None, **kwargs):
-        """Draws the slit location over the SJI observation.
-
-        Parameters
-        ----------
-        axes: `~matplotlib.axes` or None
-        Axes to plot limb on or None to use current axes.
-
-        Returns
-        -------
-        lines: list
-            A list of `matplotlib.axvline` objects that have been plotted.
-
-        Notes
-        -----
-        keyword arguments are passed onto matplotlib.pyplot.plot
-        """
-
-        if not axes:
-            axes = wcsaxes_compat.gca_wcs(self.wcs)
-
-        axes.axvline(self.meta['SLTPX1IX'])
-
-
-class SJICube(object):
-    """
-    SJICube
-
-    A series of SJI Images
+    Class representing SJI Images described by a single WCS
 
     Parameters
     ----------
+    data: `numpy.ndarray`
+        The array holding the actual data in this object.
 
-    Attributes
-    ----------
+    wcs: `ndcube.wcs.wcs.WCS`
+        The WCS object containing the axes' information
+
+    unit : `astropy.unit.Unit` or `str`
+        Unit for the dataset.
+        Strings that can be converted to a Unit are allowed.
+
+    meta : dict-like object
+        Additional meta information about the dataset.
+
+    uncertainty : any type, optional
+        Uncertainty in the dataset. Should have an attribute uncertainty_type
+        that defines what kind of uncertainty is stored, for example "std"
+        for standard deviation or "var" for variance. A metaclass defining
+        such an interface is NDUncertainty - but isn’t mandatory. If the
+        uncertainty has no such attribute the uncertainty is stored as
+        UnknownUncertainty.
+        Defaults to None.
+
+    mask : any type, optional
+        Mask for the dataset. Masks should follow the numpy convention
+        that valid data points are marked by False and invalid ones with True.
+        Defaults to None.
+
+    extra_coords : iterable of `tuple`s, each with three entries
+        (`str`, `int`, `astropy.units.quantity` or array-like)
+        Gives the name, axis of data, and values of coordinates of a data axis
+        not included in the WCS object.
+
+    copy : `bool`, optional
+        Indicates whether to save the arguments as copy. True copies every
+        attribute before saving it while False tries to save every parameter
+        as reference. Note however that it is not always possible to save the
+        input as reference.
+        Default is False.
+
+    scaled : `bool`, optional
+        Indicates if datas has been scaled.
 
     Examples
     --------
-    >>> from irispy.sji import SJICube
+    >>> from irispy import sji
     >>> from irispy.data import sample
-    >>> sji = SJICube(sample.SJI_CUBE_1400)   # doctest: +SKIP
-
+    >>> sji = read_iris_sji_level2_fits(sample.SJI_CUBE_1400)
     """
-    # pylint: disable=W0613,E1101
 
-    def __init__(self, input):
-        """Creates a new instance"""
-        if isinstance(input, str):
-            my_file = fits.open(input, memmap=True, do_not_scale_image_data=True)
-            # TODO find a new masking value for unscaled data
-            #self.data = np.ma.masked_less_equal(fits[0].data, 0)
-            self.data = my_file[0].data
-            self.mask = np.ma.masked_equal(my_file[0].data, BAD_PIXEL_VALUE_UNSCALED).mask
-            reference_header = deepcopy(my_file[0].header)
-            table_header = deepcopy(my_file[1].header)
-            # fix reference header
-            if reference_header.get('lvl_num') == 2:
-                reference_header['wavelnth'] = reference_header.get('twave1')
-                reference_header['detector'] = reference_header.get('instrume')
-                reference_header['waveunit'] = "Angstrom"
-                reference_header['obsrvtry'] = reference_header.get('telescop')
-            # check consistency
-            if reference_header['NAXIS3'] != self.data.shape[0]:
-                raise ValueError("Something is not right with this file!")
-
-            number_of_images = self.data.shape[0]
-            metas = []
-            dts = my_file[1].data[:, my_file[1].header['TIME']]
-            file_wcs = WCS(my_file[0].header)
-            # Caution!! This has not been confirmed for non-zero roll
-            # angles.
-            self.slit_center_sji_indices_x = my_file[1].data[:, my_file[1].header['SLTPX1IX']]
-            self.slit_center_sji_indices_y = my_file[1].data[:, my_file[1].header['SLTPX2IX']]
-            slit_center_positions = file_wcs.celestial.all_pix2world(
-                self.slit_center_sji_indices_x, self.slit_center_sji_indices_y,
-                iris_tools.WCS_ORIGIN)
-            self.slit_center_position_x = u.Quantity(slit_center_positions[0], 'deg').to("arcsec")
-            self.slit_center_position_y = u.Quantity(slit_center_positions[1], 'deg').to("arcsec")
-
-            # append info in second hdu to each header
-            for i in range(number_of_images):
-                metas.append(deepcopy(reference_header))
-                metas[i]['DATE_OBS'] = str(parse_time(
-                    reference_header['STARTOBS']) + timedelta(seconds=dts[i]))
-                # copy over the individual header fields
-                for item in my_file[1].header[7:]:
-                    metas[i][item] = my_file[1].data[i, my_file[1].header[item]]
-                    if item.count('EXPTIMES'):
-                        metas[i]['EXPTIME'] = my_file[1].data[i, my_file[1].header[item]]
-
-            self._meta = metas
-        elif len(input) > 1:
-            self.data = input[0]
-            self._meta = input[1]
-            number_of_images = self.data.shape[0]
-
-        norm = []
-        cmap = []
-        for i in range(number_of_images):
-            norm.append(deepcopy(self[i].plot_settings['norm']))
-            cmap.append(deepcopy(self[i].plot_settings['cmap']))
-
-        self.plot_settings = {'norm': norm, 'cmap': cmap}
-        self.ref_index = 0
-
-    def _get_map(self, index):
-        return SJIMap(self.data[index, :, :], self._meta[index], mask=self.mask[index, :, :])
-
-    def __getitem__(self, key):
-        """Overriding indexing operation.  If the key results in a single map,
-        then a map object is returned.  This allows functions like enumerate to
-        work.  Otherwise, a mapcube is returned."""
-        if isinstance(key, int):
-            return self._get_map(key)
-        elif isinstance(key, slice):
-            return SJICube((self.data[key, :, :], self._meta[key]))
-
-    def __len__(self):
-        """Return the number of maps in a mapcube."""
-        return self.data.shape[0]
+    def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
+                 mask=None, extra_coords=None, copy=False, missing_axis=None,
+                 scaled=None):
+        """
+        Initialization of Slit Jaw Imager
+        """
+        warnings.warn("This class is still in early stages of development. API not stable.")
+        # Set whether SJI data is scaled or not.
+        self.scaled = scaled
+        # Set the dust mask for the data
+        self.dust_masked = False
+        # Initialize IRISMapCube.
+        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
+                         meta=meta, unit=unit, extra_coords=extra_coords,
+                         copy=copy, missing_axis=missing_axis)
 
     def __repr__(self):
+        #Conversion of the start date of OBS
+        startobs = self.meta.get("STARTOBS", None)
+        startobs = startobs.isoformat() if startobs else None
+        #Conversion of the end date of OBS
+        endobs = self.meta.get("ENDOBS", None)
+        endobs = endobs.isoformat() if endobs else None
+        #Conversion of the instance start and end of OBS
+        if isinstance(self.extra_coords["TIME"]["value"], np.ndarray):
+            instance_start = self.extra_coords["TIME"]["value"][0]
+            instance_end = self.extra_coords["TIME"]["value"][-1]
+        else:
+            instance_start = self.extra_coords["TIME"]["value"]
+            instance_end = self.extra_coords["TIME"]["value"]
+        instance_start = instance_start.isoformat() if instance_start else None
+        instance_end = instance_end.isoformat() if instance_end else None
+        #Representation of IRISMapCube object
         return (
-            """SunPy {dtype!s}
----------
-Observatory:\t {obs}
-Instrument:\t {inst}
-Detector:\t {det}
-Measurement:\t {meas}
-Wavelength:\t {wave}
-Obs. Start:\t {date_start:{tmf}}
-Obs. End:\t {date_end:{tmf}}
-Num. of Frames:\t {frame_num}
-IRIS Obs. id:\t {obs_id}
-IRIS Obs. Description:\t {obs_desc}
-Dimensions:\t {dim}
-Scale:\t\t {scale}
-""".format(dtype=self.__class__.__name__,
-                obs=self.observatory, inst=self.instrument, det=self.detector,
-                meas=self.measurement, wave=self.wavelength, date_start=self.date[0],
-                date_end=self.date[-1], frame_num=len(self),
-                dim=u.Quantity(self.dimensions),
-                scale=u.Quantity(self.scale), obs_id=self.iris_obs_id, obs_desc=self.iris_obs_description,
-                tmf=TIME_FORMAT) + self.data.__repr__())
+            """
+    IRISMapCube
+    ---------
+    Observatory:\t\t {obs}
+    Instrument:\t\t\t {instrument}
+    Bandpass:\t\t\t {bandpass}
+    Obs. Start:\t\t\t {startobs}
+    Obs. End:\t\t\t {endobs}
+    Instance Start:\t\t {instance_start}
+    Instance End:\t\t {instance_end}
+    Total Frames in Obs.:\t {frame_num}
+    IRIS Obs. id:\t\t {obs_id}
+    IRIS Obs. Description:\t {obs_desc}
+    Cube dimensions:\t\t {dimensions}
+    Axis Types:\t\t\t {axis_types}
+    """.format(obs=self.meta.get('TELESCOP', None),
+               instrument=self.meta.get('INSTRUME', None),
+               bandpass=self.meta.get('TWAVE1', None),
+               startobs=startobs,
+               endobs=endobs,
+               instance_start=instance_start,
+               instance_end=instance_end,
+               frame_num=self.meta.get("NBFRAMES", None),
+               obs_id=self.meta.get('OBSID', None),
+               obs_desc=self.meta.get('OBS_DESC', None),
+               axis_types=self.world_axis_physical_types,
+               dimensions=self.dimensions))
 
-    # Sorting methods
-    @classmethod
-    def _sort_by_date(cls):
-        return lambda m: m.date  # maps.sort(key=attrgetter('date'))
+    def apply_exposure_time_correction(self, undo=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
 
-    def _derotate(self):
-        """Derotates the layers in the MapCube"""
-        pass
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
 
-    @property
-    def iris_obs_id(self):
-        """IRIS Observation ID"""
-        return self._meta[self.ref_index].get('OBSID', "")
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
 
-    @property
-    def iris_obs_description(self):
-        """IRIS Observation Description"""
-        return self._meta[self.ref_index].get('OBS_DESC', "")
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
 
-    @property
-    def instrument(self):
-        """Instrument name"""
-        return self._meta[self.ref_index].get('instrume', "").replace("_", " ")
+        Returns
+        -------
+        result: `IRISMapCube`
+            A new IRISMapCube is returned with the correction applied (undone).
 
-    @property
-    def measurement(self):
-        """Measurement name, defaults to the wavelength of image"""
-        return u.Quantity(self._meta[self.ref_index].get('wavelnth', 0), self._meta[self.ref_index].get('waveunit', ""))
+        """
+        # Raise an error if this method is called while memmap is used
+        if not self.scaled:
+            raise ValueError("This method is not available as you are using memmap")
+        # Get exposure time in seconds and change array's shape so that
+        # it can be broadcast with data and uncertainty arrays.
+        exposure_time_s = u.Quantity(self.extra_coords["EXPOSURE TIME"]["value"], unit='s').value
+        if not np.isscalar(self.extra_coords["EXPOSURE TIME"]["value"]):
+            if self.data.ndim == 1:
+                pass
+            elif self.data.ndim == 2:
+                exposure_time_s = exposure_time_s[:, np.newaxis]
+            elif self.data.ndim == 3:
+                exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
+            else:
+                raise ValueError(
+                    "IRISMapCube dimensions must be 2 or 3. Dimensions={0}".format(
+                        self.data.ndim))
+        # Based on value on undo kwarg, apply or remove exposure time correction.
+        if undo is True:
+            new_data_arrays, new_unit = iris_tools.uncalculate_exposure_time_correction(
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+        else:
+            new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
+                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+        # Return new instance of IRISMapCube with correction applied/undone.
+        return IRISMapCube(
+            data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
+            unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+            scaled=self.scaled,
+            extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
+                                                                   self.missing_axis))
 
-    @property
-    def wavelength(self):
-        """wavelength of the observation"""
-        return u.Quantity(self._meta[self.ref_index].get('wavelnth', 0), self._meta[self.ref_index].get('waveunit', ""))
+    def apply_dust_mask(self, undo=False):
+        """
+        Applies or undoes an update of the mask with the dust particles positions.
 
-    @property
-    def observatory(self):
-        """Observatory or Telescope name"""
-        return self._meta[self.ref_index].get('obsrvtry', self._meta[self.ref_index].get('telescop', "")).replace("_", " ")
+        Parameters
+        ----------
+        undo: `bool`
+            If False, dust particles positions mask will be applied.
+            If True, dust particles positions mask will be removed.
+            Default=False
 
-    @property
-    def detector(self):
-        """Detector name"""
-        return self._meta[self.ref_index].get('detector', "")
+        Returns
+        -------
+        result :
+            Rewrite self.mask with/without the dust positions.
+        """
+        # Calculate position of dust pixels
+        dust_mask = iris_tools.calculate_dust_mask(self.data)
+        if undo:
+            # If undo kwarg IS set, unmask dust pixels.
+            self.mask[dust_mask] = False
+            self.dust_masked = False
+        else:
+            # If undo kwarg is NOT set, unmask dust pixels.
+            self.mask[dust_mask] = True
+            self.dust_masked = True
+
+
+class IRISMapCubeSequence(NDCubeSequence):
+    """Class for holding, slicing and plotting IRIS SJI data.
+
+    This class contains all the functionality of its super class with
+    some additional functionalities.
+
+    Parameters
+    ----------
+    data_list: `list`
+        List of `IRISMapCube` objects from the same OBS ID.
+        Must also contain the 'detector type' in its meta attribute.
+
+    meta: `dict` or header object
+        Metadata associated with the sequence.
+
+    common_axis: `int`
+        The axis of the NDCubes corresponding to time.
+
+    """
+    def __init__(self, data_list, meta=None, common_axis=0):
+        # Check that all SJI data are coming from the same OBS ID.
+        if np.any([cube.meta["OBSID"] != data_list[0].meta["OBSID"] for cube in data_list]):
+            raise ValueError("Constituent IRISMapCube objects must have same "
+                             "value of 'OBSID' in its meta.")
+        # Initialize Sequence.
+        super().__init__(data_list, meta=meta, common_axis=common_axis)
+
+    def __repr__(self):
+        #Conversion of the start date of OBS
+        startobs = self.meta.get("STARTOBS", None)
+        startobs = startobs.isoformat() if startobs else None
+        #Conversion of the end date of OBS
+        endobs = self.meta.get("ENDOBS", None)
+        endobs = endobs.isoformat() if endobs else None
+        #Conversion of the instance start of OBS
+        instance_start = self[0].extra_coords["TIME"]["value"]
+        instance_start = instance_start.isoformat() if instance_start else None
+        #Conversion of the instance end of OBS
+        instance_end = self[-1].extra_coords["TIME"]["value"]
+        instance_end = instance_end.isoformat() if instance_end else None
+        #Representation of IRISMapCube object
+        return """
+IRISMapCubeSequence
+---------------------
+Observatory:\t\t {obs}
+Instrument:\t\t {instrument}
+
+OBS ID:\t\t\t {obs_id}
+OBS Description:\t {obs_desc}
+OBS period:\t\t {obs_start} -- {obs_end}
+
+Sequence period:\t {inst_start} -- {inst_end}
+Sequence Shape:\t\t {seq_shape}
+Axis Types:\t\t {axis_types}
+
+""".format(obs=self.meta.get('TELESCOP', None),
+           instrument=self.meta.get('INSTRUME', None),
+           obs_id=self.meta.get("OBSID", None),
+           obs_desc=self.meta.get("OBS_DESC", None),
+           obs_start=startobs,
+           obs_end=endobs,
+           inst_start=instance_start,
+           inst_end=instance_end,
+           seq_shape=self.dimensions,
+           axis_types=self.world_axis_physical_types)
+
+    def __getitem__(self, item):
+        return self.index_as_cube[item]
 
     @property
     def dimensions(self):
-        """
-        The dimensions of the array (x axis first, y axis second).
-        """
-        return self._meta[0].get('NAXIS1'), self._meta[0].get('NAXIS2')
+        return self.cube_like_dimensions
 
     @property
-    def dtype(self):
+    def world_axis_physical_types(self):
+        return self.cube_like_world_axis_physical_types
+
+    def plot(self, axes=None, plot_axis_indices=None, axes_coordinates=None,
+             axes_units=None, data_unit=None, **kwargs):
         """
-        The `numpy.dtype` of the array of the map.
-        """
-        return self.data.dtype
+        Visualizes data in the IRISMapCubeSequence with the sequence axis folded
+        into the common axis.
 
-    @property
-    def date(self):
-        """Observation time"""
-        return [parse_time(m.get('date_obs')) for m in self._meta]
-
-    @property
-    def scale(self):
-        """
-        Image scale along the x and y axes in units/pixel (i.e. cdelt1,
-        cdelt2)
-        """
-        # TODO: Fix this if only CDi_j matrix is provided
-        return self._get_map(self.ref_index).scale
-
-    @property
-    def spatial_units(self):
-        """
-        Image coordinate units along the x and y axes (i.e. cunit1,
-        cunit2).
-        """
-        return self._get_map(self.ref_index).units
-
-    @property
-    def exposure_time(self):
-        """Exposure time of each frame in seconds."""
-        return u.Quantity([m.get('exptime') for m in self._meta], 's')
-
-    @property
-    def rotation_matrix(self):
-        return self._get_map(self.ref_index).rotation_matrix
-
-    def meta(self, key):
-        """The Meta."""
-        result = [meta[key] for meta in self._meta]
-        # check to see if they are all the same if so just return one value
-        if len(set(result)) == 1:
-            result = set(result)
-        return result
-
-    def submap(self, range_a, range_b, range_c=None):
-        """Returns a submap of the map with the specified range.
-        """
-        new_maps = []
-        for i in range(0, len(self)):
-            new_maps.append(self._get_map(i).submap(range_a, range_b))
-        data = np.zeros([len(self), new_maps[0].data.shape[0], new_maps[0].data.shape[1]])
-        data = np.ma.masked_less_equal(data, 0)
-        _meta = []
-        for i in range(0, len(self)):
-            data[i, :, :] = new_maps[i].data
-            _meta.append(deepcopy(new_maps[i].meta))
-        return SJICube((data, _meta))
-
-    def lightcurve(self, location_a, location_b, range_c=None):
-        """Given a pixel index return a lightcurve."""
-        return LightCurve(DataFrame({"{0},{1}".format(location_a, location_b): self.data[:, location_a, location_b]},
-                                    index=self.date))
-
-    @u.quantity_input(dimensions=u.pixel, offset=u.pixel)
-    def superpixel(self, dimensions, offset=(0, 0)*u.pixel, func=np.sum):
-        """Returns a new map consisting of superpixels formed from the
-        original data.  Useful for increasing signal to noise ratio in images.
-        """
-        new_maps = []
-        print(offset)
-        for i in range(0, len(self)):
-            new_maps.append(self._get_map(i).superpixel(dimensions, offset=offset, func=func))
-        return SJICube(new_maps)
-
-    @u.quantity_input(dimensions=u.pixel)
-    def resample(self, dimensions, method='linear'):
-        """Returns a new Map that has been resampled up or down"""
-        new_maps = []
-        for i in range(0, len(self)):
-            new_maps.append(self._get_map(i).resample(dimensions, method=method))
-        return SJICube(new_maps)
-
-    def apply_function(self, function, *function_args, **function_kwargs):
-        """
-        Apply a function that operates on the full 3-d data in the mapcube and
-        return a single 2-d map based on that function.
+        Based on the cube-like dimensionality of the sequence and value of plot_axis_indices
+        kwarg, a Line/Image Plot/Animation is produced.
 
         Parameters
         ----------
-        function: a function that takes a 3-d numpy array as its first
-            argument.
-        function_args: function arguments
-        function_kwargs: function keywords
+        axes: `astropy.visualization.wcsaxes.core.WCSAxes` or ??? or None.
+            The axes to plot onto. If None the current axes will be used.
+
+        plot_axis_indices: `int` or iterable of one or two `int`.
+            If two axis indices are given, the sequence is visualized as an image or
+            2D animation, assuming the sequence has at least 2 cube-like dimensions.
+            The cube-like dimension indicated by the 0th element of plot_axis indices is
+            displayed on the x-axis while the cube-like dimension indicated by the 1st
+            element of plot_axis_indices is displayed on the y-axis. If only one axis
+            index is given (either as an int or a list of one int), then a 1D line
+            animation is produced with the indicated cube-like dimension on the x-axis
+            and other cube-like dimensions represented by animations sliders.
+            Default=[-1, -2]. If sequence only has one cube-like dimension,
+            plot_axis_indices is ignored and a static 1D line plot is produced.
+
+        axes_coordinates: `None` or `list` of `None` `astropy.units.Quantity` `numpy.ndarray` `str`
+            Denotes physical coordinates for plot and slider axes.
+            If None coordinates derived from the WCS objects will be used for all axes.
+            If a list, its length should equal either the number cube-like dimensions or
+            the length of plot_axis_indices.
+            If the length equals the number of cube-like dimensions, each element describes
+            the coordinates of the corresponding cube-like dimension.
+            If the length equals the length of plot_axis_indices,
+            the 0th entry describes the coordinates of the x-axis
+            while (if length is 2) the 1st entry describes the coordinates of the y-axis.
+            Slider axes are implicitly set to None.
+            If the number of cube-like dimensions equals the length of plot_axis_indices,
+            the latter convention takes precedence.
+            The value of each entry should be either
+            `None` (implies derive the coordinates from the WCS objects),
+            an `astropy.units.Quantity` or a `numpy.ndarray` of coordinates for each pixel,
+            or a `str` denoting a valid extra coordinate.
+
+        axes_units: `None or `list` of `None`, `astropy.units.Unit` and/or `str`
+            If None units derived from the WCS objects will be used for all axes.
+            If a list, its length should equal either the number cube-like dimensions or
+            the length of plot_axis_indices.
+            If the length equals the number of cube-like dimensions, each element gives the
+            unit in which the coordinates along the corresponding cube-like dimension should
+            displayed whether they be a plot axes or a slider axes.
+            If the length equals the length of plot_axis_indices,
+            the 0th entry describes the unit in which the x-axis coordinates should be displayed
+            while (if length is 2) the 1st entry describes the unit in which the y-axis should
+            be displayed.  Slider axes are implicitly set to None.
+            If the number of cube-like dimensions equals the length of plot_axis_indices,
+            the latter convention takes precedence.
+            The value of each entry should be either
+            `None` (implies derive the unit from the WCS object of the 0th sub-cube),
+            `astropy.units.Unit` or a valid unit `str`.
+
+        data_unit: `astropy.unit.Unit` or valid unit `str` or None
+            Unit in which data be displayed.  If the length of plot_axis_indices is 2,
+            a 2D image/animation is produced and data_unit determines the unit represented by
+            the color table.  If the length of plot_axis_indices is 1,
+            a 1D plot/animation is produced and data_unit determines the unit in which the
+            y-axis is displayed.
 
         Returns
         -------
-        SJIMAP: `sunpy.map.Map`
-            A map that stores the result of applying the function to the 3-d
-            data of the mapcube.
-        """
-        if "mapcube_index" in function_kwargs:
-            mapcube_index = function_kwargs.pop("mapcube_index")
-        else:
-            mapcube_index = 0
-        return SJIMap(function(self.data, *function_args, **function_kwargs), self._meta[mapcube_index])
+        return : ndcube.mixins.sequence_plotting.plot_as_cube
 
-    def std(self):
         """
-        Calculate the standard deviation of the data array.
-        """
-        return SJIMap(np.std(self.data, axis=0), self._meta[self.ref_index])
+        return self.plot_as_cube(axes=axes, plot_axis_indices=plot_axis_indices,
+                                 axes_coordinates=axes_coordinates,
+                                 axes_units=axes_units, data_unit=data_unit, **kwargs)
 
-    def mean(self):
+    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
-        Calculate the mean of the data array.
-        """
-        return SJIMap(np.mean(self.data, axis=0), self._meta[self.ref_index])
+        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
 
-    def min(self):
-        """
-        Calculate the minimum value of the data array.
-        """
-        return SJIMap(np.min(self.data, axis=0), self._meta[self.ref_index])
-
-    def max(self):
-        """
-        Calculate the maximum value of the data array.
-        """
-        return SJIMap(np.max(self.data, axis=0), self._meta[self.ref_index])
-
-    def plot(self, axes=None, resample=None, annotate=True, interval=200,
-             plot_function=None, **kwargs):
-        """
-        A animation plotting routine that animates each element in the
-        MapCube
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
 
         Parameters
         ----------
-        gamma: float
-            Gamma value to use for the color map
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is removed.
+            Default=False
 
-        axes: mpl axes
-            axes to plot the animation on, if none uses current axes
+        copy: `bool`
+            If True a new instance with the converted data values is returned.
+            If False, the current instance is overwritten.
+            Default=False
 
-        resample: list or False
-            Draws the map at a lower resolution to increase the speed of
-            animation. Specify a list as a fraction i.e. [0.25, 0.25] to
-            plot at 1/4 resolution.
-            [Note: this will only work where the map arrays are the same size]
-
-        annotate: bool
-            Annotate the figure with scale and titles
-
-        interval: int
-            Animation interval in ms
-
-        plot_function : function
-            A function to be called as each map is plotted. Any variables
-            returned from the function will have their ``remove()`` method called
-            at the start of the next frame so that they are removed from the plot.
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> import matplotlib.animation as animation
-        >>> from sunpy.map import Map
-
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.plot(colorbar=True)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-
-        Plot the map at 1/2 original resolution
-
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.plot(resample=[0.5, 0.5], colorbar=True)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-
-        Save an animation of the MapCube
-
-        >>> cube = Map(res, cube=True)   # doctest: +SKIP
-
-        >>> ani = cube.plot()   # doctest: +SKIP
-
-        >>> Writer = animation.writers['ffmpeg']   # doctest: +SKIP
-        >>> writer = Writer(fps=10, metadata=dict(artist='SunPy'), bitrate=1800)   # doctest: +SKIP
-
-        >>> ani.save('mapcube_animation.mp4', writer=writer)   # doctest: +SKIP
-
-        Save an animation with the limb at each time step
-
-        >>> def myplot(fig, ax, sunpy_map):
-        ...    p = sunpy_map.draw_limb()
-        ...    return p
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.peek(plot_function=myplot)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-        """
-        if not axes:
-            axes = wcsaxes_compat.gca_wcs(self._get_map(self.ref_index).wcs)
-        fig = axes.get_figure()
-
-        if not plot_function:
-            plot_function = lambda fig, ax, smap: []
-        removes = []
-
-        # Normal plot
-        def annotate_frame(i):
-            axes.set_title("{s.name}".format(s=self[i]))
-
-            # x-axis label
-            if self[0].coordinate_system.x == 'HG':
-                xlabel = 'Longitude [{lon}'.format(lon=self[i].spatial_units.x)
-            else:
-                xlabel = 'X-position [{xpos}]'.format(xpos=self[i].spatial_units.x)
-
-            # y-axis label
-            if self[0].coordinate_system.y == 'HG':
-                ylabel = 'Latitude [{lat}]'.format(lat=self[i].spatial_units.y)
-            else:
-                ylabel = 'Y-position [{ypos}]'.format(ypos=self[i].spatial_units.y)
-
-            axes.set_xlabel(xlabel)
-            axes.set_ylabel(ylabel)
-
-        if resample:
-            # This assumes that the maps are homogeneous!
-            # TODO: Update this!
-            resample = np.array(len(self)-1) * np.array(resample)
-            ani_data = [self._get_map(j).resample(resample) for j in range(0, len(self))]
-        else:
-            ani_data = [self._get_map(j) for j in range(0, len(self))]
-
-        im = ani_data[0].plot(axes=axes, **kwargs)
-        im.set_cmap(self.plot_settings['cmap'][0])
-        im.set_norm(self.plot_settings['norm'][0])
-
-        def updatefig(i, im, annotate, ani_data, removes):
-            while removes:
-                removes.pop(0).remove()
-
-            im.set_array(ani_data[i].data)
-            im.set_cmap(self.plot_settings['cmap'][i])
-            norm = deepcopy(self.plot_settings['norm'][i])
-            # The following explicit call is for bugged versions of Astropy's ImageNormalize
-            # norm.autoscale_None(ani_data[i].data)
-            im.set_norm(norm)
-
-            if wcsaxes_compat.is_wcsaxes(axes):
-                im.axes.reset_wcs(self[i].wcs)
-                wcsaxes_compat.default_wcs_grid(axes)
-            else:
-                im.set_extent(np.concatenate((self[i].xrange.value,
-                                              self[i].yrange.value)))
-
-            if annotate:
-                annotate_frame(i)
-            removes += list(plot_function(fig, axes, self[i]))
-
-        ani = matplotlib.animation.FuncAnimation(fig, updatefig,
-                                                 frames=list(range(0, len(self))),
-                                                 fargs=[im, annotate, ani_data, removes],
-                                                 interval=interval,
-                                                 blit=False)
-
-        return ani
-
-    def plot_in_notebook(self):
-        """Provides ipython widgets to plot the SJI data."""
-        # TODO: write function
-        import ipywidgets as widgets
-        pass
-
-    def to_html5_video(self):
-        """Output video of the observation"""
-        # TODO: write function
-        pass
-
-    def peek(self, resample=None, **kwargs):
-        """
-        A animation plotting routine that animates each element in the
-        MapCube
-
-        Parameters
-        ----------
-        fig: mpl.figure
-            Figure to use to create the explorer
-
-        resample: list or False
-            Draws the map at a lower resolution to increase the speed of
-            animation. Specify a list as a fraction i.e. [0.25, 0.25] to
-            plot at 1/4 resolution.
-            [Note: this will only work where the map arrays are the same size]
-
-        annotate: bool
-            Annotate the figure with scale and titles
-
-        interval: int
-            Animation interval in ms
-
-        colorbar: bool
-            Plot colorbar
-
-        plot_function : function
-            A function to call to overplot extra items on the map plot.
-            For more information see `sunpy.visualization.MapCubeAnimator`.
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
 
         Returns
         -------
-        mapcubeanim : `sunpy.visualization.MapCubeAnimator`
-            A mapcube animator instance.
+        result: `IRISMapCubeSequence`
+            If copy=False, the original IRISMapCubeSequence is modified with the exposure
+            time correction applied (undone).
+            If copy=True, a new IRISMapCubeSequence is returned with the correction
+            applied (undone).
 
-        See Also
-        --------
-        sunpy.visualization.mapcubeanimator.MapCubeAnimator
-
-        Examples
-        --------
-        >>> import matplotlib.pyplot as plt
-        >>> from sunpy.map import Map
-
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.peek(colorbar=True)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-
-        Plot the map at 1/2 original resolution
-
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.peek(resample=[0.5, 0.5], colorbar=True)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-
-        Plot the map with the limb at each time step
-
-        >>> def myplot(fig, ax, sunpy_map):
-        ...    p = sunpy_map.draw_limb()
-        ...    return p
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.peek(plot_function=myplot)   # doctest: +SKIP
-        >>> plt.show()   # doctest: +SKIP
-
-        Decide you want an animation:
-
-        >>> cube = Map(files, cube=True)   # doctest: +SKIP
-        >>> ani = cube.peek(resample=[0.5, 0.5], colorbar=True)   # doctest: +SKIP
-        >>> mplani = ani.get_animation()   # doctest: +SKIP
         """
+        corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
+                          for cube in self.data]
+        if copy is True:
+            return IRISMapCubeSequence(data_list=corrected_data, meta=self.meta,
+                                       common_axis=self._common_axis)
+        else:
+            self.data = corrected_data
 
-        if resample:
-            if self.all_maps_same_shape():
-                resample = np.array(len(self) - 1) * np.array(resample)
-                for i in range(0, len(self)):
-                    self._get_map(i).resample(resample)
-            else:
-                raise ValueError('Maps do not all have the same shape.')
-
-        return MapCubeAnimator(self, **kwargs)
-
-    def running_difference(self, offset=1, use_offset_for_meta='ahead'):
+    def apply_dust_mask(self, undo=False):
         """
-        Calculate the running difference of the mapcube and return a new mapcube
+        Applies or undoes an update of all the masks with the dust particles positions.
 
         Parameters
         ----------
-
-        offset : int
-           Calculate the running difference between map 'i + offset' and image 'i'.
-        use_offset_for_meta : {'ahead', 'behind'}
-           Which meta header to use in layer 'i' in the returned mapcube, either
-           from map 'i + offset' (when set to 'ahead') and image 'i' (when set to
-           'behind').
+        undo: `bool`
+            If False, dust particles positions masks will be applied.
+            If True, dust particles positions masks will be removed.
+            Default=False
 
         Returns
         -------
-        sunpy.map.MapCube
-           A mapcube containing the running difference of the input mapcube.
-
+        result :
+            Rewrite all self.data[i]mask with/without the dust positions.
         """
-        if offset < 1:
-            raise ValueError('The value of the offset keyword must be greater than or equal to 1.')
+        for cube in self.data:
+            cube.apply_dust_mask(undo=undo)
 
-        # Create a list containing the data for the new map object
-        new_mc = []
-        for i in range(0, len(self) - offset):
-            new_data = self.data[:, :, i + offset] - self.data[:, :, i]
-            if use_offset_for_meta == 'ahead':
-                new_meta = self._meta[i + offset]
-            elif use_offset_for_meta == 'behind':
-                new_meta = self._meta[i]
-            else:
-                raise ValueError(
-                    'The value of the keyword "use_offset_for_meta" has not been recognized.')
-            new_mc.append(Map(new_data, new_meta))
 
-        # Create the new mapcube and return
-        return SJICube(new_mc)
+def read_iris_sji_level2_fits(filenames, memmap=False):
+    """
+    Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance.
 
-    def base_difference(self, base=0, fraction=False):
-        """
-        Calculate the base difference of a mapcube.
+    Parameters
+    ----------
+    filenames: `list` of `str` or `str`
+        Filename or filenames to be read.  They must all be associated with the same
+        OBS number.
 
-        Parameters
-        ----------
-        base : int, sunpy.map.Map
-           If base is an integer, this is understood as an index to the input
-           mapcube.  Differences are calculated relative to the map at index
-           'base'.  If base is a sunpy map, then differences are calculated
-           relative to that map
+    memmap : `bool`
+        Default value is `False`.
+        If the user wants to use it, he has to set `True`
 
-        fraction : boolean
-            If False, then absolute changes relative to the base map are
-            returned.  If True, then fractional changes relative to the base map
-            are returned
+    Returns
+    -------
+    result: 'irispy.sji.IRISMapCube'
 
-        Returns
-        -------
-        sunpy.map.MapCube
-           A mapcube containing base difference of the input mapcube.
+    """
+    list_of_cubes = []
+    if type(filenames) is str:
+        filenames = [filenames]
+    for filename in filenames:
+        # Open a fits file
+        hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
+        hdulist.verify('fix')
+        # Derive WCS, data and mask for NDCube from fits file.
+        wcs = WCS(hdulist[0].header)
+        data = hdulist[0].data
+        data_nan_masked = hdulist[0].data
+        if memmap:
+            data_nan_masked[data == BAD_PIXEL_VALUE_UNSCALED] = 0
+            mask = None
+            scaled = False
+            unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
+            uncertainty = None
+        elif not memmap:
+            data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
+            mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
+            scaled = True
+            # Derive unit and readout noise from the detector
+            unit = iris_tools.DN_UNIT["SJI"]
+            readout_noise = iris_tools.READOUT_NOISE["SJI"]
+            # Derive uncertainty of data for NDCube from fits file.
+            uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+                                             + readout_noise.to(u.photon).value**2),
+                                     unit=u.photon).to(unit).value
+        # Derive exposure time from detector.
+        exposure_times = hdulist[1].data[:, hdulist[1].header["EXPTIMES"]]
+        # Derive extra coordinates for NDCube from fits file.
+        times = np.array([parse_time(hdulist[0].header["STARTOBS"])
+                          + timedelta(seconds=s)
+                          for s in hdulist[1].data[:, hdulist[1].header["TIME"]]])
+        pztx = hdulist[1].data[:, hdulist[1].header["PZTX"]] * u.arcsec
+        pzty = hdulist[1].data[:, hdulist[1].header["PZTY"]] * u.arcsec
+        xcenix = hdulist[1].data[:, hdulist[1].header["XCENIX"]] * u.arcsec
+        ycenix = hdulist[1].data[:, hdulist[1].header["YCENIX"]] * u.arcsec
+        obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m/u.s
+        ophaseix = hdulist[1].data[:, hdulist[1].header["OPHASEIX"]]
+        extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
+                        ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
+                        ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
+                        ("EXPOSURE TIME", 0, exposure_times)]
+        # Extraction of meta for NDCube from fits file.
+        startobs = hdulist[0].header.get('STARTOBS', None)
+        startobs = parse_time(startobs) if startobs else None
+        endobs = hdulist[0].header.get('ENDOBS', None)
+        endobs = parse_time(endobs) if endobs else None
+        meta = {'TELESCOP': hdulist[0].header.get('TELESCOP', None),
+                'INSTRUME': hdulist[0].header.get('INSTRUME', None),
+                'TWAVE1': hdulist[0].header.get('TWAVE1', None),
+                'STARTOBS': startobs,
+                'ENDOBS': endobs,
+                'NBFRAMES': hdulist[0].data.shape[0],
+                'OBSID': hdulist[0].header.get('OBSID', None),
+                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None)}
+        list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
+                                         unit=unit, meta=meta, mask=mask,
+                                         extra_coords=extra_coords, scaled=scaled))
+        hdulist.close()
+    if len(filenames) == 1:
+        return list_of_cubes[0]
+    else:
+        return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
 
-        """
 
-        if not(isinstance(base, GenericMap)):
-            base_data = self.data[:, :, base]
-        else:
-            base_data = base.data
+class SJIMap(GenericMap):
+    def __init__(self, data, header, **kwargs):
+        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube.")
 
-        if base_data.shape != self.data.shape:
-            raise ValueError(
-                'Base map does not have the same shape as the maps in the input mapcube.')
 
-        # Fractional changes or absolute changes
-        if fraction:
-            relative = base_data
-        else:
-            relative = 1.0
-
-        # Create a list containing the data for the new map object
-        new_mc = []
-        for i in range(0, len(self)):
-            new_data = (self.data[:, :, i] - base_data) / relative
-            new_mc.append(Map(new_data, self._meta[i]))
-
-        # Create the new mapcube and return
-        return SJICube(new_mc)
+class SJICube(object):
+    def __init__(self, input):
+        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube."
+                          "To create an irispy.sji.IRISMapCube from a level 2 SJI FITS file,"
+                          "use irispy.sji.read_iris_sji_level2_fits.")
 
 
 def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
-    """
-    Read SJI files and return a MapCube. Inherits
-    sunpy.instr.iris.SJI_to_cube to stitch multiple sji fits
-    files stitched into one mapcube.
-    Also sets colormap and normalization
-    Assumes hdu index of 0.
-
-
-    Parameters
-    ----------
-    filelist: `str` or `list`
-        File to read, if single file string detected, will
-        create a list of length 1.
-
-    start: `int`
-        Temporal axis index to create MapCube from
-
-    stop: `int`
-        Temporal index to stop MapCube at
-
-    skip: `int`
-        Temporal index to skip over MapCube at
-
-
-    Returns
-    -------
-    iris_cube: `sunpy.map.MapCube`
-        A map cube of the SJI sequence
-    """
-
-    if type(filelist) == str:
-        filelist = [filelist]
-    iris_cube = sunpy.map.MapCube()
-    for fname in filelist:
-        newmap = SJI_to_cube(fname)
-        for frame in newmap[start:stop:skip]:
-            if frame.mean() < frame.max():
-                cmap = cm.get_cmap(frame._get_cmap_name())
-                vmax = frame.mean()+3.*frame.std()
-                frame.plot_settings['cmap'] = cmap
-                frame.plot_settings['norm'] = colors.LogNorm(1, vmax)
-                #  todo: iris_intscale
-                iris_cube.maps.append(frame)
-
-    #  todo: pointing correction(rot_hpc)
-    return iris_cube
-
-
-def SJI_to_cube(filename, start=0, stop=None, hdu=0):
-    """
-    Read a SJI file and return a MapCube
-    Warning
-    -------
-    This function is a very early beta and is not stable. Further work is
-    on going to improve SunPy IRIS support.
-
-    Parameters
-    ----------
-    filename: string
-        File to read
-    start: int
-        Temporal axis index to create MapCube from
-    stop: int
-        Temporal index to stop MapCube at
-    hdu: int
-        Choose hdu index
-
-    Returns
-    -------
-    iris_cube: sunpy.map.MapCube
-        A map cube of the SJI sequence
-    """
-
-    hdus = sunpy.io.read_file(filename)
-    # Get the time delta
-    time_range = sunpy.time.TimeRange(hdus[hdu][1]['STARTOBS'],
-                                      hdus[hdu][1]['ENDOBS'])
-    splits = time_range.split(hdus[hdu][0].shape[0])
-
-    if not stop:
-        stop = len(splits)
-
-    headers = [hdus[hdu][1]]*(stop-start)
-    datas = hdus[hdu][0][start:stop]
-
-    # Make the cube:
-    iris_cube = sunpy.map.Map(list(zip(datas, headers)), cube=True)
-    # Set the date/time
-
-    for i, m in enumerate(iris_cube):
-        m.meta['DATE-OBS'] = splits[i].center.isoformat()
-
-    return iris_cube
-
-
-def dustbuster(mc):
-    """
-    Read SJI fits files and return Inpaint-corrected fits files.
-    Image inpainting involves filling in part of an image or video
-    using information from the surrounding area.
-
-    Parameters
-    ----------
-    mc: `sunpy.map.MapCube`
-        Mapcube to read
-
-
-    Returns
-    -------
-    mc: `sunpy.map.MapCube`
-        Inpaint-corrected Mapcube
-    """
-    image_result = []
-    ndx = len(mc)
-    for i, map in enumerate(mc):
-        image_orig = map.data
-        nx = map.meta.get('NRASTERP')
-        firstpos = range(ndx)[0::nx]
-        #  Create mask with values < 1, excluding frame (-200)
-        m = ma.masked_inside(image_orig, -199, .1)
-
-        if nx <= 50:  # sparse/coarse raster
-            skip = 1
-            secpos = [-1]
-            thirdpos = [-1]
-        elif nx > 50:  # dense raster
-            skip = 5
-            secpos = range(ndx)[1::nx]
-            thirdpos = range(ndx)[2::nx]
-
-        if (i in firstpos) or (i in secpos) or (i in thirdpos):
-            image_inpaint = mc[i + skip].data.copy()  # grab next frame
-        else:
-            image_inpaint = mc[i - skip].data.copy()  # grab prev frame
-
-        # Inpaint mask onto image
-        image_orig[m.mask] = image_inpaint[m.mask]
-
-        map.data = image_orig
-
-    return mc
+    raise ImportError("This function has been replaced by irispy.sji.read_iris_sji_level2_fits.")
