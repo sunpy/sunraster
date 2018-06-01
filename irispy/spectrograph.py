@@ -570,8 +570,6 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                 raise ValueError("Detector type in FITS header not recognized.")
             # Derive WCS, data and mask for NDCube from file.
             wcs_ = WCS(hdulist[window_fits_indices[i]].header)
-            data_nan_masked = copy.deepcopy(hdulist[window_fits_indices[i]].data)
-            data_nan_masked[hdulist[window_fits_indices[i]].data == -200.] = np.nan
             data_mask = hdulist[window_fits_indices[i]].data == -200.
             # Derive extra coords for this spectral window.
             window_extra_coords = copy.deepcopy(general_extra_coords)
@@ -605,12 +603,13 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                                 }
             # Derive uncertainty of data
             uncertainty = u.Quantity(np.sqrt(
-                (data_nan_masked*DN_unit).to(u.photon).value + readout_noise.to(u.photon).value**2),
-                unit=u.photon).to(DN_unit).value
+                (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
+                readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
             # Appending NDCube instance to the corresponding window key in dictionary's list.
             data_dict[window_name].append(
-                IRISSpectrogramCube(data_nan_masked, wcs_, uncertainty, DN_unit, single_file_meta,
-                                    window_extra_coords, mask=data_mask))
+                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, uncertainty,
+                                    DN_unit, single_file_meta, window_extra_coords,
+                                    mask=data_mask))
         hdulist.close()
     # Construct dictionary of IRISSpectrogramCubeSequences for spectral windows
     data = dict([(window_name, IRISSpectrogramCubeSequence(data_dict[window_name],
