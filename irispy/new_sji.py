@@ -200,6 +200,7 @@ class IRISMapCube(NDCube):
         return IRISMapCube(
             data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
             unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+            scaled=self.scaled,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axis))
 
