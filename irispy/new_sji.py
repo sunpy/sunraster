@@ -10,6 +10,7 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
+from scipy import ndimage
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 from ndcube import utils
@@ -91,6 +92,8 @@ class IRISMapCube(NDCube):
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
+        # Set the dust mask for the data
+        self.dust_masked = False
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
@@ -200,6 +203,33 @@ class IRISMapCube(NDCube):
             scaled=self.scaled,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axis))
+
+    def apply_dust_mask(self, undo=False):
+        """
+        Applies or undoes an update of the mask with the dust particles positions.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, dust particles positions mask will be applied.
+            If True, dust particles positions mask will be removed.
+            Default=False
+
+        Returns
+        -------
+        result :
+            Rewrite self.mask with/without the dust positions.
+        """
+        # Calculate position of dust pixels
+        dust_mask = iris_tools.calculate_dust_mask(self.data)
+        if undo:
+            # If undo kwarg IS set, unmask dust pixels.
+            self.mask[dust_mask] = False
+            self.dust_masked = False
+        else:
+            # If undo kwarg is NOT set, unmask dust pixels.
+            self.mask[dust_mask] = True
+            self.dust_masked = True
 
 
 class IRISMapCubeSequence(NDCubeSequence):
@@ -399,10 +429,29 @@ Axis Types:\t\t {axis_types}
         else:
             self.data = corrected_data
 
+    def apply_dust_mask(self, undo=False):
+        """
+        Applies or undoes an update of all the masks with the dust particles positions.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, dust particles positions masks will be applied.
+            If True, dust particles positions masks will be removed.
+            Default=False
+
+        Returns
+        -------
+        result :
+            Rewrite all self.data[i]mask with/without the dust positions.
+        """
+        for cube in self.data:
+            cube.apply_dust_mask(undo=undo)
+
 
 def read_iris_sji_level2_fits(filenames, memmap=False):
     """
-    Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance
+    Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance.
 
     Parameters
     ----------
