@@ -18,7 +18,7 @@ from ndcube.ndcube_sequence import NDCubeSequence
 
 from irispy import iris_tools
 
-__all__ = ['IRISMapCube']
+__all__ = ['IRISMapCube', 'IRISMapCubeSequence', 'read_iris_sji_level2_fits']
 
 # the following value is only appropriate for byte scaled images
 BAD_PIXEL_VALUE_SCALED = -200
@@ -92,7 +92,7 @@ class IRISMapCube(NDCube):
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
-        # Set the dust mask for the data
+        # Dust_masked variable shows whether the dust pixels are set to True in the data mask.
         self.dust_masked = False
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
@@ -227,7 +227,7 @@ class IRISMapCube(NDCube):
             self.mask[dust_mask] = False
             self.dust_masked = False
         else:
-            # If undo kwarg is NOT set, unmask dust pixels.
+            # If undo kwarg is NOT set, mask dust pixels.
             self.mask[dust_mask] = True
             self.dust_masked = True
 
@@ -242,7 +242,7 @@ class IRISMapCubeSequence(NDCubeSequence):
     ----------
     data_list: `list`
         List of `IRISMapCube` objects from the same OBS ID.
-        Must also contain the 'detector type' in its meta attribute.
+        Each cube must contain the same 'detector type' in its meta attribute.
 
     meta: `dict` or header object
         Metadata associated with the sequence.
@@ -256,23 +256,23 @@ class IRISMapCubeSequence(NDCubeSequence):
         if np.any([cube.meta["OBSID"] != data_list[0].meta["OBSID"] for cube in data_list]):
             raise ValueError("Constituent IRISMapCube objects must have same "
                              "value of 'OBSID' in its meta.")
-        # Initialize Sequence.
+        # Initialize IRISMapCubeSequence.
         super().__init__(data_list, meta=meta, common_axis=common_axis)
 
     def __repr__(self):
-        #Conversion of the start date of OBS
+        # Conversion of the start date of OBS
         startobs = self.meta.get("STARTOBS", None)
         startobs = startobs.isoformat() if startobs else None
-        #Conversion of the end date of OBS
+        # Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
         endobs = endobs.isoformat() if endobs else None
-        #Conversion of the instance start of OBS
+        # Conversion of the instance start of OBS
         instance_start = self[0].extra_coords["TIME"]["value"]
         instance_start = instance_start.isoformat() if instance_start else None
-        #Conversion of the instance end of OBS
+        # Conversion of the instance end of OBS
         instance_end = self[-1].extra_coords["TIME"]["value"]
         instance_end = instance_end.isoformat() if instance_end else None
-        #Representation of IRISMapCube object
+        # Representation of IRISMapCube object
         return """
 IRISMapCubeSequence
 ---------------------
@@ -443,7 +443,8 @@ Axis Types:\t\t {axis_types}
         Returns
         -------
         result :
-            Rewrite all self.data[i]mask with/without the dust positions.
+            Rewrite all self.data[i] mask with/without the dust positions.
+
         """
         for cube in self.data:
             cube.apply_dust_mask(undo=undo)
@@ -465,7 +466,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
 
     Returns
     -------
-    result: 'irispy.sji.IRISMapCube'
+    result: `irispy.sji.IRISMapCube` or `irispy.sji.IRISMapCubeSequence`
 
     """
     list_of_cubes = []
