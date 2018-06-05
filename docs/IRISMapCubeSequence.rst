@@ -1,3 +1,5 @@
+.. _IRISMapCubeSequence:
+
 ===================
 IRISMapCubeSequence
 ===================
@@ -5,7 +7,7 @@ IRISMapCubeSequence
 This class represents Slit Jaw Images from IRIS as a list of IRISMapCube, where these
 sub-cubes are 2D or 3D described by their own World Coordinate System (WCS).
 
-This class inherits from the NDCubeSequence_, so we can can apply all the methods derived
+This class inherits from NDCubeSequence_, so we can can apply all the methods derived
 from this class.
 
 Initialization
@@ -36,10 +38,17 @@ kwarg by doing: ::
     >>> my_fits_files = [my_fits_file_0, my_fits_file_1]
     >>> my_sequence = read_iris_sji_level2_fits(my_fits_files, memmap=True)
 
-So now, ``my_sequence`` is an IRISMapCubeSequence object and we can access to some
+Class Structure
+---------------
+
+So now, ``my_sequence`` is an IRISMapCubeSequence object and we can access to a lot of
 information like:
 
 - ``my_sequence.data`` : In this attribute, we can find the data array of our sequence.
+- ``my_sequence.meta`` : The meta data contains a lot of information which are not inside
+  the data array.
+- ``my_sequence.common_axis``: We can found some explanation in NDCubeSequence.Common_Axis_
+  paragraph.
 
 As an IRISMapCubeSequence object is a list of IRISMapCube objects, we can do the same things
 that we have seen previously in the IRISMapCube documentation. To access to the information
@@ -51,6 +60,77 @@ objects, we can access to their information by doing:
 - ``my_sequence[1].wcs`` : The WCS attribute of the second IRISMapCube object.
 - ``my_sequence[2].mask`` : The mask attribute of the third IRISMapCube object.
 - ``my_sequence[3].uncertainty`` : The uncertainty attribute of the fourth IRISMapCube object.
+
+Dimensions
+----------
+
+As the IRISMapCubeSequence object inherits from NDCubeSequence, we can use the dimension
+methods described in NDCubeSequence.Dimensions_ paragraph.
+
+Cropping and Indexing
+---------------------
+
+One of the most powerful capability of IRISMapCubeSequence, coming from NDCubeSequence,
+is the slicing process. To slice the sequence, we can slice the IRISMapCubeSequence with
+an Array-like Indexing or we can crop it by the Real World Coordinates.
+
+Array-like Indexing
+^^^^^^^^^^^^^^^^^^^
+
+As the IRISMapCubeSequence object inherits from NDCubeSequence, we can use the Array-like
+Indexing process described in NDCubeSequence.Slicing_ paragraph.
+
+Cropping by Real World Coordinates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As the IRISMapCubeSequence object inherits from NDCubeSequence, we can use the Cropping
+by Real World Coordinates process described in NDCubeSequence.Slicing_ paragraph.
+
+Data Manipulation
+-----------------
+
+Now we have our IRISMapCubeSequence object and we know how access to all the information
+it contains, we can manipulate the data with the below presented methods.
+
+Exposure Time Correction
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can apply the exposure time correction to data and to the uncertainty and
+this method adjusts the unit for each IRISMapCube objects inside our IRISMapCubeSequence. ::
+
+    >>> my_sequence.apply_exposure_time_correction()
+
+We also can undo the exposure time correction by doing: ::
+
+    >>> my_sequence.apply_exposure_time_correction(undo=True)
+
+The correction is only applied (undone) if the object's unit doesn't (does) already
+include inverse time. This can be overridden so that correction is applied (undone)
+regardless of unit by setting ``force=True``. Use one of the two lines above to apply
+(undone) by using the force kwarg. ::
+
+    >>> my_sequence.apply_exposure_time_correction(force=True)
+    >>> my_sequence.apply_exposure_time_correction(undo=True, force=True)
+
+Dust particle mask
+^^^^^^^^^^^^^^^^^^
+
+If we take time to look inside the data, we can see that some spots are not relevant with
+the data we want to study. These spots are dust particles that can come from space or a
+not perfect construction of the satellite. In IRISMapCubeSequence, we can use a method
+that will modify the mask of our data with the dust particles positions. We can use this
+method by doing: ::
+
+    >>> my_sequence.apply_dust_mask()
+
+Now, our ``my_cube.mask`` contains the dust particles positions and we can use it to
+select only the data we want. If we want to remove the dust particles positions from
+our mask, we can call again this method with the ``undo`` kwarg. ::
+
+    >>> my_sequence.apply_dust_mask(undo=True)
+
+Visualization
+-------------
 
 We can also print a representation of the IRISMapCubeSequence object and we can see
 something like this: ::
@@ -83,25 +163,8 @@ visualization produces by the plot method. For example, for a 2D image/animation
 Now that we have created our IRISMapCubeSequence object, we can use one of the followed methods
 to manipulate the data.
 
-Exposure Time Correction
-------------------------
-
-We can apply the exposure time correction to data and to the uncertainty and
-this method adjusts the unit for each IRISMapCube objects inside our IRISMapCubeSequence. ::
-
-    >>> my_sequence.apply_exposure_time_correction()
-
-We also can undo the exposure time correction by doing: ::
-
-    >>> my_sequence.apply_exposure_time_correction(undo=True)
-
-The correction is only applied (undone) if the object's unit doesn't (does) already
-include inverse time. This can be overridden so that correction is applied (undone)
-regardless of unit by setting ``force=True``. Use one of the two lines above to apply
-(undone) by using the force kwarg. ::
-
-    >>> my_sequence.apply_exposure_time_correction(force=True)
-    >>> my_sequence.apply_exposure_time_correction(undo=True, force=True)
-
 .. _NDCubeSequence: http://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html
 .. _IRIS: http://iris.lmsal.com/search/
+.. _NDCubeSequence.Common_Axis: http://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#common-axis
+.. _NDCubeSequence.Dimensions: http://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#dimensions
+.. _NDCubeSequence.Slicing: http://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#slicing
