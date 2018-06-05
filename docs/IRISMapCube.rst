@@ -7,7 +7,8 @@ IRISMapCube
 This class represents Slit Jaw Images from IRIS described by a single World Coordinate
 System (WCS).
 
-This class inherits from NDCube_, so we can can apply all the methods derived from this class.
+This class inherits from NDCube_, so many methods of IRISMapCube are linked to their
+description in NDCube_ documentation.
 
 Initialization
 --------------
@@ -21,7 +22,7 @@ will take all the information that it needs to create an IRISMapCube object.
 Let's assume that we will call our fits file ``my_fits_file`` and IRISMapCube object as
 ``my_cube``: ::
 
-    >>> from irispy import read_iris_sji_level2_fits
+    >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file)
 
 If you don't have a lot of RAM memory or if you are loading a huge file, we recommend to
@@ -29,7 +30,7 @@ use the memmap kwarg. By using it, you will only load what you need to run but s
 methods that requires all the file will not be accessible. You can use the memmap
 kwarg by doing: ::
 
-    >>> from irispy import read_iris_sji_level2_fits
+    >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file, memmap=True)
 
 Class Structure
@@ -46,32 +47,17 @@ So now, ``my_cube`` is an IRISMapCube object and we can access to a lot of infor
 Dimensions
 ----------
 
-As the IRISMapCube object inherits from NDCube, we can use the two properties of NDCube
-which allow us to the data shape and the axis types of our IRISMapCube object. ::
-
-  >>> my_cube.dimensions
-  <Quantity [3., 4., 5.] pix>
-  >>> my_cube.world_axis_physical_types
-  ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
+As the IRISMapCube object inherits from NDCube_, we can use the two properties of NDCube_
+which allow us to the data shape and the axis types of our IRISMapCube object. These
+properties are described in the NDCube.Dimensions_ section.
 
 Cropping and Indexing
 ---------------------
 
-One of the most powerful capability of IRISMapCube, coming from NDCube, is the slicing
+One of the most powerful capability of IRISMapCube, coming from NDCube_, is the slicing
 process. To slice the cube, we can slice the IRISMapCube with an Array-like Indexing or
-we can crop it by the Real World Coordinates.
-
-Array-like Indexing
-^^^^^^^^^^^^^^^^^^^
-
-As the IRISMapCube object inherits from NDCube, we can use the Array-like Indexing process
-described in NDCube.Slicing_ paragraph.
-
-Cropping by Real World Coordinates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-As the IRISMapCube object inherits from NDCube, we can use the Cropping by Real World
-Coordinates process described in NDCube.Slicing_ paragraph.
+we can crop it by the Real World Coordinates. As the IRISMapCube object inherits from
+NDCube_, we can use the described processes in the NDCube.Slicing_ section.
 
 Data Manipulation
 -----------------
@@ -105,7 +91,7 @@ Dust particle mask
 If we take time to look inside the data, we can see that some spots are not relevant with
 the data we want to study. These spots are dust particles that can come from space or a
 not perfect construction of the satellite. In IRISMapCube, we can use a method that will
-modify the mask of our data with the dust particles positions. We can use this method
+modify the mask of our object with the dust particles positions. We can use this method
 by doing: ::
 
     >>> my_cube.apply_dust_mask()
@@ -116,11 +102,25 @@ our mask, we can call again this method with the ``undo`` kwarg. ::
 
     >>> my_cube.apply_dust_mask(undo=True)
 
+If we don't remember or we don't know if the dust particles positions are applied or not
+in our ``my_cube.mask``, we can check an attribute of our object. ::
+
+    >>> my_cube.dust_masked
+
+If the result is ``True``, the dust particles positions are applied in our ``my_cube.mask``.
+If the result is ``False``, the dust particles positions are not applied.
+
 Visualization
 -------------
 
-We can also print a representation of the IRISMapCube object and we can see something
-like this: ::
+There is two different ways to visualize our IRISMapCube object. The first one is to use
+the representation of our object and the second one is to plot the data of our object.
+
+Representation
+^^^^^^^^^^^^^^
+
+In this part, we can have a look of our IRISMapCube object by using its representation
+property. ::
 
     >>> my_cube
     IRISMapCube
@@ -138,17 +138,18 @@ like this: ::
     Cube dimensions:		 [  49. 1095. 1018.] pix
     Axis Types:			 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
-Or we can plot the data of our IRISMapCube object in an image or animation by doing that: ::
+Here, we can found some information about our object like when the observation was made,
+how many frames its contains, the dimensions of it, etc ...
 
-    >>> my_cube.plot()
+Plotting
+^^^^^^^^
 
-We can customize the visualization by using standard matplotlib kwargs relevant to the type of
-visualization produces by the plot method. For example, for a 2D image/animation, we can use
-``vmin`` and ``vmax`` to set the floor and ceiling of the color map like so: ::
-
-    >>> my_cube.plot(vmin=0, vmax=300)
+As the IRISMapCube object inherits from NDCube_, we can use the plotting method of NDCube_
+which allow us to see the data in plots or animations. This method is described in the
+NDCube.Plotting_ section.
 
 .. _NDCube: http://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html
 .. _IRIS: http://iris.lmsal.com/search/
 .. _NDCube.Dimensions: http://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#dimensions
 .. _NDCube.Slicing: http://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#slicing
+.. _NDCube.Plotting: http://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#plotting
