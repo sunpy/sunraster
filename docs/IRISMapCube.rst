@@ -4,39 +4,31 @@
 IRISMapCube
 ===========
 
-This class represents Slit Jaw Images from IRIS described by a single World Coordinate
-System (WCS).
+This class provides access to IRIS Slit-jaw image (SJI) files.
 
 This class inherits from NDCube_, so many methods of IRISMapCube are linked to their
 description in NDCube_ documentation.
 
-Initialization
+Initialisation
 --------------
 
-To initialize an IRISMapCube, we will need to open a level 2 fits file. You can find one
-of these files in the IRIS_ website by selecting a file either by clicking on the map or by
-setting some information in the left panel. Now that we get a level 2 fits file, we can
-load it into the reading method for fits files. This method will read all the fits file and
-will take all the information that it needs to create an IRISMapCube object.
+To initialize an IRISMapCube, we need to open an IRIS level 2 SJI FITS file. Such data can be downloaded from the IRIS_. The level 2 FITS files can be loaded with the function ``read_iris_sji_level2_fits``. This function loads a FITS file into an IRISMapCube object.
 
-Let's assume that we will call our fits file ``my_fits_file`` and IRISMapCube object as
-``my_cube``: ::
+Assuming we have a FITS file ``my_fits_file``, an IRISMapCube can be initialised in the following way: ::
 
     >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file)
 
 If you don't have a lot of RAM memory or if you are loading a huge file, we recommend to
-use the memmap kwarg. By using it, you will only load what you need to run but some
-methods that requires all the file will not be accessible. You can use the memmap
-kwarg by doing: ::
+use the ``memmap=True`` keyword. By using it, you will only load the data when needed. However,
+some methods that require all data in memory will not be accessible. You can use memmap
+by doing: ::
 
     >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file, memmap=True)
 
-Now, that we have create our IRISMapCube object, we can check if the creation has been
-successfully done. We can use the representation property of our object, where are stored
-many information, to do that. This property is called just by writing the name of our
-object in the console. ::
+Once we have our ``IRISMapCube`` object, we can quickly inspect it. For that, we can use the ``__repr__`` property of our object, which shows some metadata. This property is called just by writing the name of our
+object in the command line: ::
 
     >>> my_cube
     IRISMapCube
@@ -54,32 +46,29 @@ object in the console. ::
     Cube dimensions:		 [  49. 1095. 1018.] pix
     Axis Types:			 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
-Here, we can found some information about our object like when the observation was made,
-how many frames its contains, its dimensions, etc ...
+Here, we find some information about our object, such as when the observation was made,
+how many frames it contains, its dimensions, etc ...
 
 Class Structure
 ---------------
 
-Our IRISMapCube object, called ``my_cube`` is now created and checked, we can be interested
-in the structure of our object.
+Our IRISMapCube object, here called ``my_cube``, is now created and inspected, we look into its structure.
 
 Data
 ^^^^
 
-The ``data`` attribute is storing the value of the Sun emission. These values have a unit
+The ``data`` attribute provides direct access to the data arrays. These values have a unit
 (see :ref:`Unit`), an uncertainty (see :ref:`Uncertainty`), and can be scaled or not
-(see :ref:`Scaled_Value`). This attribute is an array that can be visualize by doing: ::
+(see :ref:`Scaled_Value`). A quick representation of these data can be seen by entering: ::
 
     >>>my_cube.data
 
-The return of this should be an array where we can find a lot of ``nan`` values. This is due
-to the mask of our object (see :ref:`Mask`)
+This will show a summary start and and of the data array. It such printouts it is common to see many ``nan`` values. This is because IRIS SJI images are often padded, and these values are masked (see :ref:`Mask`).
 
 World Coordinates System
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This attribute stores information about the axes of our object. We can have a visualization
-of these information by doing: ::
+The ``wcs`` attribute stores coordinate information (space and time) of our object. We can do a quick inspection of these information by entering: ::
 
     >>> my_cube.wcs
     WCS Keywords
@@ -94,56 +83,41 @@ of these information by doing: ::
     CDELT : 4.620833333333333e-05  4.620833333333333e-05  186.617
     NAXIS : 1018  1095  49
 
-Here, we can find that our object has 3 axes which are a longitude, a latitude and
-the time. We can see that the order of these axes is the inverse of the indexing order.
-In fact, we can access to the time axis with the first index of slicing.
+Here, we can find that our object has 3 axes: a helioprojective longitude, a helioprojective latitude and time. The dimension order is from the FITS file (written in Fortran order), and will be reversed when handling the arrays in Python (which uses C order). Therefore, time is usually the first dimension in the ``data`` array.
 
-The ``PC`` values are representing a rotation matrix that we can convert to a tilt angle
-of our object axes.
-
-The ``CRVAL`` values are representing the center of the data in each axis in data unit for
-the first frame while ``CRPIX`` represents the same thing in pixel unit.
-
-The ``CDELT`` values are the values that are added per frame in each axis. For example,
-the data center in the time axis in the second frame will be ``4478.91 + 186.617 = 4665.527``
-in the data unit.
-
-Then, ``NAXIS`` represents the maximum value of the data in each axis in pixel unit.
+The ``IRISMapCube`` object is aware of the WCS matrix as read from the FITS file: ``PC`` values represent the rotation matrix, ``CRVAL`` values represent coordinate values at the pixel positions of ``CRPIX``, and ``CDELT`` represent the pixel size in coordinate units. ``NAXIS`` represents the maximum dimension of each each axis.
 
 .. _Uncertainty:
 
 Uncertainty
 ^^^^^^^^^^^
 
-We can also found an other array inside our object, stored in the ``uncertainty`` attribute.
+We can also found another array inside our object, stored in the ``uncertainty`` attribute.
 The uncertainty is calculated as the square root of our object data plus squared reading
-noise in photon unit. We can see the array by doing: ::
+noise in photon unit. We can inspect the array by entering: ::
 
     >>> my_cube.uncertainty
 
-The return of this line is an array with the same shape than data. The ``nan`` values are
+This will return a summary of the uncertainty values. The ``nan`` values are
 also coming from the mask (see :ref:`Mask`).
 
 .. _Unit:
 
-Unit
-^^^^
+Units
+^^^^^
 
-Inside the ``unit`` attribute, we can found which unit is set to our data. The unit can
-change by using some methods (like the :ref:`Exposure_Time_Correction` method). The unit
-can be displayed with this line: ::
+Inside the ``unit`` attribute, we can find the data units, typically in data number (DN). These can be changed by applying some methods (e.g. :ref:`Exposure_Time_Correction` method). We can inspect the units by entering: ::
 
     >>> my_cube.unit
     Unit("DN_IRIS_SJI")
 
-By default, the unit is ``Unit("DN_IRIS_SJI")`` which is calculated by dividing the
-detector gain by the detector yield in photon unit.
+By default, the units are ``Unit("DN_IRIS_SJI")``, which is calculated by dividing the
+detector gain by the detector yield in photon units.
 
 Meta
 ^^^^
 
-The ``meta`` attribute is storing a dictionary with some information used by the
-representation property of our object. We can see this dictionary by doing: ::
+The ``meta`` attribute is storing a dictionary with some metadata about our object. We can inspect it by entering: ::
 
     >>> my_cube.meta
     {'ENDOBS': datetime.datetime(2018, 4, 27, 1, 39, 47, 122000),
@@ -165,21 +139,18 @@ And we can also select only one key (eg. ``OBSID``) with the line: ::
 Mask
 ^^^^
 
-The mask attribute is also an array with the same shape than data and uncertainty arrays.
-This array stores Boolean values than we can use to select a part of our data. For example,
+The mask attribute is a boolean array with the same shape as the data. When ``True`` (masked values), it represents regions with invalid or missing data. For example,
 we can use it to mask the dust particle positions on the data by using the
-:ref:`Dust_Particle_Mask` method. We can access to the mask with this line: ::
+:ref:`Dust_Particle_Mask` method. We can inspect the mask by entering: ::
 
     >>> my_cube.mask
 
-By default, the mask is set to remove the unexposed pixels of the detector. This mask is
-used when the object is created, this is why all other arrays can store ``nan`` values,
-corresponding to the unexposed pixels.
+By default, the mask is set to include the unexposed pixels of the detector.
 
 Extra Coordinates
 ^^^^^^^^^^^^^^^^^
 
-As our IRISMapCube object inherits from NDCube_, this attribute is explained in the
+As our ``IRISMapCube`` object inherits from NDCube_, this attribute is explained in the
 NDCube.Extra_Coordinates_ section in the NDCube_ documentation. We can access this
 dictionary with: ::
 
@@ -199,8 +170,8 @@ We can see that this is an other dictionary, so we can select the first value of
 Missing axes
 ^^^^^^^^^^^^
 
-As previously, this attribute is explain  in the NDCube.Missing_Axes_ section in the
-NDCube_ documentation. We can see this array with this line: ::
+This ``NDCube`` attribute is explained in the NDCube.Missing_Axes_ section in the
+NDCube_ documentation. We can inspect it by entering: ::
 
     >>> my_cube.missing_axis
     [False, False, False]
@@ -210,10 +181,7 @@ NDCube_ documentation. We can see this array with this line: ::
 Scaled values
 ^^^^^^^^^^^^^
 
-This attribute is storing a Boolean that remind us if the data values are scaled or not.
-The default value of this attribute is ``True`` but the value can be ``False`` if the
-memmap kwarg has been set during the creation of the object. We can check if we are using
-the memmap kwarg by doing: ::
+This boolean attribute is used to check if the data values are scaled or not. Scaling happens when the data are read from the FITS file and converted to data number (DN), and unscaled data are read directly from the FITS file without any conversion (from 16-bit integer to 32-bit float). The default value is ``True``, and it is ``False`` when using memmap (see above) during the creation of the object. We can inspect it by entering: ::
 
     >>> my_cube.scaled
     True
@@ -221,23 +189,20 @@ the memmap kwarg by doing: ::
 Dimensions
 ----------
 
-As the IRISMapCube object inherits from NDCube_, we can use the two properties of NDCube_
-which allow us to get the data shape and the axis types of our IRISMapCube object. These
+As ``IRISMapCube`` is inherited from NDCube_, we can use the two properties of NDCube_
+which allow us to get the data shape and the axis types of our ``IRISMapCube`` object. These
 properties are described in the NDCube.Dimensions_ section.
 
 Cropping and Indexing
 ---------------------
 
-One of the most powerful capability of IRISMapCube, coming from NDCube_, is the slicing
-process. To slice the cube, we can slice the IRISMapCube with an Array-like Indexing or
-we can crop it by the Real World Coordinates. As the IRISMapCube object inherits from
-NDCube_, we can use the described processes in the NDCube.Slicing_ section.
+One of the most powerful capabilities of ``IRISMapCube``, coming from NDCube_, is the slicing
+ability. There are two ways to slice: using array-like index or by coordinates. These are described in the NDCube.Slicing_ section.
 
-Data Manipulation
------------------
+Manipulation the Data
+---------------------
 
-Now we have our IRISMapCube object and we know how access to all the information it contains,
-we can manipulate the data with the below presented methods.
+We can manipulate an ``IRISMapCube`` object with the methods listed below.
 
 .. _Exposure_Time_Correction:
 
