@@ -12,7 +12,7 @@ description in NDCube_ documentation.
 Initialisation
 --------------
 
-To initialize an IRISMapCube, we need to open an IRIS level 2 SJI FITS file. Such data can be downloaded from the IRIS_. The level 2 FITS files can be loaded with the function ``read_iris_sji_level2_fits``. This function loads a FITS file into an IRISMapCube object.
+To initialise an IRISMapCube, we need to open an IRIS level 2 SJI FITS file. Such data can be downloaded from the IRIS_. The level 2 FITS files can be loaded with the function ``read_iris_sji_level2_fits``. This function loads a FITS file into an IRISMapCube object.
 
 Assuming we have a FITS file ``my_fits_file``, an IRISMapCube can be initialised in the following way: ::
 
@@ -52,7 +52,7 @@ how many frames it contains, its dimensions, etc ...
 Class Structure
 ---------------
 
-Our IRISMapCube object, here called ``my_cube``, is now created and inspected, we look into its structure.
+Our IRISMapCube object, here called ``my_cube``, is now created and inspected, we can look into its structure.
 
 Data
 ^^^^
@@ -190,27 +190,26 @@ Dimensions
 ----------
 
 As ``IRISMapCube`` is inherited from NDCube_, we can use the two properties of NDCube_
-which allow us to get the data shape and the axis types of our ``IRISMapCube`` object. These
+which allow us to get the data shape and the axis types of our IRISMapCube object. These
 properties are described in the NDCube.Dimensions_ section.
 
 Cropping and Indexing
 ---------------------
 
-One of the most powerful capabilities of ``IRISMapCube``, coming from NDCube_, is the slicing
-ability. There are two ways to slice: using array-like index or by coordinates. These are described in the NDCube.Slicing_ section.
+One of the most powerful capabilities of IRISMapCube, coming from NDCube_, is the slicing
+ability. There are two ways to slice: using array-like indices or by coordinates. These are described in the NDCube.Slicing_ section.
 
-Manipulation the Data
+Manipulating the Data
 ---------------------
 
-We can manipulate an ``IRISMapCube`` object with the methods listed below.
+We can manipulate an IRISMapCube object with the methods listed below.
 
 .. _Exposure_Time_Correction:
 
 Exposure Time Correction
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-We can apply the exposure time correction to data and to the uncertainty and
-this method adjusts the unit: ::
+This method scales the data from data number (DN) units to DN per second, thereby correcting for any changes in exposure time during an observation and allowing a better comparison between different observations. To use it, we do: ::
 
     >>> my_cube.apply_exposure_time_correction()
 
@@ -231,28 +230,25 @@ regardless of unit by setting ``force=True``. Use one of the two lines above to 
 Dust particle mask
 ^^^^^^^^^^^^^^^^^^
 
-If we take time to look inside the data, we see that some pixels are obscured by dust,
-and so do not reflect the emission from the Sun at that location. The ``apply_dust_mask``
-method of IRISMapCube can be used to add the locations of the dust pixels to the mask
-so that we can easily exclude them from our analysis. We can use this method by doing: ::
+Some IRIS slit-jaw image pixels are obscured by dust, and no data is available at those locations. The ``apply_dust_mask`` method of ``IRISMapCube`` can be used to mask these dust pixel locations by adding them to the invalid pixel mask. We can use this method by doing: ::
 
     >>> my_cube.apply_dust_mask()
 
 Now, our ``my_cube.mask`` contains the dust particles positions and we can use it to
-select only the data we want. If we want to remove the dust particles positions from
+select only the data we want. If we want to remove the dust particle positions from
 our mask, we can call again this method with the ``undo`` kwarg. ::
 
     >>> my_cube.apply_dust_mask(undo=True)
 
-If we don't remember or we don't know if the dust particles positions are applied or not
-in our ``my_cube.mask``, we can check an attribute of our object. ::
+If unsure if the the dust particle mask is applied
+to our ``my_cube.mask``, we can check the ``dust_masked`` attribute of our object: ::
 
     >>> my_cube.dust_masked
 
-If the result is ``True``, the dust particles positions are applied in our ``my_cube.mask``.
-If the result is ``False``, the dust particles positions are not applied.
+If ``True``, the dust particle positions are added to our ``my_cube.mask``, if
+``False`` the dust particle positions are not added.
 
-Visualization
+Visualisation
 -------------
 
 As the IRISMapCube object inherits from NDCube_, we can use the plotting method of NDCube_
