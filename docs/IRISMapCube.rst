@@ -9,12 +9,15 @@ This class provides access to IRIS Slit-jaw image (SJI) files.
 This class inherits from NDCube_, so many methods of IRISMapCube are linked to their
 description in NDCube_ documentation.
 
-Initialisation
+Initialization
 --------------
 
-To initialise an IRISMapCube, we need to open an IRIS level 2 SJI FITS file. Such data can be downloaded from the IRIS_. The level 2 FITS files can be loaded with the function ``read_iris_sji_level2_fits``. This function loads a FITS file into an IRISMapCube object.
+To initialize an IRISMapCube, we need to open an IRIS level 2 SJI FITS file. Such data can
+be downloaded from the IRIS_. The level 2 FITS files can be loaded with the function
+``read_iris_sji_level2_fits``. This function loads a FITS file into an IRISMapCube object.
 
-Assuming we have a FITS file ``my_fits_file``, an IRISMapCube can be initialised in the following way: ::
+Assuming we have a FITS file ``my_fits_file``, an IRISMapCube can be initialized in the
+following way: ::
 
     >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file)
@@ -27,24 +30,25 @@ by doing: ::
     >>> from irispy.sji import read_iris_sji_level2_fits
     >>> my_cube = read_iris_sji_level2_fits(my_fits_file, memmap=True)
 
-Once we have our ``IRISMapCube`` object, we can quickly inspect it. For that, we can use the ``__repr__`` property of our object, which shows some metadata. This property is called just by writing the name of our
-object in the command line: ::
+Once we have our ``IRISMapCube`` object, we can quickly inspect it. For that, we can use 
+the ``__repr__`` property of our object, which shows some metadata. This property is called
+just by writing the name of our object in the command line: ::
 
     >>> my_cube
     IRISMapCube
     -----------
-    Observatory:		 IRIS
-    Instrument:			 SJI
-    Bandpass:			 1330.0
-    Obs. Start:			 2018-04-26T23:07:22.780000
-    Obs. End:			 2018-04-27T01:39:47.122000
-    Instance Start:		 2018-04-26T23:07:22.880000
-    Instance End:		 2018-04-27T01:36:40.490000
+    Observatory:		     IRIS
+    Instrument:		    	 SJI
+    Bandpass:		    	 1330.0
+    Obs. Start:		    	 2018-04-26T23:07:22.780000
+    Obs. End:			     2018-04-27T01:39:47.122000
+    Instance Start:	    	 2018-04-26T23:07:22.880000
+    Instance End:	    	 2018-04-27T01:36:40.490000
     Total Frames in Obs.:	 49
-    IRIS Obs. id:		 3690015104
+    IRIS Obs. id:		     3690015104
     IRIS Obs. Description:	 Very large sit-and-stare 0.3x175 1s  C II   Si IV   Mg II h/k Deep x
     Cube dimensions:		 [  49. 1095. 1018.] pix
-    Axis Types:			 ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
+    Axis Types:			     ('time', 'custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon')
 
 Here, we find some information about our object, such as when the observation was made,
 how many frames it contains, its dimensions, etc ...
@@ -52,7 +56,8 @@ how many frames it contains, its dimensions, etc ...
 Class Structure
 ---------------
 
-Our IRISMapCube object, here called ``my_cube``, is now created and inspected, we can look into its structure.
+Our IRISMapCube object, here called ``my_cube``, is now created and inspected, we can look
+into its structure.
 
 Data
 ^^^^
@@ -61,14 +66,16 @@ The ``data`` attribute provides direct access to the data arrays. These values h
 (see :ref:`Unit`), an uncertainty (see :ref:`Uncertainty`), and can be scaled or not
 (see :ref:`Scaled_Value`). A quick representation of these data can be seen by entering: ::
 
-    >>>my_cube.data
+    >>> my_cube.data
 
-This will show a summary start and and of the data array. It such printouts it is common to see many ``nan`` values. This is because IRIS SJI images are often padded, and these values are masked (see :ref:`Mask`).
+Note that IRIS SJI images are often padded with non-physical values, e.g. -200.
+These pixels are identified by the IRISMapCube :ref:`Mask`.
 
 World Coordinates System
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``wcs`` attribute stores coordinate information (space and time) of our object. We can do a quick inspection of these information by entering: ::
+The ``wcs`` attribute stores coordinate information (space and time) of our object.
+We can do a quick inspection of these information by entering: ::
 
     >>> my_cube.wcs
     WCS Keywords
@@ -83,30 +90,37 @@ The ``wcs`` attribute stores coordinate information (space and time) of our obje
     CDELT : 4.620833333333333e-05  4.620833333333333e-05  186.617
     NAXIS : 1018  1095  49
 
-Here, we can find that our object has 3 axes: a helioprojective longitude, a helioprojective latitude and time. The dimension order is from the FITS file (written in Fortran order), and will be reversed when handling the arrays in Python (which uses C order). Therefore, time is usually the first dimension in the ``data`` array.
+Here, we can find that our object has 3 axes: a helioprojective longitude, a helioprojective
+latitude and time. The dimension order is from the FITS file (written in Fortran order),
+and will be reversed when handling the arrays in Python (which uses C order). Therefore,
+time is usually the first dimension in the ``data`` array.
 
-The ``IRISMapCube`` object is aware of the WCS matrix as read from the FITS file: ``PC`` values represent the rotation matrix, ``CRVAL`` values represent coordinate values at the pixel positions of ``CRPIX``, and ``CDELT`` represent the pixel size in coordinate units. ``NAXIS`` represents the maximum dimension of each each axis.
+The ``IRISMapCube`` object is aware of the WCS matrix as read from the FITS file: ``PC``
+values represent the rotation matrix, ``CRVAL`` values represent coordinate values at the
+pixel positions of ``CRPIX``, and ``CDELT`` represent the pixel size in coordinate units.
+``NAXIS`` represents the maximum dimension of each each axis.
 
 .. _Uncertainty:
 
 Uncertainty
 ^^^^^^^^^^^
 
-We can also found another array inside our object, stored in the ``uncertainty`` attribute.
+We can also find another array inside our object, stored in the ``uncertainty`` attribute.
 The uncertainty is calculated as the square root of our object data plus squared reading
-noise in photon unit. We can inspect the array by entering: ::
+noise in photon units. We can inspect the array by entering: ::
 
     >>> my_cube.uncertainty
 
-This will return a summary of the uncertainty values. The ``nan`` values are
-also coming from the mask (see :ref:`Mask`).
+This will return a summary of the uncertainty values.
 
 .. _Unit:
 
 Units
 ^^^^^
 
-Inside the ``unit`` attribute, we can find the data units, typically in data number (DN). These can be changed by applying some methods (e.g. :ref:`Exposure_Time_Correction` method). We can inspect the units by entering: ::
+Inside the ``unit`` attribute, we can find the data units, typically in data number (DN).
+These can be changed by applying some methods (e.g. :ref:`Exposure_Time_Correction` method).
+We can inspect the units by entering: ::
 
     >>> my_cube.unit
     Unit("DN_IRIS_SJI")
@@ -117,7 +131,8 @@ detector gain by the detector yield in photon units.
 Meta
 ^^^^
 
-The ``meta`` attribute is storing a dictionary with some metadata about our object. We can inspect it by entering: ::
+The ``meta`` attribute is storing a dictionary with some metadata about our object. We can
+inspect it by entering: ::
 
     >>> my_cube.meta
     {'ENDOBS': datetime.datetime(2018, 4, 27, 1, 39, 47, 122000),
@@ -139,7 +154,8 @@ And we can also select only one key (eg. ``OBSID``) with the line: ::
 Mask
 ^^^^
 
-The mask attribute is a boolean array with the same shape as the data. When ``True`` (masked values), it represents regions with invalid or missing data. For example,
+The mask attribute is a boolean array with the same shape as the data. When ``True``
+(masked values), it represents regions with invalid or missing data. For example,
 we can use it to mask the dust particle positions on the data by using the
 :ref:`Dust_Particle_Mask` method. We can inspect the mask by entering: ::
 
@@ -181,7 +197,11 @@ NDCube_ documentation. We can inspect it by entering: ::
 Scaled values
 ^^^^^^^^^^^^^
 
-This boolean attribute is used to check if the data values are scaled or not. Scaling happens when the data are read from the FITS file and converted to data number (DN), and unscaled data are read directly from the FITS file without any conversion (from 16-bit integer to 32-bit float). The default value is ``True``, and it is ``False`` when using memmap (see above) during the creation of the object. We can inspect it by entering: ::
+This boolean attribute is used to check if the data values are scaled or not. Scaling happens
+when the data are read from the FITS file and converted to data number (DN), and unscaled
+data are read directly from the FITS file without any conversion (from 16-bit integer to
+32-bit float). The default value is ``True``, and it is ``False`` when using memmap (see above)
+during the creation of the object. We can inspect it by entering: ::
 
     >>> my_cube.scaled
     True
@@ -197,7 +217,8 @@ Cropping and Indexing
 ---------------------
 
 One of the most powerful capabilities of IRISMapCube, coming from NDCube_, is the slicing
-ability. There are two ways to slice: using array-like indices or by coordinates. These are described in the NDCube.Slicing_ section.
+ability. There are two ways to slice: using array-like indices or by coordinates. These are
+described in the NDCube.Slicing_ section.
 
 Manipulating the Data
 ---------------------
@@ -209,7 +230,9 @@ We can manipulate an IRISMapCube object with the methods listed below.
 Exposure Time Correction
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This method scales the data from data number (DN) units to DN per second, thereby correcting for any changes in exposure time during an observation and allowing a better comparison between different observations. To use it, we do: ::
+This method scales the data from data number (DN) units to DN per second, thereby correcting
+for any changes in exposure time during an observation and allowing a better comparison
+between different observations. To use it, we do: ::
 
     >>> my_cube.apply_exposure_time_correction()
 
@@ -230,7 +253,10 @@ regardless of unit by setting ``force=True``. Use one of the two lines above to 
 Dust particle mask
 ^^^^^^^^^^^^^^^^^^
 
-Some IRIS slit-jaw image pixels are obscured by dust, and no data is available at those locations. The ``apply_dust_mask`` method of ``IRISMapCube`` can be used to mask these dust pixel locations by adding them to the invalid pixel mask. We can use this method by doing: ::
+Some IRIS slit-jaw image pixels are obscured by dust, and no data is available at those
+locations. The ``apply_dust_mask`` method of ``IRISMapCube`` can be used to mask these
+dust pixel locations by adding them to the invalid pixel mask. We can use this method by
+doing: ::
 
     >>> my_cube.apply_dust_mask()
 
@@ -248,7 +274,7 @@ to our ``my_cube.mask``, we can check the ``dust_masked`` attribute of our objec
 If ``True``, the dust particle positions are added to our ``my_cube.mask``, if
 ``False`` the dust particle positions are not added.
 
-Visualisation
+Visualization
 -------------
 
 As the IRISMapCube object inherits from NDCube_, we can use the plotting method of NDCube_
