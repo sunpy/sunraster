@@ -6,10 +6,9 @@ import pytest
 import numpy as np
 from astropy import units as u
 from ndcube.utils.wcs import WCS
-from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
 from irispy import iris_tools
-from irispy.new_sji import IRISMapCube, IRISMapCubeSequence
+from irispy.sji import IRISMapCube, IRISMapCubeSequence
 
 # Sample data for IRISMapCube tests
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],
@@ -115,12 +114,9 @@ cube_dust = IRISMapCube(data_dust, wcs, uncertainty=uncertainty, mask=mask_dust,
 # Sample of data for IRISMapCubeSequence tests:
 
 meta_1 = {"OBSID":1}
-meta_2 = {"OBSID":2}
 
 cube_seq= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                       meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
-cube_seq_2= IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
-                        meta=meta_2, extra_coords=extra_coords, scaled=scaled_T)
 cube_seq_per_s= IRISMapCube(data/2, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit/u.s,
                             meta=meta_1, extra_coords=extra_coords, scaled=scaled_T)
 cube_seq_per_s_per_s= IRISMapCube(data/2/2, wcs, uncertainty=uncertainty, mask=mask_cube,
@@ -204,12 +200,6 @@ def test_IRISMapCubeSequence_apply_exposure_time_correction(test_input, undo, co
     for i in range(len(output_sequence.data)):
         np.testing.assert_array_equal(output_sequence.data[i].data, expected.data[i].data)
 
-@pytest.mark.parametrize("test_input, cubes", [
-    (ValueError, (cube_seq, cube_seq_2))])
-def test_IRISMapCubeSequence_initializaton(test_input, cubes):
-    with pytest.raises(test_input):
-        IRISMapCubeSequence(data_list=[cubes[0], cubes[1]], meta=meta_1, common_axis=0)
-        
 @pytest.mark.parametrize("test_input,expected", [
     (seq_dust, dust_mask_expected)])
 def test_IRISMapCubeSequence_apply_dust_mask(test_input, expected):
