@@ -11,10 +11,8 @@ import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
 from sunpy.map import GenericMap
-from scipy import ndimage
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-from ndcube import utils
 from ndcube.ndcube_sequence import NDCubeSequence
 
 from irispy import iris_tools
@@ -253,10 +251,6 @@ class IRISMapCubeSequence(NDCubeSequence):
 
     """
     def __init__(self, data_list, meta=None, common_axis=0):
-        # Check that all SJI data are coming from the same OBS ID.
-        if np.any([cube.meta["OBSID"] != data_list[0].meta["OBSID"] for cube in data_list]):
-            raise ValueError("Constituent IRISMapCube objects must have same "
-                             "value of 'OBSID' in its meta.")
         # Initialize IRISMapCubeSequence.
         super().__init__(data_list, meta=meta, common_axis=common_axis)
 
@@ -534,6 +528,14 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     if len(filenames) == 1:
         return list_of_cubes[0]
     else:
+        # In Sequence, all cubes must have the same Observation Identification.
+        if np.any([cube.meta["OBSID"] != list_of_cubes[0].meta["OBSID"]
+                   for cube in list_of_cubes]):
+            raise ValueError("Inputed files must have the same Observation Identification")
+        # In Sequence, all cubes must have the same passband.
+        if np.any([cube.meta["TWAVE1"] != list_of_cubes[0].meta["TWAVE1"]
+                   for cube in list_of_cubes]):
+            raise ValueError("Inputed files must have the same passband")
         return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
 
 
