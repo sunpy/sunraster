@@ -11,10 +11,8 @@ import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
 from sunpy.map import GenericMap
-from scipy import ndimage
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-from ndcube import utils
 from ndcube.ndcube_sequence import NDCubeSequence
 
 from irispy import iris_tools
