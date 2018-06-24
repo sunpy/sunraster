@@ -99,13 +99,13 @@ class IRISMapCube(NDCube):
                          copy=copy, missing_axis=missing_axis)
 
     def __repr__(self):
-        #Conversion of the start date of OBS
+        # Conversion of the start date of OBS
         startobs = self.meta.get("STARTOBS", None)
         startobs = startobs.isoformat() if startobs else None
-        #Conversion of the end date of OBS
+        # Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
         endobs = endobs.isoformat() if endobs else None
-        #Conversion of the instance start and end of OBS
+        # Conversion of the instance start and end of OBS
         if isinstance(self.extra_coords["TIME"]["value"], np.ndarray):
             instance_start = self.extra_coords["TIME"]["value"][0]
             instance_end = self.extra_coords["TIME"]["value"][-1]
@@ -114,7 +114,7 @@ class IRISMapCube(NDCube):
             instance_end = self.extra_coords["TIME"]["value"]
         instance_start = instance_start.isoformat() if instance_start else None
         instance_end = instance_end.isoformat() if instance_end else None
-        #Representation of IRISMapCube object
+        # Representation of IRISMapCube object
         return (
             """
     IRISMapCube
@@ -143,6 +143,11 @@ class IRISMapCube(NDCube):
                obs_desc=self.meta.get('OBS_DESC', None),
                axis_types=self.world_axis_physical_types,
                dimensions=self.dimensions))
+
+    def __getitem__(self, item):
+        sliced_self = super().__getitem__(item)
+        sliced_self.scaled = self.scaled
+        return sliced_self
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
