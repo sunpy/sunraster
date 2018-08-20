@@ -13,6 +13,8 @@ from astropy.units.quantity import Quantity
 from astropy.modeling import fitting
 from astropy.modeling.models import custom_model
 from astropy import constants
+from astropy.time import Time
+from astropy.table import Table
 import scipy.io
 from scipy import ndimage
 from scipy import interpolate
@@ -20,6 +22,7 @@ from sunpy.time import parse_time
 import sunpy.util.config
 from sunpy.util.net import check_download_file
 from ndcube import NDCube
+
 
 # Define some properties of IRIS detectors.  Source: IRIS instrument
 # paper.
@@ -65,6 +68,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 
 # Define whether IRIS WCS is 0 or 1 origin based.
 WCS_ORIGIN = 1
+
 
 def get_iris_response(pre_launch=False, response_file=None, response_version=None,
                       force_download=False):
@@ -138,10 +142,10 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             raise KeyError("Version number not recognized.")
         if response_version > 2:
             warnings.warn("Effective areas are not available (i.e. set  to zero).  "
-                  "For response file versions > 2 time dependent effective "
-                  "areas must be calculated via fitting, which is not supported "
-                  "by this function at this time. "
-                  "Version of this response file = {0}".format(response_version))
+                          "For response file versions > 2 time dependent effective "
+                          "areas must be calculated via fitting, which is not supported "
+                          "by this function at this time. "
+                          "Version of this response file = {0}".format(response_version))
         # Define the directory in which the response file should exist
         # to be the sunpy download directory.
         config = sunpy.util.config.load_config()
@@ -171,6 +175,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"])
         except:
             iris_response["DATE_OBS"] = None
+
         # Convert C_F_TIME to array of datetime objects while
         # conserving shape.
         c_f_time = np.empty(iris_response["C_F_TIME"].shape, dtype=object)
@@ -178,6 +183,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             for j, t in enumerate(row):
                 c_f_time[i][j] = parse_time(float(t))
         iris_response["C_F_TIME"] = c_f_time
+
         # Convert C_F_LAMBDA to Quantity.
         iris_response["C_F_LAMBDA"] = Quantity(iris_response["C_F_LAMBDA"], unit="nm")
         # Convert C_N_TIME to array of datetime objects while
@@ -187,6 +193,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             for j, t in enumerate(row):
                 c_n_time[i][j] = parse_time(float(t))
         iris_response["C_N_TIME"] = c_n_time
+
         # Convert C_N_LAMBDA to Quantity.
         iris_response["C_N_LAMBDA"] = Quantity(iris_response["C_N_LAMBDA"], unit="nm")
         # Convert C_S_TIME to array of datetime objects while
@@ -197,6 +204,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                 for k, t in enumerate(column):
                     c_s_time[i][j][k] = parse_time(float(t))
         iris_response["C_S_TIME"] = c_s_time
+
         # Convert DATE in ELEMENTS array to array of datetime objects.
         for i, t in enumerate(iris_response["ELEMENTS"]["DATE"]):
             iris_response["ELEMENTS"]["DATE"][i] = parse_time(t.decode())
@@ -210,6 +218,102 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                                                           int(iris_response["DATE"][6:8]))
         del(iris_response["DATE"])
     return iris_response
+
+
+def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
+    """
+    To calculate the coefficients of best-fit time function for throughput,
+    for which there are two modes:
+    1. Perform fit: supply xput and single element ``cal_coeffs``.
+    2. Apply fit: supply full ``cal_coeffs``.
+
+    The procedure involved in this function is as follows:
+    1. The time difference (in years) is computed from the time_obs and time_cal_coeffs.
+    2. A least-sqaures fit is performed to determine the best fit for the time-dependent
+    effective areas given the time difference.
+
+    Parameters
+    ----------
+    time_obs: a numpy array of floats
+    - Times of datapoints.
+
+    time_cal_coeffs: a numpy array of floats (with exactly two columns)
+    - Start and end times of intervals of constant ``cal_coeffs[i]``.
+
+    cal_coeffs: a numpy array of floats (with at least two columns)
+    - Coefficients of best-fit function.
+
+    Returns
+    -------
+    Yields the values of fit for times ``time_obs``.
+
+    """
+    # Convert the observation time into an astropy ``time.time`` object
+    time_obs = np.array([parse_time(time_obs, format = 'utime') for t in time_obs])
+
+    size_time_cal_coeffs = time_cal_coeffs.shape
+    size_cal_coeffs = cal_coeffs.shape
+
+    if size_time_cal_coeffs[1] != 2 or size_cal_coeffs[1] < 2:
+        # Raise ValueError as time coefficient have the wrong format.
+        raise ValueError("Incorrect number of elements either in time_cal_coeffs or in cal_coeffs.")
+
+    # Some time transformations.
+    # Convert the time_cal_coeffs given in the .geny file into a ``datetime.datetime`` object
+    # called t_cal_coeffs, so that the time differences will be in days...
+    t_cal_coeffs_flat = time_cal_coeffs.flatten()
+    t_cal_coeffs = [parse_time(x, format = 'utime') for x in t_cal_coeffs_flat]
+    t_cal_coeffs = np.array(t_cal_coeffs).reshape(size_time_cal_coeffs)
+
+    # For loop for carrying out the least-squares fit and computation of fit output.
+    count = 0
+    for i in time_obs:
+        aux_cal_coeffs = np.zeros(2*size_time_cal_coeffs[0])
+
+        # Exponent for transition between exp.decay intervals.
+        transition_exp = 1.5
+
+        fit_out = np.zeros(len(list(time_obs)), dtype=np.float64)
+
+        # Looking for the closest time in the calibration time intervals.
+        # Differences are given in years before passing to the next stage.
+        t_diff = time_obs - t_cal_coeffs
+
+        t_diff = t_diff.flatten()
+        
+        t_diff = [x.to(u.year) for x in t_diff]
+        
+        # To Convert to an array, quantities need to be dimensionless, hence dividing out the unit.
+        t_diff = np.array([x/u.year for x in t_diff])
+
+        w = np.where(t_diff < 0)[0][0]
+
+        # If the t_obs is betweeen the calibration time intervals of a
+        # calibration file (w % !=0) then the aux_coeffs are given by an
+        # exponential (coefficient and exponential value).
+        # If the t_obs is between the end calibration time interval of
+        # a calibration file (cal_file_t) and the beginning calibration
+        # time interval of the next calibration file (cal_file_t+1)
+        # (w % 2 == 0) then, the aux_coeffs are given by 4 values
+        # corresponding to a partial exponential obtained from
+        # cal_file_t and a complemetary exponential obtained from the
+        # cal_file_t+1
+        if w % 2 != 0:  # I.e., if w is not even...
+            dtt_0 = 1.
+            exp_0 = np.exp(cal_coeffs[w//2, 2]*(t_diff[w-1]))
+            aux_cal_coeffs[w-1:w+1] = np.array([dtt_0, dtt_0*exp_0])
+        else:
+            dtt_1 = (t_diff[w-1] / (t_diff[w-1] - t_diff[w]))**transition_exp
+            dtt_0 = 1. - dtt_1
+            exp_0 = np.exp(cal_coeffs[(w//2)-1, 2]*(t_diff[w-2]))
+            exp_1 = np.exp(cal_coeffs[w//2, 2]*(t_diff[w]))
+            aux_cal_coeffs[w-2:w+2] = np.array([dtt_0, dtt_0*exp_0, dtt_1, dtt_1*exp_1])
+        # print(aux_cal_coeffs)
+        # print(cal_coeffs[:,:2].reshape((aux_cal_coeffs.shape[0])))
+        fit_out[count] = np.matmul(aux_cal_coeffs, cal_coeffs[:, :2].reshape((aux_cal_coeffs.shape[0])))
+        count += 1
+
+    return fit_out
 
 
 @custom_model
@@ -286,6 +390,7 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
     # that region.
     if slit_pixel_range:
         if len(slit_pixel_range) == 2:
+            # Undefined name 'slit_axis' in line below.
             data_array = data_array.isel(slit_axis, slice(slit_pixel_range[0], slit_pixel_range[1]))
         else:
             raise TypeError("slit_pixel_range must be tuple of length 2 giving lower and " +
@@ -371,9 +476,9 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
             # Define empirical sine fitting at 0 roll angle shifted by
             # different phase.
             sine_params = [-0.66615146, -1.0, 53.106583-roll_angle/360.*2*np.pi]
-            phase_adj=np.nanmean(sine_params[0]*np.sin(sine_params[1]*orbital_phase+sine_params[2]))
+            phase_adj = np.nanmean(sine_params[0]*np.sin(sine_params[1]*orbital_phase+sine_params[2]))
             # thermal component of the orbital variation, in the unit of unsummed wavelength pixel
-            dw_th=dw_th_p+phase_adj
+            dw_th = dw_th_p+phase_adj
             # For absolute wavelength calibration of NUV the following
             # amount (unit Angstrom) has to be subtracted from the
             # wavelengths.
@@ -400,12 +505,12 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
         wbad = not(np.isfinite(mean_line_wavelengths))
         nbad = float(sum(wbad))
         if nbad/ngood > 0.25:
-            raise ValuError("Not enough good data for spline fit.")
+            raise ValueError("Not enough good data for spline fit.")
         # Smooth residual thermal variation curve to eliminate the
         # 5-min photospheric oscillation.
         # Determine number of smoothing point using 3 point
         # lagrangian derivative.
-        deriv_time = np.array([(time_s[i+1]-time_s[i-1])/2. for i in range(1,len(time_s)-1)])
+        deriv_time = np.array([(time_s[i+1]-time_s[i-1])/2. for i in range(1, len(time_s)-1)])
         deriv_time = np.insert(deriv_time, 0, (-3*time_s[0]+4*time_s[1]-time_s[2])/2)
         deriv_time = np.insert(deriv_time, -1, (3*time_s[-1]-4*time_s[-2]+time_s[-3])/2)
         n_smooth = int(spline_knot_spacing/deriv_time.mean())
@@ -433,6 +538,7 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_
                                          names=("time", "wavelength variation FUV", "wavelength variation NUV"))
     return orbital_wavelength_variation
 
+
 def get_detector_type(meta):
     """
     Gets the IRIS detector type from a meta dictionary.
@@ -455,6 +561,7 @@ def get_detector_type(meta):
     else:
         detector_type = meta["detector type"]
     return detector_type
+
 
 def convert_between_DN_and_photons(old_data_arrays, old_unit, new_unit):
     """Converts arrays from IRIS DN to photons or vice versa.
@@ -501,6 +608,7 @@ def convert_between_DN_and_photons(old_data_arrays, old_unit, new_unit):
                            for data in old_data_arrays]
     return new_data_arrays, new_unit_time_accounted
 
+
 def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
                                        force=False):
     """
@@ -540,6 +648,7 @@ def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
         new_unit = old_unit/u.s
     return new_data_arrays, new_unit
 
+
 def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
                                          force=False):
     """
@@ -578,6 +687,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_tim
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
         new_unit = old_unit*u.s
     return new_data_arrays, new_unit
+
 
 def convert_or_undo_photons_per_sec_to_radiance(
         data_quantities, obs_wavelength, detector_type,
@@ -646,6 +756,7 @@ def convert_or_undo_photons_per_sec_to_radiance(
                                for data in data_quantities]
     return new_data_quantities
 
+
 def calculate_photons_per_sec_to_radiance_factor(
         wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
@@ -675,12 +786,12 @@ def calculate_photons_per_sec_to_radiance_factor(
     # Get effective area and interpolate to observed wavelength grid.
     eff_area_interp = _get_interpolated_effective_area(detector_type, wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
-    return constants.h * constants.c / wavelength / u.photon / \
-           spectral_dispersion_per_pixel / eff_area_interp / solid_angle
+    return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
+
 
 def _get_interpolated_effective_area(detector_type, obs_wavelength):
     # Get effective area
-    ########### This needs to be generalized to the time of OBS once that functionality is written #########
+    # This needs to be generalized to the time of OBS once that functionality is written!
     iris_response = get_iris_response(pre_launch=True)
     if detector_type == "FUV":
         detector_type_index = 0
@@ -699,6 +810,7 @@ def _get_interpolated_effective_area(detector_type, obs_wavelength):
         obs_wavelength.to(eff_area_interp_base_unit).value, tck) * eff_area_interp_base_unit ** 2
     return eff_area_interp
 
+
 def _reshape_1D_wavelength_dimensions_for_broadcast(wavelength, n_data_dim):
     if n_data_dim == 1:
         pass
@@ -709,6 +821,7 @@ def _reshape_1D_wavelength_dimensions_for_broadcast(wavelength, n_data_dim):
     else:
         raise ValueError("IRISSpectrogram dimensions must be 2 or 3.")
     return wavelength
+
 
 def _convert_iris_sequence(sequence, new_unit):
     """Converts data and uncertainty in an IRISSpectrogramSequence between units.
@@ -759,6 +872,7 @@ def _convert_iris_sequence(sequence, new_unit):
                 extra_coords=_extra_coords_to_input_format(cube._extra_coords)))
     return converted_data_list
 
+
 def _apply_or_undo_exposure_time_correction(sequence, correction_function):
     """Applies or undoes exposure time correction to a sequence of NDCubes.
 
@@ -803,6 +917,7 @@ def _apply_or_undo_exposure_time_correction(sequence, correction_function):
         else:
             converted_data_list.append(cube)
     return converted_data_list
+
 
 def calculate_dust_mask(data_array):
     """Calculate a mask with the dust positions in a given arrayself.

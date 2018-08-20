@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
+import os
 import pytest
 
 import numpy as np
 import numpy.testing as np_test
 import astropy.units as u
+from astropy.utils.data import download_file
+import scipy.io
 
 import irispy.iris_tools as iris_tools
+from irispy.iris_tools import fit_iris_xput
 
 DETECTOR_TYPE_KEY = "detector type"
 
@@ -31,6 +35,27 @@ data_dust = np.array([[[-1, 2, -3, 4], [2, -200, 5, 3], [0, 1, 2, -300]],
 dust_mask_expected = np.array(
     [[[True, True, True, True], [True, True, True, True], [True, True, False, False]],
      [[True, True, True, False], [True, True, True, True], [True, True, True, True]]])
+
+# Arrays for the fit_iris_xput method
+response_url = 'https://sohowww.nascom.nasa.gov/solarsoft/iris/response/iris_sra_c_20161022.geny'
+r = download_file(response_url)
+raw_response_data = scipy.io.readsav(r)
+iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
+time_obs = np.array([1.0941696e+09])
+time_cal_coeffs0 = iris_response.get('C_F_TIME')
+time_cal_coeffs1 = iris_response.get('C_N_TIME')
+cal_coeffs0 = iris_response.get('COEFFS_FUV')[0,:,:]
+cal_coeffs1 = iris_response.get('COEFFS_FUV')[1,:,:]
+cal_coeffs2 = iris_response.get('COEFFS_FUV')[2,:,:]
+cal_coeffs3 = iris_response.get('COEFFS_NUV')[0,:,:]
+cal_coeffs4 = iris_response.get('COEFFS_NUV')[1,:,:]
+cal_coeffs5 = iris_response.get('COEFFS_NUV')[2,:,:]
+iris_fit_expected0 = np.array([0.79865301])
+iris_fit_expected1 = np.array([2.2495413])
+iris_fit_expected2 = np.array([2.2495413])
+iris_fit_expected3 = np.array([0.23529011])
+iris_fit_expected4 = np.array([0.25203046])
+iris_fit_expected5 = np.array([0.25265095])
 
 @pytest.mark.parametrize("test_input, expected_output", [
     ({DETECTOR_TYPE_KEY: "FUV1"}, "FUV"),
@@ -148,3 +173,13 @@ def test_calculate_orbital_wavelength_variation():
     (data_dust, dust_mask_expected)])
 def test_calculate_dust_mask(input_array, expected_array):
     np_test.assert_array_equal(iris_tools.calculate_dust_mask(input_array), expected_array)
+
+@pytest.mark.parametrize("input_arrays, expected_array", [
+    ([time_obs, time_cal_coeffs0, cal_coeffs0], iris_fit_expected0),
+    ([time_obs, time_cal_coeffs0, cal_coeffs1], iris_fit_expected1),
+    ([time_obs, time_cal_coeffs0, cal_coeffs2], iris_fit_expected2),
+    ([time_obs, time_cal_coeffs1, cal_coeffs3], iris_fit_expected3),
+    ([time_obs, time_cal_coeffs1, cal_coeffs4], iris_fit_expected4),
+    ([time_obs, time_cal_coeffs1, cal_coeffs5], iris_fit_expected5)])
+def test_fit_iris_xput(input_arrays, expected_array):
+    np_test.assert_almost_equal(fit_iris_xput(input_arrays[0], input_arrays[1], input_arrays[2]), expected_array, decimal=6)
