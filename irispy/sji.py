@@ -10,6 +10,7 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
+import sunpy.cm
 from sunpy.map import GenericMap
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
@@ -150,6 +151,16 @@ class IRISMapCube(NDCube):
         # Ensure value of scaled property is maintained.
         sliced_self.scaled = self.scaled
         return sliced_self
+
+    def plot(self, *args, **kwargs):
+        """See parent class for docstring. To Do: Inherit parent docstring."""
+        # If colormap not set, load one default sunpy colormap based on SJI passband.
+        cmap = kwargs.pop("cmap", None)
+        if not cmap:
+            cmap = sunpy.cm.get_cmap(name="irissji{0}".format(int(self.meta["TWAVE1"])))
+
+        # Call parent plot function
+        return super().plot(*args, cmap=cmap, **kwargs)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
