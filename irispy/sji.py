@@ -531,7 +531,11 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                 'ENDOBS': endobs,
                 'NBFRAMES': hdulist[0].data.shape[0],
                 'OBSID': hdulist[0].header.get('OBSID', None),
-                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None)}
+                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None),
+                'FOVX': hdulist[0].header.get('FOVX', None),
+                'FOVY': hdulist[0].header.get('FOVY', None),
+                'XCEN': hdulist[0].header.get('XCEN', None),
+                'YCEN': hdulist[0].header.get('YCEN', None)}
         list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
                                          unit=unit, meta=meta, mask=mask,
                                          extra_coords=extra_coords, scaled=scaled))
