@@ -552,10 +552,18 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
         ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
         exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
         exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
-        general_extra_coords = [("time", 0, times), ("raster position", 0, raster_positions),
-                                ("pztx", 0, pztx), ("pzty", 0, pzty),
-                                ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
-                                ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
+        # If OBS is raster, include raster positions.  Otherwise don't.
+        if top_meta["NRASTERP"] > 1:
+            general_extra_coords = [("time", 0, times),
+                                    ("raster position", 0, np.arange(top_meta["NRASTERP"])),
+                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
+                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
+        else:
+            general_extra_coords = [("time", 0, times),
+                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
+                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
         for i, window_name in enumerate(spectral_windows_req):
             # Determine values of properties dependent on detector type.
             if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
@@ -569,6 +577,10 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             else:
                 raise ValueError("Detector type in FITS header not recognized.")
             # Derive WCS, data and mask for NDCube from file.
+            # Sit-and-stare have a CDELT of 0 which causes issues in astropy WCS.
+            # In this case, set CDELT to a tiny non-zero number.
+            if hdulist[window_fits_indices[i]].header["CDELT3"] == 0:
+                hdulist[window_fits_indices[i]].header["CDELT3"] = 1e-10
             wcs_ = WCS(hdulist[window_fits_indices[i]].header)
             data_mask = hdulist[window_fits_indices[i]].data == -200.
             # Derive extra coords for this spectral window.
