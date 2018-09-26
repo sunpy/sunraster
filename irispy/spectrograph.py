@@ -623,10 +623,18 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                                     DN_unit, single_file_meta, window_extra_coords,
                                     mask=data_mask))
         hdulist.close()
-    # Construct dictionary of IRISSpectrogramCubeSequences for spectral windows
-    data = dict([(window_name, IRISSpectrogramCubeSequence(data_dict[window_name],
-                                                           window_metas[window_name],
-                                                           common_axis=0))
+    # Construct dictionary of IRISSpectrogramCubeSequences for spectral windows.
+    # The one exception is when a single sit-and-stare file is being read in.
+    # In that case create a dictionary of IRISSpectrogramCubes
+    if top_meta["NRASTERP"] == len(filenames) == 1:
+        data = dict()
+        for window_name in spectral_windows_req:
+            data_dict[window_name][0].meta.update(window_metas[window_name])
+            data[window_name] = data_dict[window_name][0]
+    else:
+        data = dict([(window_name, IRISSpectrogramCubeSequence(data_dict[window_name],
+                                                               window_metas[window_name],
+                                                               common_axis=0))
                  for window_name in spectral_windows_req])
     # Initialize an IRISSpectrograph object.
     return IRISSpectrograph(data, meta=top_meta)
