@@ -145,7 +145,9 @@ class IRISMapCube(NDCube):
                dimensions=self.dimensions))
 
     def __getitem__(self, item):
+        # Use parent method to slice item.
         sliced_self = super().__getitem__(item)
+        # Ensure value of scaled property is maintained.
         sliced_self.scaled = self.scaled
         return sliced_self
 
@@ -509,10 +511,14 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
         ycenix = hdulist[1].data[:, hdulist[1].header["YCENIX"]] * u.arcsec
         obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m/u.s
         ophaseix = hdulist[1].data[:, hdulist[1].header["OPHASEIX"]]
+        slit_pos_x = hdulist[1].data[:, hdulist[1].header["SLTPX1IX"]]
+        slit_pos_y = hdulist[1].data[:, hdulist[1].header["SLTPX2IX"]]
         extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
                         ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
                         ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
-                        ("EXPOSURE TIME", 0, exposure_times)]
+                        ("EXPOSURE TIME", 0, exposure_times),
+                        ("SLIT X POSITION", 0, slit_pos_x*u.pix),
+                        ("SLIT Y POSITION", 0, slit_pos_y*u.pix)]
         # Extraction of meta for NDCube from fits file.
         startobs = hdulist[0].header.get('STARTOBS', None)
         startobs = parse_time(startobs) if startobs else None
@@ -525,7 +531,11 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                 'ENDOBS': endobs,
                 'NBFRAMES': hdulist[0].data.shape[0],
                 'OBSID': hdulist[0].header.get('OBSID', None),
-                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None)}
+                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None),
+                'FOVX': hdulist[0].header.get('FOVX', None),
+                'FOVY': hdulist[0].header.get('FOVY', None),
+                'XCEN': hdulist[0].header.get('XCEN', None),
+                'YCEN': hdulist[0].header.get('YCEN', None)}
         list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
                                          unit=unit, meta=meta, mask=mask,
                                          extra_coords=extra_coords, scaled=scaled))
