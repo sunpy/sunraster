@@ -15,7 +15,7 @@ IRISpy and its development from both users and developers. There are a
 number of ways to make your voice heard.  Whether it be constructive
 criticism, inquiries about current or future capabilities, or
 flattering praise, we would love to hear from you.  You can contact us
-on the SunPy matrix channel or SunPy mailing lists.  See 
+on the SunPy matrix channel or SunPy mailing lists.  See
 :ref:`getting_help`.
 
 Reporting Bugs
@@ -36,7 +36,7 @@ Contributing Code
 
 If you would like to contribute code, it is strongly
 recommended that you first discuss your aims with the IRISpy
-community.  We strive to be an open and welcoming community for 
+community.  We strive to be an open and welcoming community for
 developers of all experience levels. Discussing your ideas
 before you start can give you new insights that will make your
 development easier, lead to a better end product, and reduce the
@@ -69,7 +69,7 @@ the development version of IRISpy.  To find out how, see
 
 Next, you will have to create a new online version of the IRISpy
 repo on your own GitHub account, a process known as "forking".  (If you
-don't have a GitHub account, `sign up here`_.)  Sign into your GitHub
+don't have a GitHub account, `sign up here <https://github.com/join>`__.)  Sign into your GitHub
 account and then go to the main `IRISpy GitHub repository`_.  Click
 the "Fork" button in the top right corner of the page.  A pop-up
 window should appear asking to you to confirm which GitHub account you
@@ -79,7 +79,7 @@ reside at a URL like https:/github.com/my_github_handle/irispy.
 
 Next, we need to link our newly forked online repo with the one we
 created on our local machine as part of the installation.  To do
-this, we will have to create a remote.  A `git remote`_ is an alias
+this, we will have to create a remote.  A `git remote <https://git-scm.com/docs/git-remote>`__ is an alias
 pointing to the URL of a GitHub repo.  To see what remotes you have
 and the URLs they point to, change into the local repo directory on
 the command line and type:
@@ -126,7 +126,7 @@ while Linux and MacOS users should type:
 
 Next, change into the local IRISpy repo directory, ``irispy-git``.
 When you are making changes to IRISpy, it is strongly recommended that
-you use a different `git branch`_ for each set of related new features
+you use a different `git branch <https://git-scm.com/docs/git-branch>`__ for each set of related new features
 and/or bug fixes. `Git branches`_ are a way of having different
 versions of the same code within the repo simultaneously. Assuming you
 have just installed the IRISpy development version, you will only have

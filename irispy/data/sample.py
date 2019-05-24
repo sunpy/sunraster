@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-"""IRISPy sample data files"""
+"""
+IRISPy sample data files.
+"""
 from __future__ import absolute_import
 
 import sys
-from sunpy.data._sample import get_sample_file, download_sample_data
+
+from sunpy.data._sample import download_sample_data, get_sample_file
 
 _base_urls = (
-    'http://data.sunpy.org/irispy/',
-    'https://github.com/sunpy/sample-data/raw/master/irispy/'
+    "http://data.sunpy.org/irispy/",
+    "https://github.com/sunpy/sample-data/raw/master/irispy/",
 )
 
-_sample_files = {"SJI_CUBE_2832": "iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits",
-                 "SJI_CUBE_1330": "iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits",
-                 "SJI_CUBE_2796": "iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits",
-                 "SJI_CUBE_1400": "iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits",
-                 "RASTER": "iris_l2_20170502_052551_3893010094_raster.fits.tar.zip"
+_sample_files = {
+    "SJI_CUBE_2832": "iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits",
+    "SJI_CUBE_1330": "iris_l2_20170502_052551_3893010094_SJI_1330_t000.fits",
+    "SJI_CUBE_2796": "iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits",
+    "SJI_CUBE_1400": "iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits",
+    "RASTER": "iris_l2_20170502_052551_3893010094_raster.fits.tar.zip",
 }
 
 file_list = []
@@ -25,4 +29,4 @@ for _key in _sample_files:
     file_list.append(f)
     file_dict.update({_key: f})
 
-__all__ = list(_sample_files.keys()) + ['file_dict', 'file_list']
+__all__ = list(_sample_files.keys()) + ["file_dict", "file_list"]

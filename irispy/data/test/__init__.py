@@ -1,4 +1,6 @@
-"""Irispy test data files"""
+"""
+Irispy test data files.
+"""
 from __future__ import absolute_import
 
 import os
@@ -8,9 +10,10 @@ from astropy.utils.data import get_pkg_data_filename
 
 import irispy
 
-__all__ = ['rootdir', 'file_list', 'get_test_filepath']
+__all__ = ["rootdir", "file_list", "get_test_filepath"]
 
 rootdir = os.path.join(os.path.dirname(irispy.__file__), "data", "test")
+
 
 def get_test_filepath(filename, **kwargs):
     """
@@ -36,9 +39,8 @@ def get_test_filepath(filename, **kwargs):
 
     This is a wrapper around `astropy.utils.data.get_pkg_data_filename` which
     sets the ``package`` kwarg to be 'irispy.data.test`.
-
     """
     return get_pkg_data_filename(filename, package="irispy.data.test", **kwargs)
 
 
-file_list = glob.glob(os.path.join(rootdir, '*.[!p]*'))
+file_list = glob.glob(os.path.join(rootdir, "*.[!p]*"))

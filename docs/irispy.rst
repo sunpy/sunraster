@@ -1,4 +1,0 @@
-IRISPy
-======
-
-.. automodapi:: irispy

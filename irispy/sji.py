@@ -1,23 +1,24 @@
-'''
-This module provides movie tools for level 2 IRIS SJI fits file
-'''
+"""
+This module provides movie tools for level 2 IRIS SJI fits file.
+"""
 
-from datetime import timedelta
 import warnings
+from datetime import timedelta
 
 import numpy as np
-from astropy.io import fits
-import astropy.units as u
-from astropy.wcs import WCS
-from sunpy.time import parse_time
-from sunpy.map import GenericMap
 from ndcube import NDCube
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 from ndcube.ndcube_sequence import NDCubeSequence
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+
+import astropy.units as u
+from astropy.io import fits
+from astropy.wcs import WCS
+from sunpy.map import GenericMap
+from sunpy.time import parse_time
 
 from irispy import iris_tools
 
-__all__ = ['IRISMapCube', 'IRISMapCubeSequence', 'read_iris_sji_level2_fits']
+__all__ = ["IRISMapCube", "IRISMapCubeSequence"]
 
 # the following value is only appropriate for byte scaled images
 BAD_PIXEL_VALUE_SCALED = -200
@@ -27,7 +28,7 @@ BAD_PIXEL_VALUE_UNSCALED = -32768
 
 class IRISMapCube(NDCube):
     """
-    IRISMapCube
+    IRISMapCube.
 
     Class representing SJI Images described by a single WCS
 
@@ -35,17 +36,13 @@ class IRISMapCube(NDCube):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-
     unit : `astropy.unit.Unit` or `str`
         Unit for the dataset.
         Strings that can be converted to a Unit are allowed.
-
     meta : dict-like object
         Additional meta information about the dataset.
-
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
@@ -54,24 +51,20 @@ class IRISMapCube(NDCube):
         uncertainty has no such attribute the uncertainty is stored as
         UnknownUncertainty.
         Defaults to None.
-
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-
-    extra_coords : iterable of `tuple`s, each with three entries
+    extra_coords : iterable of `tuple`, each with three entries
         (`str`, `int`, `astropy.units.quantity` or array-like)
         Gives the name, axis of data, and values of coordinates of a data axis
         not included in the WCS object.
-
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every
         attribute before saving it while False tries to save every parameter
         as reference. Note however that it is not always possible to save the
         input as reference.
         Default is False.
-
     scaled : `bool`, optional
         Indicates if datas has been scaled.
 
@@ -82,21 +75,41 @@ class IRISMapCube(NDCube):
     >>> sji = read_iris_sji_level2_fits(sample.SJI_CUBE_1400)
     """
 
-    def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
-                 mask=None, extra_coords=None, copy=False, missing_axes=None,
-                 scaled=None):
+    def __init__(
+        self,
+        data,
+        wcs,
+        uncertainty=None,
+        unit=None,
+        meta=None,
+        mask=None,
+        extra_coords=None,
+        copy=False,
+        missing_axes=None,
+        scaled=None,
+    ):
         """
-        Initialization of Slit Jaw Imager
+        Initialization of Slit Jaw Imager.
         """
-        warnings.warn("This class is still in early stages of development. API not stable.")
+        warnings.warn(
+            "This class is still in early stages of development. API not stable."
+        )
         # Set whether SJI data is scaled or not.
         self.scaled = scaled
         # Dust_masked variable shows whether the dust pixels are set to True in the data mask.
         self.dust_masked = False
         # Initialize IRISMapCube.
-        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
-                         meta=meta, unit=unit, extra_coords=extra_coords,
-                         copy=copy, missing_axes=missing_axes)
+        super().__init__(
+            data,
+            wcs,
+            uncertainty=uncertainty,
+            mask=mask,
+            meta=meta,
+            unit=unit,
+            extra_coords=extra_coords,
+            copy=copy,
+            missing_axes=missing_axes,
+        )
 
     def __repr__(self):
         # Conversion of the start date of OBS
@@ -115,8 +128,7 @@ class IRISMapCube(NDCube):
         instance_start = instance_start.isoformat() if instance_start else None
         instance_end = instance_end.isoformat() if instance_end else None
         # Representation of IRISMapCube object
-        return (
-            """
+        return """
     IRISMapCube
     ---------
     Observatory:\t\t {obs}
@@ -131,18 +143,20 @@ class IRISMapCube(NDCube):
     IRIS Obs. Description:\t {obs_desc}
     Cube dimensions:\t\t {dimensions}
     Axis Types:\t\t\t {axis_types}
-    """.format(obs=self.meta.get('TELESCOP', None),
-               instrument=self.meta.get('INSTRUME', None),
-               bandpass=self.meta.get('TWAVE1', None),
-               startobs=startobs,
-               endobs=endobs,
-               instance_start=instance_start,
-               instance_end=instance_end,
-               frame_num=self.meta.get("NBFRAMES", None),
-               obs_id=self.meta.get('OBSID', None),
-               obs_desc=self.meta.get('OBS_DESC', None),
-               axis_types=self.world_axis_physical_types,
-               dimensions=self.dimensions))
+    """.format(
+            obs=self.meta.get("TELESCOP", None),
+            instrument=self.meta.get("INSTRUME", None),
+            bandpass=self.meta.get("TWAVE1", None),
+            startobs=startobs,
+            endobs=endobs,
+            instance_start=instance_start,
+            instance_end=instance_end,
+            frame_num=self.meta.get("NBFRAMES", None),
+            obs_id=self.meta.get("OBSID", None),
+            obs_desc=self.meta.get("OBS_DESC", None),
+            axis_types=self.world_axis_physical_types,
+            dimensions=self.dimensions,
+        )
 
     def __getitem__(self, item):
         # Use parent method to slice item.
@@ -153,7 +167,8 @@ class IRISMapCube(NDCube):
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -176,14 +191,15 @@ class IRISMapCube(NDCube):
         -------
         result: `IRISMapCube`
             A new IRISMapCube is returned with the correction applied (undone).
-
         """
         # Raise an error if this method is called while memmap is used
         if not self.scaled:
             raise ValueError("This method is not available as you are using memmap")
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
-        exposure_time_s = u.Quantity(self.extra_coords["EXPOSURE TIME"]["value"], unit='s').value
+        exposure_time_s = u.Quantity(
+            self.extra_coords["EXPOSURE TIME"]["value"], unit="s"
+        ).value
         if not np.isscalar(self.extra_coords["EXPOSURE TIME"]["value"]):
             if self.data.ndim == 1:
                 pass
@@ -194,25 +210,43 @@ class IRISMapCube(NDCube):
             else:
                 raise ValueError(
                     "IRISMapCube dimensions must be 2 or 3. Dimensions={0}".format(
-                        self.data.ndim))
+                        self.data.ndim
+                    )
+                )
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data_arrays, new_unit = iris_tools.uncalculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+                (self.data, self.uncertainty.array),
+                self.unit,
+                exposure_time_s,
+                force=force,
+            )
         else:
             new_data_arrays, new_unit = iris_tools.calculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+                (self.data, self.uncertainty.array),
+                self.unit,
+                exposure_time_s,
+                force=force,
+            )
         # Return new instance of IRISMapCube with correction applied/undone.
         return IRISMapCube(
-            data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
-            unit=new_unit, meta=self.meta, mask=self.mask, missing_axes=self.missing_axes,
+            data=new_data_arrays[0],
+            wcs=self.wcs,
+            uncertainty=new_data_arrays[1],
+            unit=new_unit,
+            meta=self.meta,
+            mask=self.mask,
+            missing_axes=self.missing_axes,
             scaled=self.scaled,
-            extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
-                                                                   self.missing_axes))
+            extra_coords=convert_extra_coords_dict_to_input_format(
+                self.extra_coords, self.missing_axes
+            ),
+        )
 
     def apply_dust_mask(self, undo=False):
         """
-        Applies or undoes an update of the mask with the dust particles positions.
+        Applies or undoes an update of the mask with the dust particles
+        positions.
 
         Parameters
         ----------
@@ -239,7 +273,8 @@ class IRISMapCube(NDCube):
 
 
 class IRISMapCubeSequence(NDCubeSequence):
-    """Class for holding, slicing and plotting IRIS SJI data.
+    """
+    Class for holding, slicing and plotting IRIS SJI data.
 
     This class contains all the functionality of its super class with
     some additional functionalities.
@@ -255,8 +290,8 @@ class IRISMapCubeSequence(NDCubeSequence):
 
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
-
     """
+
     def __init__(self, data_list, meta=None, common_axis=0):
         # Initialize IRISMapCubeSequence.
         super().__init__(data_list, meta=meta, common_axis=common_axis)
@@ -289,16 +324,18 @@ Sequence period:\t {inst_start} -- {inst_end}
 Sequence Shape:\t\t {seq_shape}
 Axis Types:\t\t {axis_types}
 
-""".format(obs=self.meta.get('TELESCOP', None),
-           instrument=self.meta.get('INSTRUME', None),
-           obs_id=self.meta.get("OBSID", None),
-           obs_desc=self.meta.get("OBS_DESC", None),
-           obs_start=startobs,
-           obs_end=endobs,
-           inst_start=instance_start,
-           inst_end=instance_end,
-           seq_shape=self.dimensions,
-           axis_types=self.world_axis_physical_types)
+""".format(
+            obs=self.meta.get("TELESCOP", None),
+            instrument=self.meta.get("INSTRUME", None),
+            obs_id=self.meta.get("OBSID", None),
+            obs_desc=self.meta.get("OBS_DESC", None),
+            obs_start=startobs,
+            obs_end=endobs,
+            inst_start=instance_start,
+            inst_end=instance_end,
+            seq_shape=self.dimensions,
+            axis_types=self.world_axis_physical_types,
+        )
 
     def __getitem__(self, item):
         return self.index_as_cube[item]
@@ -311,11 +348,18 @@ Axis Types:\t\t {axis_types}
     def world_axis_physical_types(self):
         return self.cube_like_world_axis_physical_types
 
-    def plot(self, axes=None, plot_axis_indices=None, axes_coordinates=None,
-             axes_units=None, data_unit=None, **kwargs):
+    def plot(
+        self,
+        axes=None,
+        plot_axis_indices=None,
+        axes_coordinates=None,
+        axes_units=None,
+        data_unit=None,
+        **kwargs
+    ):
         """
-        Visualizes data in the IRISMapCubeSequence with the sequence axis folded
-        into the common axis.
+        Visualizes data in the IRISMapCubeSequence with the sequence axis
+        folded into the common axis.
 
         Based on the cube-like dimensionality of the sequence and value of plot_axis_indices
         kwarg, a Line/Image Plot/Animation is produced.
@@ -382,15 +426,20 @@ Axis Types:\t\t {axis_types}
         Returns
         -------
         return : ndcube.mixins.sequence_plotting.plot_as_cube
-
         """
-        return self.plot_as_cube(axes=axes, plot_axis_indices=plot_axis_indices,
-                                 axes_coordinates=axes_coordinates,
-                                 axes_units=axes_units, data_unit=data_unit, **kwargs)
+        return self.plot_as_cube(
+            axes=axes,
+            plot_axis_indices=plot_axis_indices,
+            axes_coordinates=axes_coordinates,
+            axes_units=axes_units,
+            data_unit=data_unit,
+            **kwargs
+        )
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -421,19 +470,22 @@ Axis Types:\t\t {axis_types}
             time correction applied (undone).
             If copy=True, a new IRISMapCubeSequence is returned with the correction
             applied (undone).
-
         """
-        corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
-                          for cube in self.data]
+        corrected_data = [
+            cube.apply_exposure_time_correction(undo=undo, force=force)
+            for cube in self.data
+        ]
         if copy is True:
-            return IRISMapCubeSequence(data_list=corrected_data, meta=self.meta,
-                                       common_axis=self._common_axis)
+            return IRISMapCubeSequence(
+                data_list=corrected_data, meta=self.meta, common_axis=self._common_axis
+            )
         else:
             self.data = corrected_data
 
     def apply_dust_mask(self, undo=False):
         """
-        Applies or undoes an update of all the masks with the dust particles positions.
+        Applies or undoes an update of all the masks with the dust particles
+        positions.
 
         Parameters
         ----------
@@ -446,7 +498,6 @@ Axis Types:\t\t {axis_types}
         -------
         result :
             Rewrite all self.data[i] mask with/without the dust positions.
-
         """
         for cube in self.data:
             cube.apply_dust_mask(undo=undo)
@@ -469,7 +520,6 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     Returns
     -------
     result: `irispy.sji.IRISMapCube` or `irispy.sji.IRISMapCubeSequence`
-
     """
     list_of_cubes = []
     if type(filenames) is str:
@@ -477,7 +527,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     for filename in filenames:
         # Open a fits file
         hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
-        hdulist.verify('fix')
+        hdulist.verify("fix")
         # Derive WCS, data and mask for NDCube from fits file.
         wcs = WCS(hdulist[0].header)
         data = hdulist[0].data
@@ -496,75 +546,97 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
             unit = iris_tools.DN_UNIT["SJI"]
             readout_noise = iris_tools.READOUT_NOISE["SJI"]
             # Derive uncertainty of data for NDCube from fits file.
-            uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
-                                             + readout_noise.to(u.photon).value**2),
-                                     unit=u.photon).to(unit).value
+            uncertainty = (
+                u.Quantity(
+                    np.sqrt(
+                        (data_nan_masked * unit).to(u.photon).value
+                        + readout_noise.to(u.photon).value ** 2
+                    ),
+                    unit=u.photon,
+                )
+                .to(unit)
+                .value
+            )
         # Derive exposure time from detector.
         exposure_times = hdulist[1].data[:, hdulist[1].header["EXPTIMES"]]
         # Derive extra coordinates for NDCube from fits file.
-        times = np.array([parse_time(hdulist[0].header["STARTOBS"])
-                          + timedelta(seconds=s)
-                          for s in hdulist[1].data[:, hdulist[1].header["TIME"]]])
+        times = np.array(
+            [
+                parse_time(hdulist[0].header["STARTOBS"]) + timedelta(seconds=s)
+                for s in hdulist[1].data[:, hdulist[1].header["TIME"]]
+            ]
+        )
         pztx = hdulist[1].data[:, hdulist[1].header["PZTX"]] * u.arcsec
         pzty = hdulist[1].data[:, hdulist[1].header["PZTY"]] * u.arcsec
         xcenix = hdulist[1].data[:, hdulist[1].header["XCENIX"]] * u.arcsec
         ycenix = hdulist[1].data[:, hdulist[1].header["YCENIX"]] * u.arcsec
-        obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m/u.s
+        obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m / u.s
         ophaseix = hdulist[1].data[:, hdulist[1].header["OPHASEIX"]]
         slit_pos_x = hdulist[1].data[:, hdulist[1].header["SLTPX1IX"]]
         slit_pos_y = hdulist[1].data[:, hdulist[1].header["SLTPX2IX"]]
-        extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
-                        ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
-                        ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
-                        ("EXPOSURE TIME", 0, exposure_times),
-                        ("SLIT X POSITION", 0, slit_pos_x*u.pix),
-                        ("SLIT Y POSITION", 0, slit_pos_y*u.pix)]
+        extra_coords = [
+            ("TIME", 0, times),
+            ("PZTX", 0, pztx),
+            ("PZTY", 0, pzty),
+            ("XCENIX", 0, xcenix),
+            ("YCENIX", 0, ycenix),
+            ("OBS_VRIX", 0, obs_vrix),
+            ("OPHASEIX", 0, ophaseix),
+            ("EXPOSURE TIME", 0, exposure_times),
+            ("SLIT X POSITION", 0, slit_pos_x * u.pix),
+            ("SLIT Y POSITION", 0, slit_pos_y * u.pix),
+        ]
         # Extraction of meta for NDCube from fits file.
-        startobs = hdulist[0].header.get('STARTOBS', None)
+        startobs = hdulist[0].header.get("STARTOBS", None)
         startobs = parse_time(startobs) if startobs else None
-        endobs = hdulist[0].header.get('ENDOBS', None)
+        endobs = hdulist[0].header.get("ENDOBS", None)
         endobs = parse_time(endobs) if endobs else None
-        meta = {'TELESCOP': hdulist[0].header.get('TELESCOP', None),
-                'INSTRUME': hdulist[0].header.get('INSTRUME', None),
-                'TWAVE1': hdulist[0].header.get('TWAVE1', None),
-                'STARTOBS': startobs,
-                'ENDOBS': endobs,
-                'NBFRAMES': hdulist[0].data.shape[0],
-                'OBSID': hdulist[0].header.get('OBSID', None),
-                'OBS_DESC': hdulist[0].header.get('OBS_DESC', None),
-                'FOVX': hdulist[0].header.get('FOVX', None),
-                'FOVY': hdulist[0].header.get('FOVY', None),
-                'XCEN': hdulist[0].header.get('XCEN', None),
-                'YCEN': hdulist[0].header.get('YCEN', None)}
-        list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
-                                         unit=unit, meta=meta, mask=mask,
-                                         extra_coords=extra_coords, scaled=scaled))
+        meta = {
+            "TELESCOP": hdulist[0].header.get("TELESCOP", None),
+            "INSTRUME": hdulist[0].header.get("INSTRUME", None),
+            "TWAVE1": hdulist[0].header.get("TWAVE1", None),
+            "STARTOBS": startobs,
+            "ENDOBS": endobs,
+            "NBFRAMES": hdulist[0].data.shape[0],
+            "OBSID": hdulist[0].header.get("OBSID", None),
+            "OBS_DESC": hdulist[0].header.get("OBS_DESC", None),
+            "FOVX": hdulist[0].header.get("FOVX", None),
+            "FOVY": hdulist[0].header.get("FOVY", None),
+            "XCEN": hdulist[0].header.get("XCEN", None),
+            "YCEN": hdulist[0].header.get("YCEN", None),
+        }
+        list_of_cubes.append(
+            IRISMapCube(
+                data_nan_masked,
+                wcs,
+                uncertainty=uncertainty,
+                unit=unit,
+                meta=meta,
+                mask=mask,
+                extra_coords=extra_coords,
+                scaled=scaled,
+            )
+        )
         hdulist.close()
     if len(filenames) == 1:
         return list_of_cubes[0]
     else:
         # In Sequence, all cubes must have the same Observation Identification.
-        if np.any([cube.meta["OBSID"] != list_of_cubes[0].meta["OBSID"]
-                   for cube in list_of_cubes]):
-            raise ValueError("Inputed files must have the same Observation Identification")
+        if np.any(
+            [
+                cube.meta["OBSID"] != list_of_cubes[0].meta["OBSID"]
+                for cube in list_of_cubes
+            ]
+        ):
+            raise ValueError(
+                "Inputed files must have the same Observation Identification"
+            )
         # In Sequence, all cubes must have the same passband.
-        if np.any([cube.meta["TWAVE1"] != list_of_cubes[0].meta["TWAVE1"]
-                   for cube in list_of_cubes]):
+        if np.any(
+            [
+                cube.meta["TWAVE1"] != list_of_cubes[0].meta["TWAVE1"]
+                for cube in list_of_cubes
+            ]
+        ):
             raise ValueError("Inputed files must have the same passband")
         return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
-
-
-class SJIMap(GenericMap):
-    def __init__(self, data, header, **kwargs):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube.")
-
-
-class SJICube(object):
-    def __init__(self, input):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube."
-                          "To create an irispy.sji.IRISMapCube from a level 2 SJI FITS file,"
-                          "use irispy.sji.read_iris_sji_level2_fits.")
-
-
-def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
-    raise ImportError("This function has been replaced by irispy.sji.read_iris_sji_level2_fits.")
