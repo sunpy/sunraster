@@ -245,7 +245,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 
     Returns
     -------
-    Yields the values of fit for times ``time_obs``.
+    Yields the effective areas as values of fit for times ``time_obs``.
 
     """
     # Convert the observation time into an astropy ``time.time`` object
