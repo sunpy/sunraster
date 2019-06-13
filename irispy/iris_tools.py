@@ -245,7 +245,8 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 
     Returns
     -------
-    Yields the effective areas as values of fit for times ``time_obs``.
+    Yields the fit used to compute the effective area using the input
+    times ``time_obs``.
 
     """
     # Convert the observation time into an astropy ``time.time`` object
@@ -259,33 +260,31 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
         raise ValueError("Incorrect number of elements either in time_cal_coeffs or in cal_coeffs.")
 
     # Some time transformations.
-    # Convert the time_cal_coeffs given in the .geny file into a ``datetime.datetime`` object
-    # called t_cal_coeffs, so that the time differences will be in days...
+    # Convert the time_cal_coeffs given in the .geny file into a ``time.time``
+    # object called t_cal_coeffs, so that the time differences will be in days...
     t_cal_coeffs_flat = time_cal_coeffs.flatten()
     t_cal_coeffs = [parse_time(x, format = 'utime') for x in t_cal_coeffs_flat]
     t_cal_coeffs = np.array(t_cal_coeffs).reshape(size_time_cal_coeffs)
 
+    # Exponent for transition between exp.decay intervals.
+    transition_exp = 1.5
+    
     # For loop for carrying out the least-squares fit and computation of fit output.
-    count = 0
-    for i in time_obs:
+    fit_out = np.zeros(len(time_obs))
+    
+    for i, t in enumerate(time_obs):
         aux_cal_coeffs = np.zeros(2*size_time_cal_coeffs[0])
-
-        # Exponent for transition between exp.decay intervals.
-        transition_exp = 1.5
 
         fit_out = np.zeros(len(list(time_obs)), dtype=np.float64)
 
         # Looking for the closest time in the calibration time intervals.
         # Differences are given in years before passing to the next stage.
-        t_diff = time_obs - t_cal_coeffs
+        t_diff = t - t_cal_coeffs
 
         t_diff = t_diff.flatten()
         
-        t_diff = [x.to(u.year) for x in t_diff]
-        
         # To Convert to an array, quantities need to be dimensionless, hence dividing out the unit.
-        t_diff = np.array([x/u.year for x in t_diff])
-
+        t_diff = np.array([x.to(u.year).value for x in t_diff])
         w = np.where(t_diff < 0)[0][0]
 
         # If the t_obs is betweeen the calibration time intervals of a
@@ -310,8 +309,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
             aux_cal_coeffs[w-2:w+2] = np.array([dtt_0, dtt_0*exp_0, dtt_1, dtt_1*exp_1])
         # print(aux_cal_coeffs)
         # print(cal_coeffs[:,:2].reshape((aux_cal_coeffs.shape[0])))
-        fit_out[count] = np.matmul(aux_cal_coeffs, cal_coeffs[:, :2].reshape((aux_cal_coeffs.shape[0])))
-        count += 1
+        fit_out[i] = np.matmul(aux_cal_coeffs, cal_coeffs[:, :2].reshape((aux_cal_coeffs.shape[0])))
 
     return fit_out
 
