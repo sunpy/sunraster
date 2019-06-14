@@ -70,7 +70,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 WCS_ORIGIN = 1
 
 
-def get_iris_response(pre_launch=False, response_file=None, response_version=None,
+def get_iris_response(time_obs, pre_launch=False, response_file=None, response_version=None,
                       force_download=False):
     """Returns IRIS response structure.
 
@@ -78,6 +78,8 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
 
     Parameters
     ----------
+    time_obs: a `numpy.array` of floats
+        Observation times of the datapoints.
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
         simultaneously with response_file kwarg. Default=False
@@ -92,7 +94,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     -------
     iris_response: `dict`
         Various parameters regarding IRIS response.  The following keys:
-        date_obs: `datetime.datetime`
+        date_obs: `time.time`
         lambda: `astropy.units.Quantity`
         area_sg: `astropy.units.Quantity`
         name_sg: `str`
@@ -102,15 +104,14 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         dn2phot_sji:  `tuple` of length 4
         comment: `str`
         version: `int`
-        version_date: `datetime.datetime`
+        version_date: `time.time`
 
     Notes
     -----
-    This routine does not calculate time dependent effective areas using
+    This routine does calculate time dependent effective areas using
     version 3 and above of the response functions as is done in the SSW version
-    of this code.  Therefore, asking it to read a version 3 or above response
-    function will result in an error.  This code should be updated in future
-    versions to calculate time dependent effective areas.
+    of this code. This code has been updated to calculate time-dependent
+    effective areas.
 
     """
     # Ensures the file exits in the path given.
@@ -141,7 +142,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         except KeyError:
             raise KeyError("Version number not recognized.")
         if response_version > 2:
-            warnings.warn("Effective areas are not available (i.e. set  to zero).  "
+            warnings.warn("Effective areas are not available (i.e. set to zero).  "
                           "For response file versions > 2 time dependent effective "
                           "areas must be calculated via fitting, which is not supported "
                           "by this function at this time. "
@@ -169,8 +170,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     # Convert some properties not found in version below version 3 to
     # more convenient types.
     if iris_response["VERSION"] > 2:
-        # If DATE_OBS has a value, convert to datetime, else set to
-        # None.
+        # If DATE_OBS has a value, convert to `time.time`, else set to None.
         try:
             iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"])
         except:
@@ -196,7 +196,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
 
         # Convert C_N_LAMBDA to Quantity.
         iris_response["C_N_LAMBDA"] = Quantity(iris_response["C_N_LAMBDA"], unit="nm")
-        # Convert C_S_TIME to array of datetime objects while
+        # Convert C_S_TIME to array of time objects while
         # conserving shape.
         c_s_time = np.empty(iris_response["C_S_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_S_TIME"]):
@@ -205,7 +205,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                     c_s_time[i][j][k] = parse_time(float(t))
         iris_response["C_S_TIME"] = c_s_time
 
-        # Convert DATE in ELEMENTS array to array of datetime objects.
+        # Convert DATE in ELEMENTS array to array of time objects.
         for i, t in enumerate(iris_response["ELEMENTS"]["DATE"]):
             iris_response["ELEMENTS"]["DATE"][i] = parse_time(t.decode())
         # Convert VERSION_DATE to datetime object.
