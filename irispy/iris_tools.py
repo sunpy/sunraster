@@ -79,7 +79,7 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
     Parameters
     ----------
     time_obs: a `numpy.array` of floats
-        Observation times of the datapoints.
+        Observation times of the datapoints. time_obs is ignored for versions 1 and 2.
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
         simultaneously with response_file kwarg. Default=False
@@ -93,7 +93,8 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
     Returns
     -------
     iris_response: `dict`
-        Various parameters regarding IRIS response.  The following keys:
+        Various parameters regarding IRIS response or effective area structure.
+        Includes the following keys:
         date_obs: `time.time`
         lambda: `astropy.units.Quantity`
         area_sg: `astropy.units.Quantity`
@@ -142,10 +143,8 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
         except KeyError:
             raise KeyError("Version number not recognized.")
         if response_version > 2:
-            warnings.warn("Effective areas are not available (i.e. set to zero).  "
-                          "For response file versions > 2 time dependent effective "
-                          "areas must be calculated via fitting, which is not supported "
-                          "by this function at this time. "
+            warnings.warn("Time-dependent effective area determination has been "
+                          "enabled in this version of IRISpy."
                           "Version of this response file = {0}".format(response_version))
         # Define the directory in which the response file should exist
         # to be the sunpy download directory.
@@ -176,7 +175,7 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
         except:
             iris_response["DATE_OBS"] = None
 
-        # Convert C_F_TIME to array of datetime objects while
+        # Convert C_F_TIME to array of time objects while
         # conserving shape.
         c_f_time = np.empty(iris_response["C_F_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_F_TIME"]):
@@ -186,7 +185,7 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
 
         # Convert C_F_LAMBDA to Quantity.
         iris_response["C_F_LAMBDA"] = Quantity(iris_response["C_F_LAMBDA"], unit="nm")
-        # Convert C_N_TIME to array of datetime objects while
+        # Convert C_N_TIME to array of time objects while
         # conserving shape.
         c_n_time = np.empty(iris_response["C_N_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_N_TIME"]):
@@ -208,7 +207,7 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
         # Convert DATE in ELEMENTS array to array of time objects.
         for i, t in enumerate(iris_response["ELEMENTS"]["DATE"]):
             iris_response["ELEMENTS"]["DATE"][i] = parse_time(t.decode())
-        # Convert VERSION_DATE to datetime object.
+        # Convert VERSION_DATE to time object.
         iris_response["VERSION_DATE"] = parse_time(iris_response["VERSION_DATE"].decode())
     else:
         # Change DATE tag in data with version < 2 to VERSION_DATE to
