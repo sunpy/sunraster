@@ -151,11 +151,11 @@ def test_uncalculate_exposure_time_correction_error(input_arrays, old_unit, expo
 
 
 def test_get_iris_response_not_equal_to_one():
-    assert pytest.raises(ValueError, iris_tools.get_iris_response, pre_launch=True, response_version=3)
+    assert pytest.raises(ValueError, iris_tools.get_iris_response, time_obs, pre_launch=True, response_version=3)
 
 
 def test_get_iris_response_response_file():
-    assert pytest.raises(KeyError, iris_tools.get_iris_response, response_file="hello.py")
+    assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
 
 def test_get_iris_response():

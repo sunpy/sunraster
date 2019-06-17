@@ -216,6 +216,48 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
                                                           int(iris_response["DATE"][4:6]),
                                                           int(iris_response["DATE"][6:8]))
         del(iris_response["DATE"])
+
+    n_time_obs = len(time_obs)
+    iris_response["AREA_SG"] = np.zeros(iris_response["AREA_SG"].shape)
+    iris_response["AREA_SJI"] = np.zeros(iris_response["AREA_SJI"].shape)
+    resposne_out = np.zeros(n_time_obs)
+
+    # FUV SG effective areas
+    lambran = np.array([[133.1,135.9],[138.8,140.8]])
+    # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
+    iris_response["COEFFS_FUV"] = iris_response.get("COEFFS_FUV")
+    shp = iris_response["COEFFS_FUV"].shape
+    # Time-dependent response for shp[3] = 3 wavelengths
+    iris_fit = np.zeros((n_time_obs, shp[0]))
+    for j in range(shp[0]):
+        iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
+    # Interpolate onto lambda grid, separately for each of the tow FUV CCD's.
+    for j in range(2):
+        if iris_response["LAMBDA"] >= lambran[j, 0] and iris_response["LAMBDA"] <= lambran[j,1]:
+            response_out = response_out  # To be edited
+
+    # NUV SG effective areas
+    lambran = np.array([278.2,283.5])
+    # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
+    iris_response["COEFFS_NUV"] = iris_response.get("COEFFS_NUV")
+    shp = iris_response["COEFFS_NUV"].shape
+    # Time-dependent response for shp[3] wavelengths
+    iris_fit = np.zeros((n_time_obs, shp[0]))
+    for j in range(int(shp[0])):
+        iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
+    # Interpolate onto lambda grid
+    if int(iris_response["VERSION"]) <= 3:
+        for k in range(n_time_obs):
+            response_out = response_out  # To be edited
+    else:
+        for k in range(n_time_obs):
+            resposne_out = response_out  # To be edted
+
+    # SJI effective areas
+    if int(iris_response["VERSION"]) <= 3:
+        iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
+        shp = iris_response["COEEFS_SJI"].shape
+                        
     return iris_response
 
 
@@ -787,6 +829,22 @@ def calculate_photons_per_sec_to_radiance_factor(
 
 
 def _get_interpolated_effective_area(detector_type, obs_wavelength):
+    """
+    To compute the interpolated effective area.
+    
+    Parameters
+    ----------
+    detector_type: `str`
+        Detector type: 'FUV' or 'NUV'.
+        
+    obs_wavelength: `astropy.units.Quantity`
+        The wavelength at which the observation has been taken in Angstroms.
+    
+    Returns
+    -------
+    eff_area_interp: ``
+    
+    """
     # Get effective area
     # This needs to be generalized to the time of OBS once that functionality is written!
     iris_response = get_iris_response(pre_launch=True)
