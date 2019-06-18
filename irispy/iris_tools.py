@@ -220,32 +220,31 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
     n_time_obs = len(time_obs)
     iris_response["AREA_SG"] = np.zeros(iris_response["AREA_SG"].shape)
     iris_response["AREA_SJI"] = np.zeros(iris_response["AREA_SJI"].shape)
-    resposne_out = np.zeros(n_time_obs)  # This may not be necessary...
 
-    # FUV SG effective areas
-    lambran = np.array([[133.1,135.9],[138.8,140.8]])
+    # 1. FUV SG effective areas
+    lambran_0 = np.array([[133.1,135.9],[138.8,140.8]])
     # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
     iris_response["COEFFS_FUV"] = iris_response.get("COEFFS_FUV")
-    shp = iris_response["COEFFS_FUV"].shape
-    # Time-dependent response for shp[3] = 3 wavelengths
-    iris_fit = np.zeros((n_time_obs, shp[0]))
+    shp_0 = iris_response["COEFFS_FUV"].shape
+    # Time-dependent response for shp_0[0] = 3 wavelengths
+    iris_fit = np.zeros((n_time_obs, shp_0[0]))
     detector_0 = "FUV"
-    for j in range(shp[0]):
+    for j in range(shp_0[0]):
         iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
     # Interpolate onto lambda grid, separately for each of the tow FUV CCD's.
     for j in range(2):
-        if iris_response["LAMBDA"] >= lambran[j, 0] and iris_response["LAMBDA"] <= lambran[j,1]:
-            iris_response["AREA_SG"][w,1] =  _get_interpolated_effective_area(detector_0, iris_response["LAMBDA"][w]) # To be edited
+        if iris_response["LAMBDA"] >= lambran_0[j, 0] and iris_response["LAMBDA"] <= lambran_0[j,1]:
+            iris_response["AREA_SG"][w,1] =  _get_interpolated_effective_area(iris_fit, detector_0, iris_response["LAMBDA"][j+1:j]) # To be edited
 
-    # NUV SG effective areas
-    lambran = np.array([278.2,283.5])
+    # 2. NUV SG effective areas
+    lambran_1 = np.array([278.2,283.5])
     # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
     iris_response["COEFFS_NUV"] = iris_response.get("COEFFS_NUV")
-    shp = iris_response["COEFFS_NUV"].shape
-    # Time-dependent response for shp[3] wavelengths
-    iris_fit = np.zeros((n_time_obs, shp[0]))
-    detector = "NUV"
-    for j in range(int(shp[0])):
+    shp_1 = iris_response["COEFFS_NUV"].shape
+    # Time-dependent response for shp_1[0] wavelengths
+    iris_fit = np.zeros((n_time_obs, shp_1[0]))
+    detector_1 = "NUV"
+    for j in range(int(shp_1[0])):
         iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
     # Interpolate onto lambda grid
     if int(iris_response["VERSION"]) <= 3:
@@ -255,10 +254,10 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
         for k in range(n_time_obs):
             resposne_out = response_out  # To be edited
 
-    # SJI effective areas
+    # 3. SJI effective areas
     if int(iris_response["VERSION"]) <= 3:
         iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
-        shp = iris_response["COEEFS_SJI"].shape
+        shp_2 = iris_response["COEEFS_SJI"].shape
                         
     return iris_response
 
@@ -833,7 +832,7 @@ def calculate_photons_per_sec_to_radiance_factor(
 
 def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength):
     """
-    To compute the interpolated effective area.
+    To compute the interpolated time-dependent effective area.
     
     Parameters
     ----------
@@ -850,7 +849,7 @@ def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength):
     Returns
     -------
     eff_area_interp: `numpy.array`
-        The effective area(s) determined by interpolation.
+        The effective area(s) determined by interpolation with a spline fit.
     
     """
     # This needs to be generalized to the time of OBS once that functionality is written!
@@ -867,9 +866,9 @@ def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength):
     # at which the data is recorded:
     eff_area_interp_base_unit = u.Angstrom
     tck = interpolate.splrep(response_wavelength.to(eff_area_interp_base_unit).value,
-                             eff_area.to(eff_area_interp_base_unit ** 2).value, s=0)
+                             eff_area.to(eff_area_interp_base_unit ** 2).value * iris_fit, s=0)
     eff_area_interp = interpolate.splev(
-        obs_wavelength.to(eff_area_interp_base_unit).value, tck) * eff_area_interp_base_unit ** 2
+        obs_wavelength.to(eff_area_interp_base_unit).value, tck) * (eff_area_interp_base_unit ** 2)
     return eff_area_interp
 
 
