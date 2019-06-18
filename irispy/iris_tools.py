@@ -264,7 +264,7 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
         for j in range(shp_2[0]):
             # Calculate pre-launch area from the individual elements
             area_pre_launch = iris_response["GEOM_AREA"]
-            for k in range(len(iris_response["INDEX_EL_SJI"][j, :]):
+            for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
                 area_pre_launch = area_pre_launch * 1  # Needs editing...
                 # Time dependent response
                 iris_fit_2 = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
