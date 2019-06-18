@@ -257,18 +257,22 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
             iris_response["AREA_SG"][1,w_1] = _get_interpolated_effective_area(iris_fit_1, detector_1, iris_response["LAMBDA"][:, k])
 
     # 3. SJI effective areas
+    iris_response["INDEX_EL_SJI"] = iris_response.get("INDEX_EL_SJI")
     if int(iris_response["VERSION"]) <= 3:
         iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
         shp_2 = iris_response["COEEFS_SJI"].shape
         for j in range(shp_2[0]):
             # Calculate pre-launch area from the individual elements
             area_pre_launch = iris_response["GEOM_AREA"]
-            for k in range():
+            for k in range(len(iris_response["INDEX_EL_SJI"][j, :]):
+                area_pre_launch = area_pre_launch * 1  # Needs editing...
                 # Time dependent response
                 iris_fit_2 = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
             for k in range(n_time_obs):
                 iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_2[k]
+    else:
+        pass
                         
     return iris_response
 
