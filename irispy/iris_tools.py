@@ -257,7 +257,8 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
             iris_response["AREA_SG"][1,w_1] = _get_interpolated_effective_area(iris_fit_1, detector_1, iris_response["LAMBDA"][:, k])
 
     # 3. SJI effective areas
-    iris_response["INDEX_EL_SJI"] = iris_response.get("INDEX_EL_SJI")
+    iris_response["INDEX_EL_SJI"] = iris_response.get("INDEX_EL_SJI")  # Needs editing
+    iris_response["INDEX_EL_SG"] = iris_response.get("INDEX_EL_SG")  # Needs editing
     if int(iris_response["VERSION"]) <= 3:
         iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
         shp_2 = iris_response["COEEFS_SJI"].shape
@@ -265,14 +266,50 @@ def get_iris_response(time_obs, pre_launch=False, response_file=None, response_v
             # Calculate pre-launch area from the individual elements
             area_pre_launch = iris_response["GEOM_AREA"]
             for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
-                area_pre_launch = area_pre_launch * 1  # Needs editing...
+                area_pre_launch = area_pre_launch * np.iris_response["INDEX_EL_SJI"][j, k].T()
                 # Time dependent response
                 iris_fit_2 = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
             for k in range(n_time_obs):
                 iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_2[k]
     else:
-        pass
+        for nuv in range(2):
+            # Calculate baseline SJI area curves
+            area_sji = iris_response["GEOM_AREA"]
+            for k in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
+                area_sji = area_sji * np.iris_response["INDEX_EL_SJI"][nuv*2:(nuv*2)+1, k].T()
+            # Apply time dependent profile shape adjustment to FUV SJI
+            if -nuv:
+                # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
+                weight = np.array([2.4, 1.0])  # Typical solar ratio CII : SiIV
+                wavelength = iris_response["C_F_LAMBDA"]
+                n_wavelength = len(wavelength)
+                wavelength = np.array([wavelength[0], (wavelength[n_wavelength - 2] * 2.0 + wavelength[n_wavelength - 1]) / 3.0])  # 2 wvlngts in nm
+                # Calculate baseline SG area for scaling purposes
+                area_sg = iris_response["GEOM_AREA"]
+                for k in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
+                               area_sg = area_sg * np.iris_response["INDEX_EL_SG"][nuv, k].T()
+                # SG and SJI areas at wavelength
+                area_sg2 = interpolate.splrep(area_sg, iris_response["LAMBDA"])
+                area_sj2 = np.zeros((2, 2))
+                for j in range(2):
+                    area_sj2[j, :] = interpolate.splprep(area_sji[j, :], iris_response["LAMBDA"])
+                # Calculate the normalized slant function scal, apply to asji
+                for k in range(n_time_obs):
+                    # Best-estimate slant, i.e., eff.area @ wavelength / baseline SG @ wavelength
+                    sca2 = interpolate.splrep(iris_response["AREA_SG"][0, :], iris_response["LAMBDA"]) / area_sg2
+                    # Normalize slant so that total(wei*asj2*sca2)/total(wei*asj2)=1
+                    for j in range(2):
+                        sca2n = sca2 * 1
+                        sca1n = interpolate.splprep(sca2n, iris_response["LAMBDA"])
+                        if sca1n > 0.0:
+                            iris_response["AREA_SJI"][j, :] = area_sji[j, :] * sca1n
+            else:
+                for j in range(4):
+                    # SJI specific time dependency
+                    iris_fit_3 = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
+                    for k in range(n_time_obs):
+                        iris_response["AREA_SJI"][j, :] = iris_response["AREA_SJI"][j, :] * iris_fit_3[k]
                         
     return iris_response
 
