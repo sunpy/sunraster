@@ -838,8 +838,7 @@ def convert_or_undo_photons_per_sec_to_radiance(
     # Change shape of arrays so they are compatible for broadcasting
     # with data and uncertainty arrays.
     photons_per_sec_to_radiance_factor = \
-        _reshape_1D_wavelength_dimensions_for_broadcast(photons_per_sec_to_radiance_factor,
-                                                        data_quantities[0].ndim)
+    _reshape_1D_wavelength_dimensions_for_broadcast(photons_per_sec_to_radiance_factor, data_quantities[0].ndim)
     # Perform (or undo) radiometric conversion.
     if undo is True:
         new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.photon/u.s)
@@ -850,8 +849,7 @@ def convert_or_undo_photons_per_sec_to_radiance(
     return new_data_quantities
 
 
-def calculate_photons_per_sec_to_radiance_factor(
-        wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
+def calculate_photons_per_sec_to_radiance_factor(time_obs, time_cal_coeffs, cal_coeffs, wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
 
@@ -876,8 +874,10 @@ def calculate_photons_per_sec_to_radiance_factor(
         for input wavelengths.
 
     """
+    # Get best fit by the method of least squares
+    iris_fit = fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs)  # Need to work on this...
     # Get effective area and interpolate to observed wavelength grid.
-    eff_area_interp = _get_interpolated_effective_area(detector_type, wavelength)
+    eff_area_interp = _get_interpolated_effective_area(iris_fit, detector_type, wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
     return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
