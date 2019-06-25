@@ -70,15 +70,15 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 WCS_ORIGIN = 1
 
 
-def get_iris_response(time_obs, pre_launch=False, response_file=None, response_version=None,
-                      force_download=False):
+def get_iris_response(pre_launch=False, response_file=None, response_version=None,
+                      force_download=False, *args, **kwargs):
     """Returns IRIS response structure.
 
     One and only one of pre_launch, response_file and response_version must be set.
 
     Parameters
     ----------
-    time_obs: a `numpy.array` of floats
+    time_obs: a `numpy.array` of floats, as a kwarg, valid for version > 2
         Observation times of the datapoints. time_obs is ignored for versions 1 and 2.
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
@@ -875,7 +875,7 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, time_cal_coeffs, cal_
 
     """
     # Get best fit by the method of least squares
-    iris_fit = fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs)  # Need to work on this...
+    iris_fit = fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs)
     # Get effective area and interpolate to observed wavelength grid.
     eff_area_interp = _get_interpolated_effective_area(iris_fit, detector_type, wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
