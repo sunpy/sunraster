@@ -222,39 +222,37 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     iris_response["AREA_SJI"] = np.zeros(iris_response["AREA_SJI"].shape)
 
     # 1. FUV SG effective areas
-    lambran_0 = np.array([[133.1, 135.9],[138.8, 140.8]])
+    lambran_fuv = np.array([[133.1, 135.9],[138.8, 140.8]])
     # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
-    iris_response["COEFFS_FUV"] = iris_response.get("COEFFS_FUV")
-    shp_0 = iris_response["COEFFS_FUV"].shape
+    shp_fuv = iris_response["COEFFS_FUV"].shape
     # Time-dependent response for shp_0[0] = 3 wavelengths
-    iris_fit_0 = np.zeros((n_time_obs, shp_0[0]))
-    detector_0 = "FUV"
-    for j in range(shp_0[0]):
+    iris_fit_fuv = np.zeros((n_time_obs, shp_fuv[0]))
+    detector_fuv = "FUV"
+    for j in range(shp_fuv[0]):
         iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
     # Interpolate onto lambda grid, separately for each of the tow FUV CCD's.
     for j in range(2):
-        w_0 = np.where(iris_response["LAMBDA"] >= lambran_0[j, 0] and iris_response["LAMBDA"] <= lambran_0[j, 1])
+        w_fuv = np.where(iris_response["LAMBDA"] >= lambran_fuv[j, 0] and iris_response["LAMBDA"] <= lambran_0[j, 1])
         for k in range(n_time_obs):
-            iris_response["AREA_SG"][w_0, 0] =  _get_interpolated_effective_area(iris_fit_0[j:j+1, k], detector_0, iris_response["LAMBDA"][j+1: j])
+            iris_response["AREA_SG"][w_fuv, 0] =  _get_interpolated_effective_area(iris_fit_fuv[j:j+1, k], detector_fuv, iris_response["LAMBDA"][j+1: j])
 
     # 2. NUV SG effective areas
-    lambran_1 = np.array([278.2, 283.5])
+    lambran_nuv = np.array([278.2, 283.5])
     # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
-    iris_response["COEFFS_NUV"] = iris_response.get("COEFFS_NUV")
-    shp_1 = iris_response["COEFFS_NUV"].shape
+    shp_nuv = iris_response["COEFFS_NUV"].shape
     # Time-dependent response for shp_1[0] wavelengths
-    iris_fit_1 = np.zeros((n_time_obs, shp_1[0]))
-    detector_1 = "NUV"
-    for j in range(int(shp_1[0])):
+    iris_fit_nuv = np.zeros((n_time_obs, shp_nuv[0]))
+    detector_nuv = "NUV"
+    for j in range(int(shp_nuv[0])):
         iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
     # Interpolate onto lambda grid
-    w_1 = np.where(iris_responese["LAMBDA"] >= lambran_1[0] and iris_response["LAMBDA"] <= lambran_1[1])
+    w_nuv = np.where(iris_responese["LAMBDA"] >= lambran_nuv[0] and iris_response["LAMBDA"] <= lambran_nuv[1])
     if int(iris_response["VERSION"]) <= 3:
         for k in range(n_time_obs):
-            iris_response["AREA_SG"][1, w_1] = _get_interpolated_effective_area(iris_fit_1, detector_1, iris_response["LAMBDA"][:, k])
+            iris_response["AREA_SG"][1, w_nuv] = _get_interpolated_effective_area(iris_fit_nuv, detector_nuv, iris_response["LAMBDA"][:, k])
     else:
         for k in range(n_time_obs):
-            iris_response["AREA_SG"][1,w_1] = _get_interpolated_effective_area(iris_fit_1, detector_1, iris_response["LAMBDA"][:, k])
+            iris_response["AREA_SG"][1,w_nuv] = _get_interpolated_effective_area(iris_fit_nuv, detector_nuv, iris_response["LAMBDA"][:, k])
 
     # 3. SJI effective areas
     iris_response["INDEX_EL_SJI"] = iris_response.get("INDEX_EL_SJI")  # Needs editing
@@ -262,24 +260,24 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     if int(iris_response["VERSION"]) <= 3:
         iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
         shp_2 = iris_response["COEEFS_SJI"].shape
+        area_pre_launch = iris_response["GEOM_AREA"]
         for j in range(shp_2[0]):
             # Calculate pre-launch area from the individual elements
-            area_pre_launch = iris_response["GEOM_AREA"]
             for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
-                area_pre_launch = area_pre_launch * np.iris_response["INDEX_EL_SJI"][j, k].T()
+                area_pre_launch = area_pre_launch * iris_response[iris_response["INDEX_EL_SJI"][j, k]].trans
                 # Time dependent response
                 iris_fit_2 = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
             for k in range(n_time_obs):
                 iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_2[k]
     else:
+        area_sji = iris_response["GEOM_AREA"]
         for nuv in range(2):
             # Calculate baseline SJI area curves
-            area_sji = iris_response["GEOM_AREA"]
             for k in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
-                area_sji = area_sji * np.iris_response["INDEX_EL_SJI"][nuv*2:(nuv*2)+1, k].T()
+                area_sji = area_sji * iris_response[iris_response["INDEX_EL_SJI"][nuv*2:(nuv*2)+1, k]].trans
             # Apply time dependent profile shape adjustment to FUV SJI
-            if -nuv:
+            if not nuv:
                 # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
                 weight = np.array([2.4, 1.0])  # Typical solar ratio CII : SiIV
                 wavelength = iris_response["C_F_LAMBDA"]
@@ -288,7 +286,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                 # Calculate baseline SG area for scaling purposes
                 area_sg = iris_response["GEOM_AREA"]
                 for k in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
-                               area_sg = area_sg * np.iris_response["INDEX_EL_SG"][nuv, k].T()
+                               area_sg = area_sg * iris_response[iris_response["INDEX_EL_SG"][nuv, k]].trans
                 # SG and SJI areas at wavelength
                 area_sg2 = interpolate.splrep(area_sg, iris_response["LAMBDA"])
                 area_sj2 = np.zeros((2, 2))
