@@ -264,7 +264,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         for j in range(shp_sji[0]):
             # Calculate pre-launch area from the individual elements
             for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
-                area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"]["trans"], axis=correct_axis)
+                area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][j, k]["trans"], axis=correct_axis)
                 # Time dependent response
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
@@ -275,7 +275,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         for nuv in range(2):
             # Calculate baseline SJI area curves
             for k in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
-                area_sji = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"]["trans"], axis=correct_axis)
+                area_sji = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][nuv*2:nuv*2+1, k]["trans"], axis=correct_axis)
             # Apply time dependent profile shape adjustment to FUV SJI
             if not nuv:
                 # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
@@ -286,7 +286,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                 # Calculate baseline SG area for scaling purposes
                 area_sg = iris_response["GEOM_AREA"]
                 for k in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
-                    area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SG"]["trans"], axis=correct_axis)
+                    area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SG"][nuv, k]["trans"], axis=correct_axis)
                 # SG and SJI areas at wavelength
                 area_sg2 = scipy.interpolate.interp1d(area_sg, iris_response["LAMBDA"], kind='linear')
                 area_sj2 = np.zeros((2, 2))
