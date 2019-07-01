@@ -164,8 +164,19 @@ def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
 # Tests for get_iris_response function
-test_iris_response = scipy.io.readsav("irispy/data/idl_iris_get_response_20150515.sav")
-iris_response = test_iris_response["iris_response"]
+test_iris_response = scipy.readsav("irispy/data/idl_iris_get_response_20150515.sav")
+iris_response = test_iris_response["iris_response"]  # Converting from IDL rec.array to a normal numpy recarray
+date_obs = iris_response.DATE_OBS[0]
+lamb = iris_response.LAMBDA[0]
+area_sg = iris_response.AREA_SG[0]
+name_sg = iris_response.NAME_SG[0]
+dn2phot_sg = iris_response.DN2PHOT_SG[0]
+area_sji = iris_response.AREA_SJI[0]
+name_sji = iris_response.NAME_SJI[0]
+dn2phot_sji = iris_response.DN2PHOT_SJI[0]
+comment = iris_response.COMMENT[0]
+version = iris_response.VERSION[0]
+version_date = iris_response.VERSION_DATE[0]
 
 def test_get_iris_response():
     pass
