@@ -62,6 +62,7 @@ iris_fit_expected5 = np.array([0.25265095])
     ({DETECTOR_TYPE_KEY: "NUV"}, "NUV"),
     ({DETECTOR_TYPE_KEY: "SJI"}, "SJI")
 ])
+
 def test_get_detector_type(test_input, expected_output):
     assert iris_tools.get_detector_type(test_input) == expected_output
 
@@ -79,6 +80,7 @@ def test_get_detector_type(test_input, expected_output):
     ([SOURCE_DATA_PHOTONS_SJI_1, SOURCE_DATA_PHOTONS_SJI_1], u.photon, iris_tools.DN_UNIT["SJI"],
     [SOURCE_DATA_DN_1, SOURCE_DATA_DN_1], iris_tools.DN_UNIT["SJI"])
 ])
+
 def test_convert_between_DN_and_photons(data_arrays, old_unit, new_unit,
                                         expected_data_arrays, expected_unit):
     output_arrays, output_unit = iris_tools.convert_between_DN_and_photons(data_arrays,
@@ -102,6 +104,7 @@ def test_convert_between_DN_and_photons(data_arrays, old_unit, new_unit,
          [SOURCE_DATA_DN/single_exposure_time, SOURCE_DATA_DN/single_exposure_time],
          iris_tools.DN_UNIT["NUV"]/u.s/u.s)
     ])
+
 def test_calculate_exposure_time_correction(input_arrays, old_unit, exposure_time, force,
                                             expected_arrays, expected_unit):
     output_arrays, output_unit = iris_tools.calculate_exposure_time_correction(
@@ -114,6 +117,7 @@ def test_calculate_exposure_time_correction(input_arrays, old_unit, exposure_tim
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon/u.s, EXPOSURE_TIME, False),
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"]/u.s, EXPOSURE_TIME, False)
 ])
+
 def test_calculate_exposure_time_correction_error(input_arrays, old_unit, exposure_time, force):
     assert pytest.raises(ValueError, iris_tools.calculate_exposure_time_correction,
                          input_arrays, old_unit, exposure_time, force)
@@ -132,6 +136,7 @@ def test_calculate_exposure_time_correction_error(input_arrays, old_unit, exposu
          [SOURCE_DATA_DN * single_exposure_time, SOURCE_DATA_DN * single_exposure_time],
          iris_tools.DN_UNIT["FUV"]*u.s)
 ])
+
 def test_uncalculate_exposure_time_correction(input_arrays, old_unit, exposure_time, force,
                                               expected_arrays, expected_unit):
         output_arrays, output_unit = iris_tools.uncalculate_exposure_time_correction(
@@ -144,6 +149,7 @@ def test_uncalculate_exposure_time_correction(input_arrays, old_unit, exposure_t
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], u.photon, EXPOSURE_TIME, False),
     ([SOURCE_DATA_DN, SOURCE_DATA_DN], iris_tools.DN_UNIT["NUV"], EXPOSURE_TIME, False)
 ])
+
 def test_uncalculate_exposure_time_correction_error(input_arrays, old_unit, exposure_time, force):
     with pytest.raises(ValueError):
         assert iris_tools.uncalculate_exposure_time_correction(input_arrays, old_unit,
@@ -157,10 +163,12 @@ def test_get_iris_response_not_equal_to_one():
 def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
+# Tests for get_iris_response function
+test_iris_response = scipy.io.readsav("irispy/data/idl_iris_get_response_20150515.sav")
+iris_response = test_iris_response["iris_response"]
 
 def test_get_iris_response():
     pass
-
 
 def test_gaussian1d_on_linear_bg():
     pass
