@@ -155,7 +155,6 @@ def test_uncalculate_exposure_time_correction_error(input_arrays, old_unit, expo
         assert iris_tools.uncalculate_exposure_time_correction(input_arrays, old_unit,
                                                                exposure_time, force=force)
 
-
 def test_get_iris_response_not_equal_to_one():
     assert pytest.raises(TypeError, iris_tools.get_iris_response, time_obs, pre_launch=False, response_version=3)
 
@@ -186,12 +185,12 @@ def test_get_iris_response():
 def test_gaussian1d_on_linear_bg():
     pass
 
-
 def test_calculate_orbital_wavelength_variation():
     pass
 
 @pytest.mark.parametrize("input_array, expected_array", [
     (data_dust, dust_mask_expected)])
+
 def test_calculate_dust_mask(input_array, expected_array):
     np_test.assert_array_equal(iris_tools.calculate_dust_mask(input_array), expected_array)
 
@@ -202,5 +201,6 @@ def test_calculate_dust_mask(input_array, expected_array):
     ([time_obs, time_cal_coeffs1, cal_coeffs3], iris_fit_expected3),
     ([time_obs, time_cal_coeffs1, cal_coeffs4], iris_fit_expected4),
     ([time_obs, time_cal_coeffs1, cal_coeffs5], iris_fit_expected5)])
+
 def test_fit_iris_xput(input_arrays, expected_array):
     np_test.assert_almost_equal(fit_iris_xput(input_arrays[0], input_arrays[1], input_arrays[2]), expected_array, decimal=6)

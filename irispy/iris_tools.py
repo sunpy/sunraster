@@ -84,7 +84,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
         simultaneously with response_file kwarg. Default=False
-    response_file: `str`
+    response_file: `int`
         Version number of effective area file to be used.  Cannot be set
         simultaneously with pre_launch kwarg.  Default=latest
     response_version : `int`
@@ -143,10 +143,6 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             response_filename = RESPONSE_VERSION_FILENAMES[str(response_version)]
         except KeyError:
             raise KeyError("Version number not recognized.")
-        if response_version > 2:
-            warnings.warn("Time-dependent effective area determination has been "
-                          "enabled in this version of IRISpy."
-                          "Version of this response file = {0}".format(response_version))
         # Define the directory in which the response file should exist
         # to be the sunpy download directory.
         config = sunpy.util.config.load_config()
