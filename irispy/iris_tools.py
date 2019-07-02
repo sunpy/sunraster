@@ -8,6 +8,7 @@ import warnings
 import os.path
 
 import numpy as np
+import astropy
 import astropy.units as u
 from astropy.units.quantity import Quantity
 from astropy.modeling import fitting
@@ -209,9 +210,9 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
     else:
         # Change DATE tag in data with version < 2 to VERSION_DATE to
         # be consistent with more recent versions.
-        iris_response["VERSION_DATE"] = time.time(int(iris_response["DATE"][0:4]),
+        iris_response["VERSION_DATE"] = Time(datetime.datetime(int(iris_response["DATE"][0:4]),
                                                           int(iris_response["DATE"][4:6]),
-                                                          int(iris_response["DATE"][6:8]))
+                                                          int(iris_response["DATE"][6:8])))
         del(iris_response["DATE"])
 
     if iris_response["VERSION"] > 2 and time_obs is not None:
@@ -253,9 +254,8 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                 iris_response["AREA_SG"][1,w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='cubic')
 
     # 3. SJI effective areas
-    if int(iris_response["VERSION"]) <= 3:
-        iris_response["COEFFS_SJI"] = iris_response.get("COEFFS_SJI")
-        shp_sji = iris_response["COEEFS_SJI"].shape
+    if int(iris_response["VERSION"]) = 3:
+        shp_sji = iris_response["COEFFS_SJI"].shape
         area_pre_launch = iris_response["GEOM_AREA"]
         for j in range(shp_sji[0]):
             # Calculate pre-launch area from the individual elements
