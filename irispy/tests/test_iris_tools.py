@@ -12,6 +12,7 @@ import scipy.io
 
 import irispy.iris_tools as iris_tools
 from irispy.iris_tools import fit_iris_xput
+from irispy.iris_tools import get_iris_response
 
 DETECTOR_TYPE_KEY = "detector type"
 
@@ -178,6 +179,10 @@ dn2phot_sji = iris_response.dn2phot_sji[0]
 comment = iris_response.comment[0]
 version = iris_response.version[0]
 version_date = iris_response.version_date[0]
+
+raw_iris_input = scipy.io.readsav(r, python_dict=True)
+iris_input = raw_iris_input['p0']  # an numpy.recarray
+
 
 def test_get_iris_response():
     pass

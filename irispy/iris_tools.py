@@ -72,7 +72,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 WCS_ORIGIN = 1
 
 
-def get_iris_response(pre_launch=False, response_file=None, response_version=None,
+def get_iris_response(time_obs=None, pre_launch=False, response_file=None, response_version=None,
                       force_download=False, *args, **kwargs):
     """Returns IRIS response structure.
 
@@ -156,8 +156,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
 
     # Read response file and store in a dictionary.
     raw_response_data = scipy.io.readsav(response_file)
-    iris_response = dict([(name, raw_response_data["p0"][name][0])
-                          for name in raw_response_data["p0"].dtype.names])
+    iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
     # Convert some properties to more convenient types.
     iris_response["LAMBDA"] = Quantity(iris_response["LAMBDA"], unit=u.nm)
     iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
@@ -172,13 +171,15 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"])
         except:
             iris_response["DATE_OBS"] = None
+        
+        time_obs = np.array([time_obs])
 
         # Convert C_F_TIME to array of time objects while
         # conserving shape.
         c_f_time = np.empty(iris_response["C_F_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_F_TIME"]):
             for j, t in enumerate(row):
-                c_f_time[i][j] = parse_time(float(t))
+                c_f_time[i][j] = parse_time(t, format = 'utime')
         iris_response["C_F_TIME"] = c_f_time
 
         # Convert C_F_LAMBDA to Quantity.
@@ -188,7 +189,7 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         c_n_time = np.empty(iris_response["C_N_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_N_TIME"]):
             for j, t in enumerate(row):
-                c_n_time[i][j] = parse_time(float(t))
+                c_n_time[i][j] = parse_time(t, format = 'utime')
         iris_response["C_N_TIME"] = c_n_time
 
         # Convert C_N_LAMBDA to Quantity.
@@ -199,15 +200,16 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         for i, row in enumerate(iris_response["C_S_TIME"]):
             for j, column in enumerate(row):
                 for k, t in enumerate(column):
-                    c_s_time[i][j][k] = parse_time(float(t))
+                    c_s_time[i][j][k] = parse_time(t, format = 'utime')
         iris_response["C_S_TIME"] = c_s_time
 
         # Convert DATE in ELEMENTS array to array of time objects.
         for i, t in enumerate(iris_response["ELEMENTS"]["DATE"]):
-            iris_response["ELEMENTS"]["DATE"][i] = parse_time(t.decode())
-        # Convert VERSION_DATE to time object.
-        iris_response["VERSION_DATE"] = parse_time(iris_response["VERSION_DATE"].decode())
-    else:
+            iris_response["ELEMENTS"]["DATE"][i] = parse_time(t, format = 'iso')
+            # Convert VERSION_DATE to time object.
+            iris_response["VERSION_DATE"] = parse_time(iris_response["VERSION_DATE"])
+
+    if iris_response["VERSION"] < 2:
         # Change DATE tag in data with version < 2 to VERSION_DATE to
         # be consistent with more recent versions.
         iris_response["VERSION_DATE"] = Time(datetime.datetime(int(iris_response["DATE"][0:4]),
@@ -216,7 +218,10 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         del(iris_response["DATE"])
 
     if iris_response["VERSION"] > 2 and time_obs is not None:
-        n_time_obs = len(time_obs)
+        try:
+            n_time_obs = len(time_obs)
+        except:
+            n_time_obs = 1
         iris_response["AREA_SG"] = np.zeros(iris_response["AREA_SG"].shape)
         iris_response["AREA_SJI"] = np.zeros(iris_response["AREA_SJI"].shape)
 
@@ -228,12 +233,12 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         iris_fit_fuv = np.zeros((n_time_obs, shp_fuv[0]))
         detector_fuv = "FUV"
         for j in range(shp_fuv[0]):
-            iris_fit[j,:] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
+            iris_fit_fuv[:, j] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
         # Interpolate onto lambda grid, separately for each of the tow FUV CCD's.
         for j in range(2):
-            w_fuv = np.where(iris_response["LAMBDA"] >= lambran_fuv[j, 0] and iris_response["LAMBDA"] <= lambran_fuv[j, 1])
+            w_fuv = np.where(iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0]) and np.where(iris_response["LAMBDA"]/u.nm <= lambran_fuv[j, 1])
             for k in range(n_time_obs):
-                iris_response["AREA_SG"][w_fuv, 0] =  scipy.interpolate.interp1d(iris_fit_fuv[j:j+1, k], iris_response["LAMBDA"][j+1: j], kind='linear')
+                iris_response["AREA_SG"][w_fuv, 0] = scipy.interpolate.interp1d(iris_fit_fuv[j:j+1, k], iris_response["LAMBDA"][j: j+1], kind='linear')
 
         # 2. NUV SG effective areas
         lambran_nuv = np.array([278.2, 283.5])
@@ -253,25 +258,25 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
             for k in range(n_time_obs):
                 iris_response["AREA_SG"][1,w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='cubic')
 
-    # 3. SJI effective areas
-    if int(iris_response["VERSION"]) = 3:
+        # 3. SJI effective areas
         shp_sji = iris_response["COEFFS_SJI"].shape
         area_pre_launch = iris_response["GEOM_AREA"]
         for j in range(shp_sji[0]):
             # Calculate pre-launch area from the individual elements
             for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
-                area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][j, k]["trans"], axis=correct_axis)
+                #area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][j, k]["trans"], axis=correct_axis)
+                area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)[j, k]
                 # Time dependent response
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
             for k in range(n_time_obs):
                 iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_sji[k]
-    else:
         area_sji = iris_response["GEOM_AREA"]
         for nuv in range(2):
             # Calculate baseline SJI area curves
-            for k in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
-                area_sji = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][nuv*2:nuv*2+1, k]["trans"], axis=correct_axis)
+            #for k in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
+                #area_sji = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][nuv*2:nuv*2+1, k]["trans"], axis=correct_axis)
+            area_sji = np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)
             # Apply time dependent profile shape adjustment to FUV SJI
             if not nuv:
                 # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
@@ -282,7 +287,8 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
                 # Calculate baseline SG area for scaling purposes
                 area_sg = iris_response["GEOM_AREA"]
                 for k in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
-                    area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SG"][nuv, k]["trans"], axis=correct_axis)
+                    #area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SG"][nuv, k]["trans"], axis=correct_axis)
+                    area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)[nuv, k]
                 # SG and SJI areas at wavelength
                 area_sg2 = scipy.interpolate.interp1d(area_sg, iris_response["LAMBDA"], kind='linear')
                 area_sj2 = np.zeros((2, 2))
