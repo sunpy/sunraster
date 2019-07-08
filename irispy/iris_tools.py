@@ -235,15 +235,18 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         iris_fit_fuv = np.zeros((n_time_obs, shp_fuv[0]))
         detector_fuv = "FUV"
         for j in range(shp_fuv[0]):
-            iris_fit_fuv[:, j] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
+            iris_fit_fuv[j] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
         iris_fit_fuv = np.squeeze(iris_fit_fuv)
         # Interpolate onto lambda grid, separately for each of the two FUV CCD's.
         for j in range(2):
-            w_fuv = np.where(np.logical_and.reduce([iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0], iris_response["LAMBDA"]/u.nm <= lambran_fuv[j, 1]]))
+            #w_fuv = np.where(np.logical_and.reduce([iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0], iris_response["LAMBDA"]/u.nm <= lambran_fuv[j, 1]]))
+            w_fuv = np.where(iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0]) and np.where(iris_response["LAMBDA"]/u.nm <= lambran_fuv[j, 1])
             for k in range(n_time_obs):
                 interpol_fuv = interpolate.interp1d(iris_response["LAMBDA"][w_fuv], np.squeeze(iris_response["AREA_SG"][j, w_fuv]), kind='linear')
-                iris_response["AREA_SG"][j, w_fuv] = interpol_fuv(iris_response["C_F_LAMBDA"][j: j+1])  # Pick up from here later...
-                #iris_response["AREA_SG"] = interpol_fuv(iris_response["C_N_LAMBDA"]/u.nm)  # Placeholder!
+                iris_response["AREA_SG"][j:j+1, w_fuv] = iris_fit_fuv *  interpol_fuv(iris_response["C_F_LAMBDA"][j:j+1])
+
+                #interpol_fuv = interpolate.interp1d(iris_response["C_F_LAMBDA"][j:j+1], np.squeeze(iris_response["AREA_SG"][j:j+1, k]), kind='linear')
+                #iris_response["AREA_SG"][j:j+1, w_fuv] = iris_fit_fuv *  interpol_fuv(iris_response["LAMBDA"][w_fuv])
 
         # 2. NUV SG effective areas
         lambran_nuv = np.array([278.2, 283.5])
@@ -252,30 +255,31 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         # Time-dependent response for shp_1[0] wavelengths
         iris_fit_nuv = np.zeros((n_time_obs, shp_nuv[0]))
         detector_nuv = "NUV"
-        for j in range(int(shp_nuv[0])):
-            iris_fit_nuv[j,:] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
+        for j in range(shp_nuv[0]):
+            iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
         # Interpolate onto lambda grid
-        w_nuv = np.where(iris_responese["LAMBDA"] >= lambran_nuv[0] and iris_response["LAMBDA"] <= lambran_nuv[1])
-        if int(iris_response["VERSION"]) <= 3:
-            for k in range(n_time_obs):
-                iris_response["AREA_SG"][1, w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='linear')
-        else:
-            for k in range(n_time_obs):
-                iris_response["AREA_SG"][1,w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='cubic')
+        #w_nuv = np.where(np.logical_and.reduce([iris_response["LAMBDA"]/u.nm >= lambran_nuv[0], iris_response["LAMBDA"]/u.nm <= lambran_nuv[1]]))
+        w_nuv = np.where(iris_response["LAMBDA"] >= lambran_nuv[0]) and np.where(iris_response["LAMBDA"] <= lambran_nuv[1]))
+        for k in range(n_time_obs):
+            interpol_nuv =  interpolate.interp1d(iris_response["LAMBDA"][w_nuv], np.squeeze(iris_response["AREA_SG"][:, w_nuv]), kind='cubic')
+            iris_response["AREA_SG"][:, ] = iris_fit_nuv * interpol_nuv(iris_response["C_N_LAMBDA"][:])  # Debug this!
+        #else:
+            #for k in range(n_time_obs):
+                #interpol_nuv = interpolate.interp1d(iris_response["LAMBDA"][w_nuv], np.squeeze(iris_response["AREA_SG"][:, w_nuv]), kind='cubic')
+                #iris_response["AREA_SG"][:, w_nuv] = interpol_nuv(iris_response["C_N_LAMBDA"])
+                #iris_response["AREA_SG"][1, w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='cubic')
 
         # 3. SJI effective areas
         shp_sji = iris_response["COEFFS_SJI"].shape
         area_pre_launch = iris_response["GEOM_AREA"]
         for j in range(shp_sji[0]):
             # Calculate pre-launch area from the individual elements
-            for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
-                #area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["INDEX_EL_SJI"][j, k]["trans"], axis=correct_axis)
-                area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)[j, k]
-                # Time dependent response
-                iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
+            area_pre_launch = iris_response["GEOM_AREA"] * np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)
+            # Time dependent response
+            iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
             # Time dependent profiles
             for k in range(n_time_obs):
-                iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_sji[k]
+                iris_response["AREA_SJI"][j, :] = area_pre_launch * iris_fit_sji[k]  # Needs debugging
         area_sji = iris_response["GEOM_AREA"]
         for nuv in range(2):
             # Calculate baseline SJI area curves
