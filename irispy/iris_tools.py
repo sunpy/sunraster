@@ -241,8 +241,9 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         for j in range(2):
             w_fuv = np.where(np.logical_and.reduce([iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0], iris_response["LAMBDA"]/u.nm <= lambran_fuv[j, 1]]))
             for k in range(n_time_obs):
-                interpol_fuv = interpolate.interp1d(np.squeeze(iris_response["AREA_SG"][j, w_fuv]), iris_response["LAMBDA"][w_fuv], kind='linear')  # Pick up from here later...
-                #iris_response["AREA_SG"] = interpol_fuv(iris_response["C_N_LAMBDA"]/u.nm)  # Placeholder! Edit this!
+                interpol_fuv = interpolate.interp1d(iris_response["LAMBDA"][w_fuv], np.squeeze(iris_response["AREA_SG"][j, w_fuv]), kind='linear')
+                iris_response["AREA_SG"][j, w_fuv] = interpol_fuv(iris_response["C_F_LAMBDA"][j: j+1])  # Pick up from here later...
+                #iris_response["AREA_SG"] = interpol_fuv(iris_response["C_N_LAMBDA"]/u.nm)  # Placeholder!
 
         # 2. NUV SG effective areas
         lambran_nuv = np.array([278.2, 283.5])
