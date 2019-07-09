@@ -253,7 +253,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         for j in range(shp_nuv[0]):
             iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
         # Interpolate onto lambda grid
-            w_nuv = np.where(np.logical_and.reduce([iris_response["LAMBDA"]/u.nm >= lambran_nuv[j, 0], iris_response["LAMBDA"]/u.nm <= lambran_nuv[j, 1]]))
+            w_nuv = np.where(iris_response["LAMBDA"]/u.nm >= lambran_nuv[0]) and np.where(iris_response["LAMBDA"]/u.nm <= lambran_nuv[1])
         for k in range(n_time_obs):
             interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
             iris_response["AREA_SG"][k, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
@@ -289,7 +289,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                     #area_sg = iris_response["GEOM_AREA"]
                     area_sg = iris_response["GEOM_AREA"] * np.prod(iris_response["ELEMENTS"]["trans"][iris_response["INDEX_EL_SJI"]], axis=1)
                     # SG and SJI areas at wavelength
-                    interpol_sg = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sg[j]]), fill_value='extrapolate')  # Missing some index here
+                    interpol_sg = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sg[j]), fill_value='extrapolate')
+                    area_sg2 = interpol_sg(wavelength)
                     area_sj2 = np.zeros((2, 2))
                     for m in range(2):
                         interpol_sji = scipy.interpolate.interp1d( iris_response["LAMBDA"], np.squeeze(area_sji[m]), fill_value='extrapolate')
@@ -305,7 +306,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                             interpol_sca = scipy.interpolate.interp1d(wavelength, np.squeeze(sca2n), fill_value='extrapolate')
                             sca1n = interpol_sca(iris_response["LAMBDA"])
                             if sca1n.all() > 0.0:
-                                iris_response["AREA_SJI"][l, :] = area_sji[l, :] * sca1n
+                                iris_response["AREA_SJI"][l, :] = area_sji[l] * sca1n  # Need to debug this 
                 else:
                     for j in range(4):
                         # SJI specific time dependency
