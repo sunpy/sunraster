@@ -164,16 +164,16 @@ def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
 # Tests for get_iris_response function
-sav_file_path = 'irispy/data/idl_iris_get_response_20150515_new.sav'
+sav_file_path = 'irispy/data/idl_iris_get_response_20130903_new.sav'
 test_iris_response = scipy.io.readsav(sav_file_path, python_dict=True, verbose=True)
 iris_response = test_iris_response['iris_response']  # Converting from IDL rec.array to a normal numpy recarray
 
 date_obs = iris_response.date_obs[0]
 lamb = iris_response.lambda_vars[0]
-area_sg = iris_response.area_sg[0]
+area_sg = iris_response.area_sg[0]  # The 2nd list in the array are both zero-lists
 name_sg = iris_response.name_sg[0]
 dn2phot_sg = iris_response.dn2phot_sg[0]
-area_sji = iris_response.area_sji[0]
+area_sji = iris_response.area_sji[0]  # The 3rd and 4th lists in the arrays seems to match
 name_sji = iris_response.name_sji[0]
 dn2phot_sji = iris_response.dn2phot_sji[0]
 comment = iris_response.comment[0]
