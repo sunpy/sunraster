@@ -166,23 +166,19 @@ def test_get_iris_response_response_file():
 # Tests for get_iris_response function using version 4
 sav_file_path = 'irispy/data/idl_iris_get_response_20130903_new.sav'
 test_iris_response = scipy.io.readsav(sav_file_path, python_dict=True, verbose=True)
-iris_response = test_iris_response['iris_response']  # Converting from IDL rec.array to a normal numpy recarray
+iris_response_load = test_iris_response['iris_response']  # Converting from IDL rec.array to a normal numpy recarray
 
-date_obs = iris_response.date_obs[0]
-lamb = iris_response.lambda_vars[0]
-area_sg = iris_response.area_sg[0]  # The 2nd list in the array are both zero-lists
-name_sg = iris_response.name_sg[0]
-dn2phot_sg = iris_response.dn2phot_sg[0]
-area_sji = iris_response.area_sji[0]  # The 3rd and 4th lists in the arrays seems to match
-name_sji = iris_response.name_sji[0]
-dn2phot_sji = iris_response.dn2phot_sji[0]
-comment = iris_response.comment[0]
-version = iris_response.version[0]
-version_date = iris_response.version_date[0]
-
-raw_iris_input = scipy.io.readsav(r, python_dict=True)
-iris_input = raw_iris_input['p0']  # an numpy.recarray
-
+date_obs_load = iris_response_load.date_obs[0]
+lamb_load = iris_response_load.lambda_vars[0]
+area_sg_load = iris_response_load.area_sg[0]  # The 2nd list in the array are both zero-lists
+name_sg_load = iris_response_load.name_sg[0]
+dn2phot_sg_load = iris_response_load.dn2phot_sg[0]
+area_sji_load = iris_response_load.area_sji[0]  # The 3rd and 4th lists in the arrays seems to match
+name_sji_load = iris_response_load.name_sji[0]
+dn2phot_sji_load = iris_response_load.dn2phot_sji[0]
+comment_load = iris_response_load.comment[0]
+version_load = iris_response_load.version[0]
+version_date_load = iris_response_load.version_date[0]
 
 def test_get_iris_response():
     pass
