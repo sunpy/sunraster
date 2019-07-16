@@ -163,7 +163,7 @@ def test_get_iris_response_not_equal_to_one():
 def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
-# Tests for get_iris_response function
+# Tests for get_iris_response function using version 4
 sav_file_path = 'irispy/data/idl_iris_get_response_20130903_new.sav'
 test_iris_response = scipy.io.readsav(sav_file_path, python_dict=True, verbose=True)
 iris_response = test_iris_response['iris_response']  # Converting from IDL rec.array to a normal numpy recarray
