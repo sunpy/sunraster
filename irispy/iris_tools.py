@@ -241,7 +241,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             w_fuv = np.logical_and(iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0], iris_response["LAMBDA"]/u.nm  <= lambran_fuv[j, 1])
             for k in range(n_time_obs):
                 interpol_fuv = scipy.interpolate.interp1d(iris_response["C_F_LAMBDA"][j:j+2], np.squeeze(iris_fit_fuv[k, j:j+2]), fill_value='extrapolate')
-                iris_response["AREA_SG"][k, w_fuv] = interpol_fuv(iris_response["LAMBDA"][w_fuv])
+                iris_response["AREA_SG"][0, w_fuv] = interpol_fuv(iris_response["LAMBDA"][w_fuv])
     
         # 2. NUV SG effective areas
         lambran_nuv = np.array([278.2, 283.5])
@@ -252,17 +252,12 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         detector_nuv = "NUV"
         for j in range(shp_nuv[0]):
             iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
-        # Interpolate onto lambda grid
-            w_nuv = np.where(iris_response["LAMBDA"]/u.nm >= lambran_nuv[0]) and np.where(iris_response["LAMBDA"]/u.nm <= lambran_nuv[1])
+            # Interpolate onto lambda grid
+            w_nuv = np.where(np.logical_and(iris_response["LAMBDA"]/u.nm >= lambran_nuv[0], iris_response["LAMBDA"]/u.nm <= lambran_nuv[1]))
         for k in range(n_time_obs):
-            interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
-            iris_response["AREA_SG"][k, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
-        #else:
-            #for k in range(n_time_obs):
-                #interpol_nuv = interpolate.interp1d(iris_response["LAMBDA"][w_nuv], np.squeeze(iris_response["AREA_SG"][:, w_nuv]), kind='cubic')
-                #iris_response["AREA_SG"][:, w_nuv] = interpol_nuv(iris_response["C_N_LAMBDA"])
-                #iris_response["AREA_SG"][1, w_nuv] = scipy.interpolate.interp1d(iris_fit_nuv, iris_response["LAMBDA"][:, k], kind='cubic')
-
+            interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
+            iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
+        
         # 3. SJI effective areas
         shp_sji = iris_response["COEFFS_SJI"].shape
         area_pre_launch = iris_response["GEOM_AREA"]
