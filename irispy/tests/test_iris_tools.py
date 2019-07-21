@@ -163,22 +163,74 @@ def test_get_iris_response_not_equal_to_one():
 def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
-# Tests for get_iris_response function using version 4
-sav_file_path = 'irispy/data/idl_iris_get_response_20130903_new.sav'
-test_iris_response = scipy.io.readsav(sav_file_path, python_dict=True, verbose=True)
-iris_response_load = test_iris_response['iris_response']  # Converting from IDL rec.array to a normal numpy recarray
+# Tests for get_iris_response function
+## Version 1
+sav_file_path1 = 'irispy/data/idl_iris_get_response_20130903_new_version001.sav'
+test_iris_response1 = scipy.io.readsav(sav_file_path1, python_dict=True, verbose=True)
+iris_response_load1 = test_iris_response1['iris_response'][0]
 
-date_obs_load = iris_response_load.date_obs[0]
-lamb_load = iris_response_load.lambda_vars[0]
-area_sg_load = iris_response_load.area_sg[0]  # The 2nd list in the array are both zero-lists
-name_sg_load = iris_response_load.name_sg[0]
-dn2phot_sg_load = iris_response_load.dn2phot_sg[0]
-area_sji_load = iris_response_load.area_sji[0]  # The 3rd and 4th lists in the arrays seems to match
-name_sji_load = iris_response_load.name_sji[0]
-dn2phot_sji_load = iris_response_load.dn2phot_sji[0]
-comment_load = iris_response_load.comment[0]
-version_load = iris_response_load.version[0]
-version_date_load = iris_response_load.version_date[0]
+date_obs_load1 = iris_response_load1.date_obs
+lamb_load1 = iris_response_load1.lambda_vars
+area_sg_load1 = iris_response_load1.area_sg
+name_sg_load1 = iris_response_load1.name_sg
+dn2phot_sg_load1 = iris_response_load1.dn2phot_sg
+area_sji_load1 = iris_response_load1.area_sji
+name_sji_load1 = iris_response_load1.name_sji
+dn2phot_sji_load1 = iris_response_load1.dn2phot_sji
+comment_load1 = iris_response_load1.comment
+version_load1 = iris_response_load1.version
+version_date_load1 = iris_response_load1.version_date
+
+## Version 2
+sav_file_path2 = 'irispy/data/idl_iris_get_response_20130903_new_version002.sav'
+test_iris_response2 = scipy.io.readsav(sav_file_path2, python_dict=True, verbose=True)
+iris_response_load2 = test_iris_response2['iris_response'][0]
+
+date_obs_load2 = iris_response_load2.date_obs
+lamb_load2 = iris_response_load2.lambda_vars
+area_sg_load2 = iris_response_load2.area_sg
+name_sg_load2 = iris_response_load2.name_sg
+dn2phot_sg_load2 = iris_response_load2.dn2phot_sg
+area_sji_load2 = iris_response_load2.area_sji
+name_sji_load2 = iris_response_load2.name_sji
+dn2phot_sji_load2 = iris_response_load2.dn2phot_sji
+comment_load2 = iris_response_load2.comment
+version_load2 = iris_response_load2.version
+version_date_load2 = iris_response_load2.version_date
+
+## Version 3
+sav_file_path3 = 'irispy/data/idl_iris_get_response_20130903_new_version003.sav'
+test_iris_response3 = scipy.io.readsav(sav_file_path3, python_dict=True, verbose=True)
+iris_response_load3 = test_iris_response3['iris_response'][0]
+
+date_obs_load3 = iris_response_load3.date_obs
+lamb_load3 = iris_response_load3.lambda_vars
+area_sg_load3 = iris_response_load3.area_sg
+name_sg_load3 = iris_response_load3.name_sg
+dn2phot_sg_load3 = iris_response_load3.dn2phot_sg
+area_sji_load3 = iris_response_load3.area_sji
+name_sji_load3 = iris_response_load3.name_sji
+dn2phot_sji_load3 = iris_response_load3.dn2phot_sji
+comment_load3 = iris_response_load3.comment
+version_load3 = iris_response_load3.version
+version_date_load3 = iris_response_load3.version_date
+
+## Version 4
+sav_file_path4 = 'irispy/data/idl_iris_get_response_20130903_new_version004.sav'
+test_iris_response4 = scipy.io.readsav(sav_file_path4, python_dict=True, verbose=True)
+iris_response_load4 = test_iris_response4['iris_response'][0]
+
+date_obs_load4 = iris_response_load4.date_obs
+lamb_load4 = iris_response_load4.lambda_vars
+area_sg_load4 = iris_response_load4.area_sg
+name_sg_load4 = iris_response_load4.name_sg
+dn2phot_sg_load4 = iris_response_load4.dn2phot_sg
+area_sji_load4 = iris_response_load4.area_sji
+name_sji_load4 = iris_response_load4.name_sji
+dn2phot_sji_load4 = iris_response_load4.dn2phot_sji
+comment_load4 = iris_response_load4.comment
+version_load4 = iris_response_load4.version
+version_date_load4 = iris_response_load4.version_date
 
 def test_get_iris_response():
     pass
