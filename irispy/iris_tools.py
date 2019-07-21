@@ -268,8 +268,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             for j in range(0, shp_sji[0]):
                 prelaunch_area = iris_response["GEOM_AREA"]
                 for k in range(0, len(iris_response["INDEX_EL_SJI"][j,:])):
-                    index_value = iris_response["INDEX_EL_SJI"][j, k]
-                    prelaunch_area = prelaunch_area * iris_response["ELEMENTS"].trans[index_value]
+                    index_values0 = iris_response["INDEX_EL_SJI"][j, k]
+                    prelaunch_area = prelaunch_area * iris_response["ELEMENTS"].trans[index_values0]
                 # Time dependent response
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 # Time dependetn profiles
@@ -280,8 +280,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                 # Calculate baseline SJI area curves
                 area_sji = iris_response["GEOM_AREA"]
                 for m in range(0, len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
-                    index_value = iris_response["INDEX_EL_SJI"][nuv*2: nuv*2+2, m]
-                    area_sji = area_sji * iris_response["ELEMENTS"].trans[index_value]
+                    index_values1 = iris_response["INDEX_EL_SJI"][nuv*2: nuv*2+2, m]
+                    area_sji = area_sji * iris_response["ELEMENTS"].trans[index_values1]
                 # Apply time dependent profile shape adjustment to FUV SJI
                 if nuv == 0:
                     # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
@@ -292,8 +292,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                     # Calculate baseline SG area for scaling purposes
                     area_sg = iris_response["GEOM_AREA"]
                     for n in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
-                        index_value = iris_response["INDEX_EL_SJI"][nuv, n]
-                        elements = iris_response["ELEMENTS"].trans[index_value]
+                        index_values2 = iris_response["INDEX_EL_SJI"][nuv, n]
+                        elements = iris_response["ELEMENTS"].trans[index_values2]
                         area_sg = area_sg * elements
                     # SG and SJI areas at wavelength
                     interpol_sg = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sg), fill_value='extrapolate')
