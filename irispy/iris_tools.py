@@ -265,21 +265,21 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         # 3. SJI effective areas
         if int(iris_response["VERSION"]) <= 3:
             shp_sji = iris_response["COEFFS_SJI"].shape
-            for j in range(0, shp_sji[0]):
+            for j in range(shp_sji[0]):
                 prelaunch_area = iris_response["GEOM_AREA"]
-                for k in range(0, len(iris_response["INDEX_EL_SJI"][j,:])):
+                for k in range(len(iris_response["INDEX_EL_SJI"][j,:])):
                     index_values0 = iris_response["INDEX_EL_SJI"][j, k]
                     prelaunch_area = prelaunch_area * iris_response["ELEMENTS"].trans[index_values0]
                 # Time dependent response
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 # Time dependetn profiles
-                for k in range(0, n_time_obs):
+                for k in range(n_time_obs):
                     iris_response["AREA_SJI"][j, :] = prelaunch_area * iris_fit_sji[k]
         else:
             for nuv in range(2):
                 # Calculate baseline SJI area curves
                 area_sji = iris_response["GEOM_AREA"]
-                for m in range(0, len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
+                for m in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
                     index_values1 = iris_response["INDEX_EL_SJI"][nuv*2: nuv*2+2, m]
                     area_sji = area_sji * iris_response["ELEMENTS"].trans[index_values1]
                 # Apply time dependent profile shape adjustment to FUV SJI
@@ -313,7 +313,9 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                             interpol_sca = scipy.interpolate.interp1d(wavelength, np.squeeze(sca2n), fill_value='extrapolate')
                             sca1n = interpol_sca(iris_response["LAMBDA"])
                             tmp = area_sji[m] * sca1n
-                            iris_response["AREA_SJI"][m, :] = np.heaviside(tmp, 0)
+                            print(tmp)
+                            iris_response["AREA_SJI"][m, :] = np.clip(tmp, a_min=0, a_max=None)
+                            print(iris_response["AREA_SJI"][m, :])
                 else:
                     # NUV: essentially same calculation as r.version=3
                      for m in range(n_time_obs):
