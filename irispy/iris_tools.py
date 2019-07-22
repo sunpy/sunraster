@@ -162,10 +162,10 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
     iris_response["AREA_SJI"] = Quantity(iris_response["AREA_SJI"], unit=u.cm**2)
     iris_response["GEOM_AREA"] = Quantity(iris_response["GEOM_AREA"], unit=u.cm**2)
-    iris_response["VERSION"] = int(iris_response["VERSION"])
+    iris_response["VERSION"] = iris_response["VERSION"]
     # Convert some properties not found in version below version 3 to
     # more convenient types.
-    if iris_response["VERSION"] > 2:
+    if int(iris_response["VERSION"]) > 2:
         # If DATE_OBS has a value, convert to `time.time`, else set to None.
         try:
             iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"], format = 'utime')
@@ -211,7 +211,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             # Convert VERSION_DATE to time object.
             iris_response["VERSION_DATE"] = parse_time(iris_response["VERSION_DATE"])
 
-    if iris_response["VERSION"] < 2:
+    if int(iris_response["VERSION"]) < 2:
         # Change DATE tag in data with version < 2 to VERSION_DATE to
         # be consistent with more recent versions.
         iris_response["VERSION_DATE"] = Time(datetime.datetime(int(iris_response["DATE"][0:4]),
@@ -219,7 +219,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                                                           int(iris_response["DATE"][6:8])))
         del(iris_response["DATE"])
 
-    if iris_response["VERSION"] > 2 and time_obs is not None:
+    if int(iris_response["VERSION"]) > 2 and time_obs is not None:
         try:
             n_time_obs = len(time_obs)
         except:
@@ -316,7 +316,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                             iris_response["AREA_SJI"][m, :] = np.clip(tmp, a_min=0, a_max=None)
                 else:
                     # NUV: essentially same calculation as r.version=3
-                     for m in range(n_time_obs):
+                     for n in range(n_time_obs):
                          iris_response["AREA_SJI"] = [Quantity(x, unit=u.cm**2) for x in iris_response["AREA_SJI"]]
                          area_sji = [x for x in area_sji]
                          iris_response["AREA_SJI"][2:4] = area_sji[:]
