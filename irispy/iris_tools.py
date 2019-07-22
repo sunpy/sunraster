@@ -263,11 +263,11 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                 interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), extrapolate=True)
         
         # 3. SJI effective areas
-        if int(iris_response["VERSION"]) <= 3:
+        if int(iris_response["VERSION"]) <= 3:  # Meaning for version 3 only.
             shp_sji = iris_response["COEFFS_SJI"].shape
             for j in range(shp_sji[0]):
                 prelaunch_area = iris_response["GEOM_AREA"]
-                for k in range(len(iris_response["INDEX_EL_SJI"][j,:])):
+                for k in range(len(iris_response["INDEX_EL_SJI"][j, :])):
                     index_values0 = iris_response["INDEX_EL_SJI"][j, k]
                     prelaunch_area = prelaunch_area * iris_response["ELEMENTS"].trans[index_values0]
                 # Time dependent response
@@ -313,9 +313,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                             interpol_sca = scipy.interpolate.interp1d(wavelength, np.squeeze(sca2n), fill_value='extrapolate')
                             sca1n = interpol_sca(iris_response["LAMBDA"])
                             tmp = area_sji[m] * sca1n
-                            print(tmp)
                             iris_response["AREA_SJI"][m, :] = np.clip(tmp, a_min=0, a_max=None)
-                            print(iris_response["AREA_SJI"][m, :])
                 else:
                     # NUV: essentially same calculation as r.version=3
                      for m in range(n_time_obs):
