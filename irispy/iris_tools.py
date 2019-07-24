@@ -290,7 +290,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                     weight = np.array([2.4, 1.0])  # Typical solar ratio CII : SiIV
                     wavelength = iris_response["C_F_LAMBDA"]
                     n_wavelength = len(wavelength)
-                    wavelength = np.array([wavelength[0]/u.nm, (wavelength[n_wavelength - 2]/u.nm*2.0 + wavelength[n_wavelength - 1]/u.nm)/3.0])  # 2 wvlngts in nm
+                    wavelength = np.array([wavelength[0].value, (wavelength[n_wavelength-2].value*2.0 + wavelength[n_wavelength-1].value)/3.0])  # 2 wvlngts in nm
                     # Calculate baseline SG area for scaling purposes
                     area_sg = iris_response["GEOM_AREA"]
                     for n in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
