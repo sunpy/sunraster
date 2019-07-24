@@ -170,8 +170,8 @@ test_iris_response1 = scipy.io.readsav(sav_file_path1, python_dict=True, verbose
 iris_response_load1 = test_iris_response1['iris_response'][0]
 
 date_obs_load1 = iris_response_load1.date_obs
-lamb_load1 = iris_response_load1["LAMBDA"]
-area_sg_load1 = iris_response_load1.lambda_vars
+lamb_load1 = iris_response_load1.lambda_vars
+area_sg_load1 = iris_response_load1.area_sg
 name_sg_load1 = iris_response_load1.name_sg
 dn2phot_sg_load1 = iris_response_load1.dn2phot_sg
 area_sji_load1 = iris_response_load1.area_sji
@@ -187,8 +187,8 @@ test_iris_response2 = scipy.io.readsav(sav_file_path2, python_dict=True, verbose
 iris_response_load2 = test_iris_response2['iris_response'][0]
 
 date_obs_load2 = iris_response_load2.date_obs
-lamb_load2 = iris_response_load2["LAMBDA"]
-area_sg_load2 = iris_response_load.lambda_vars
+lamb_load2 = iris_response_load2.lambda_vars
+area_sg_load2 = iris_response_load.area_sg
 name_sg_load2 = iris_response_load2.name_sg
 dn2phot_sg_load2 = iris_response_load2.dn2phot_sg
 area_sji_load2 = iris_response_load2.area_sji
