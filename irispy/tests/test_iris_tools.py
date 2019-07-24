@@ -163,40 +163,42 @@ def test_get_iris_response_not_equal_to_one():
 def test_get_iris_response_response_file():
     assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs, response_file="hello.py")
 
+
 # Tests for get_iris_response function
 ## Version 1
 sav_file_path1 = 'irispy/data/idl_iris_get_response_20130903_new_version001.sav'
 test_iris_response1 = scipy.io.readsav(sav_file_path1, python_dict=True, verbose=True)
 iris_response_load1 = test_iris_response1['iris_response'][0]
 
-date_obs_load1 = iris_response_load1.date_obs
 lamb_load1 = iris_response_load1.lambda_vars
 area_sg_load1 = iris_response_load1.area_sg
 name_sg_load1 = iris_response_load1.name_sg
-dn2phot_sg_load1 = iris_response_load1.dn2phot_sg
+index_el_sg_load1 = iris_response_load1.index_el_sg
 area_sji_load1 = iris_response_load1.area_sji
 name_sji_load1 = iris_response_load1.name_sji
-dn2phot_sji_load1 = iris_response_load1.dn2phot_sji
+index_el_sji_load1 = iris_response_load1.index_el_sji
+geom_area_load1 = iris_response_load1.geom_area
+elements_load1 = iris_response_load1.elements
 comment_load1 = iris_response_load1.comment
 version_load1 = iris_response_load1.version
-version_date_load1 = iris_response_load1.version_date
+date_load1 = iris_response_load1.date
 
 ## Version 2
 sav_file_path2 = 'irispy/data/idl_iris_get_response_20130903_new_version002.sav'
 test_iris_response2 = scipy.io.readsav(sav_file_path2, python_dict=True, verbose=True)
 iris_response_load2 = test_iris_response2['iris_response'][0]
 
-date_obs_load2 = iris_response_load2.date_obs
 lamb_load2 = iris_response_load2.lambda_vars
-area_sg_load2 = iris_response_load.area_sg
+area_sg_load2 = iris_response_load2.area_sg
 name_sg_load2 = iris_response_load2.name_sg
-dn2phot_sg_load2 = iris_response_load2.dn2phot_sg
+index_el_sg_load2 = iris_response_load2.index_el_sg
 area_sji_load2 = iris_response_load2.area_sji
 name_sji_load2 = iris_response_load2.name_sji
-dn2phot_sji_load2 = iris_response_load2.dn2phot_sji
+index_el_sji_load2 = iris_response_load2.index_el_sji
+elements_load2 = iris_response_load2.elements
 comment_load2 = iris_response_load2.comment
 version_load2 = iris_response_load2.version
-version_date_load2 = iris_response_load2.version_date
+date_load2 = iris_response_load2.date
 
 ## Version 3
 sav_file_path3 = 'irispy/data/idl_iris_get_response_20130903_new_version003.sav'
@@ -232,8 +234,60 @@ comment_load4 = iris_response_load4.comment
 version_load4 = iris_response_load4.version
 version_date_load4 = iris_response_load4.version_date
 
-def test_get_iris_response():
-    pass
+# For testing of version 1
+
+iris_response1 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=1)
+@pytest.mark.parametrize("input_quantity, expected_quantity",
+[(iris_response1["VERSION"], version_load1),
+ (iris_response1["NAME_SG"], name_sg_load1),
+ (iris_response1["AREA_SG"], area_sg_load1),
+ (iris_response1["NAME_SJI"], name_sji_load1),
+ (iris_response1["AREA_SJI"], area_sji_load1)
+ ])
+
+def test_get_iris_response_version1(input_quantity, expected_quantity):
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
+
+# For testing of version 2
+iris_response2 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=2)
+@pytest.mark.parametrize("input_quantity, expected_quantity",
+[
+ (iris_response2["VERSION"], version_load2),
+ (iris_response2["NAME_SG"], name_sg_load2),
+ (iris_response2["AREA_SG"], area_sg_load2),
+ (iris_response2["NAME_SJI"], name_sji_load2),
+ (iris_response2["AREA_SJI"], area_sji_load2)])
+
+def test_get_iris_response_version2(input_quantity, expected_quantity):
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
+
+# For testing of version 3
+iris_response3 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=3)
+@pytest.mark.parametrize("input_quantity, expected_quantity",
+[
+ (iris_response3["VERSION"], version_load3),
+ (iris_response3["NAME_SG"], name_sg_load3),
+ (iris_response3["AREA_SG"], area_sg_load3),
+ (iris_response3["NAME_SJI"], name_sji_load3),
+ (iris_response3["AREA_SJI"], area_sji_load3),
+ ])
+
+def test_get_iris_response_version3(input_quantity, expected_quantity):
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
+
+# For testing of version 4
+iris_response4 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=4)
+@pytest.mark.parametrize("input_quantity, expected_quantity",
+[
+ (iris_response4["VERSION"], version_load4),
+ (iris_response4["NAME_SG"], name_sg_load4),
+ (iris_response4["AREA_SG"], area_sg_load4),
+ (iris_response4["NAME_SJI"], name_sji_load4),
+ (iris_response4["AREA_SJI"], area_sji_load4),
+ ])
+
+def test_get_iris_response_version4(input_quantity, expected_quantity):
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
 
 def test_gaussian1d_on_linear_bg():
     pass
