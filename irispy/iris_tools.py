@@ -294,7 +294,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                     # Calculate baseline SG area for scaling purposes
                     area_sg = iris_response["GEOM_AREA"]
                     for n in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
-                        index_values2 = iris_response["INDEX_EL_SJI"][nuv, n]
+                        index_values2 = iris_response["INDEX_EL_SG"][nuv, n]
                         area_sg = area_sg * iris_response["ELEMENTS"][index_values2].trans
                     # SG and SJI areas at wavelength
                     interpol_sg = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sg), fill_value='extrapolate')
