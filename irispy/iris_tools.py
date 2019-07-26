@@ -99,7 +99,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     iris_response: `dict`
         Various parameters regarding IRIS response or effective area structure.
         Includes the following keys:
-        date_obs: `time.time`
+        date_obs: `astropy.time.Time`
         lambda: `astropy.units.Quantity`
         area_sg: `astropy.units.Quantity`
         name_sg: `str`
@@ -109,7 +109,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         dn2phot_sji:  `tuple` of length 4
         comment: `str`
         version: `int`
-        version_date: `time.time`
+        version_date: `astropy.time.Time`
 
     Notes
     -----
@@ -168,7 +168,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     # Convert some properties not found in version below version 3 to
     # more convenient types.
     if int(iris_response["VERSION"]) > 2:
-        # If DATE_OBS has a value, convert to `time.time`, else set to None.
+        # If DATE_OBS has a value, convert to `astropy.time.Time`, else set to None.
         try:
             iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"], format = 'utime')
         except:
@@ -360,7 +360,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     times ``time_obs``.
 
     """
-    # Convert the observation time into an astropy ``time.time`` object
+    # Convert the observation time into an astropy ``astropy.time.Time`` object
     time_obs = np.array([parse_time(time_obs, format = 'utime') for t in time_obs])
 
     size_time_cal_coeffs = time_cal_coeffs.shape
@@ -371,7 +371,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
         raise ValueError("Incorrect number of elements either in time_cal_coeffs or in cal_coeffs.")
 
     # Some time transformations.
-    # Convert the time_cal_coeffs given in the .geny file into a ``time.time``
+    # Convert the time_cal_coeffs given in the .geny file into a ``astropy.time.Time``
     # object called t_cal_coeffs, so that the time differences will be in days...
     t_cal_coeffs_flat = time_cal_coeffs.flatten()
     t_cal_coeffs = [parse_time(x, format = 'utime') for x in t_cal_coeffs_flat]
