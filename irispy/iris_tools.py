@@ -898,7 +898,7 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, time_cal_coeffs, cal_
     return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
 
-def _get_interpolated_effective_area(detector_type, obs_wavelength, *args, **kwargs):
+def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength, *args, **kwargs):
     """
     To compute the interpolated time-dependent effective area.
     
