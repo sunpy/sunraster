@@ -137,10 +137,6 @@ def test_fits_data_comparison(iris_l2_test_raster):
     data2 = copy.deepcopy(hdulist[2].data)
     data3 = copy.deepcopy(hdulist[3].data)
 
-    data1[hdulist[1].data == -200.] = np.nan
-    data2[hdulist[2].data == -200.] = np.nan
-    data3[hdulist[3].data == -200.] = np.nan
-
     np.testing.assert_array_almost_equal(
         iris_l2_test_raster.data[spectral_window1].data[0].data, data1)
     np.testing.assert_array_almost_equal(

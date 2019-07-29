@@ -264,7 +264,7 @@ class IRISSpectrogramCube(NDCube):
     """
 
     def __init__(self, data, wcs, uncertainty, unit, meta, extra_coords,
-                 mask=None, copy=False, missing_axis=None):
+                 mask=None, copy=False, missing_axes=None):
         # Check required meta data is provided.
         required_meta_keys = ["detector type"]
         if not all([key in list(meta) for key in required_meta_keys]):
@@ -278,20 +278,20 @@ class IRISSpectrogramCube(NDCube):
         # Initialize IRISSpectrogramCube.
         super(IRISSpectrogramCube, self).__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-            unit=unit, extra_coords=extra_coords, copy=copy, missing_axis=missing_axis)
+            unit=unit, extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
     def __getitem__(self, item):
         result = super(IRISSpectrogramCube, self).__getitem__(item)
         return IRISSpectrogramCube(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axis),
-            mask=result.mask, missing_axis=result.missing_axis)
+            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
+            mask=result.mask, missing_axes=result.missing_axes)
 
     def __repr__(self):
         if self.extra_coords["time"]["axis"] is None:
             axis_missing = True
         else:
-            axis_missing = self.missing_axis[::-1][self.extra_coords["time"]["axis"]]
+            axis_missing = self.missing_axes[::-1][self.extra_coords["time"]["axis"]]
         if axis_missing is True:
             instance_start = instance_end = self.extra_coords["time"]["value"]
         else:
@@ -356,8 +356,8 @@ Axis Types: {axis_types}
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogramCube(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-                    mask=self.mask, missing_axis=self.missing_axis)
+                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+                    mask=self.mask, missing_axes=self.missing_axes)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
             else:
@@ -389,8 +389,8 @@ Axis Types: {axis_types}
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogramCube(
             new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -443,8 +443,8 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogramCube with correction applied/undone.
         return IRISSpectrogramCube(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
 
 def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
