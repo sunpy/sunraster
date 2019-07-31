@@ -133,6 +133,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         response_version_set = True
     else:
         response_version_set = False
+        if response_file_set is False:
+            response_version = 4
     if response_file_set+pre_launch+response_version_set != 1:
         raise ValueError("One and only one of kwargs pre_launch, response_file "
                          "and response_version must be set.")
