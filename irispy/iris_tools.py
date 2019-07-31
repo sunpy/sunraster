@@ -18,8 +18,8 @@ from astropy.modeling.models import custom_model
 from astropy import constants
 from astropy.time import Time
 from astropy.table import Table
-import scipy.io
 import scipy
+import scipy.io
 from scipy import ndimage
 from scipy import interpolate
 from sunpy.time import parse_time
@@ -135,7 +135,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         response_version_set = False
         if response_file_set is False:
             response_version = 4
-    if response_file_set+pre_launch+response_version_set != 1:
+    if response_file_set+pre_launch+response_version_set > 1:
         raise ValueError("One and only one of kwargs pre_launch, response_file "
                          "and response_version must be set.")
     # If pre_launch set, define response_version to 2.
@@ -153,11 +153,9 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         config = sunpy.util.config.load_config()
         download_dir = config.get('downloads', 'download_dir')
         # Check response file exists in download_dir.  If not, download it.
-        check_download_file(response_filename, IRIS_RESPONSE_REMOTE_PATH, download_dir,
-                            replace=force_download)
+        check_download_file(response_filename, IRIS_RESPONSE_REMOTE_PATH, download_dir, replace=force_download)
         # Define response file as path + filename.
         response_file = os.path.join(download_dir, response_filename)
-
     # Read response file and store in a dictionary.
     raw_response_data = scipy.io.readsav(response_file)
     iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
