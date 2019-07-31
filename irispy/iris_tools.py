@@ -123,6 +123,8 @@ def get_iris_response(pre_launch=False, response_file=None, response_version=Non
         response_version_set = True
     else:
         response_version_set = False
+        if response_file_set == False:
+            response_version = 4  # Default to version 4 if version is not passed explicitly and if a response file has not been specified. 
     if response_file_set+pre_launch+response_version_set != 1:
         raise ValueError("One and only one of kwargs pre_launch, response_file "
                          "and response_version must be set.")
