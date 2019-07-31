@@ -82,8 +82,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
 
     Parameters
     ----------
-    time_obs: a `numpy.array` of floats, as a kwarg, valid for version > 2
-        Observation times of the datapoints. Must be in the format of the output of time_obs = parse_time('2013-09-03', format='utime'), which yields 1094169600.0 seconds. The argument time_obs is ignored for versions 1 and 2.
+    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+        Observation times of the datapoints. Must be in the format of , e.g., time_obs = parse_time('2013-09-03', format='utime'), which yields 1094169600.0 seconds in value. The argument time_obs is ignored for versions 1 and 2.
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
         simultaneously with response_file kwarg. Default=False
@@ -174,7 +174,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         except:
             iris_response["DATE_OBS"] = None
         
-        time_obs = time_obs
+        time_obs = np.array([time_obs.value])
 
         # Convert C_F_TIME to array of time objects while conserving shape.
         c_f_time = np.empty(iris_response["C_F_TIME"].shape, dtype=object)
