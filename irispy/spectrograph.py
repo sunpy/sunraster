@@ -17,7 +17,8 @@ from irispy import iris_tools
 
 __all__ = ['IRISSpectrograph']
 
-class IRISSpectrograph(object):
+
+class IRISSpectrograph:
     """
     An object to hold data from multiple IRIS raster scans.
 
