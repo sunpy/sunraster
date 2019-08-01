@@ -83,7 +83,10 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     Parameters
     ----------
     time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
-        Observation times of the datapoints. Must be in the format of , e.g., time_obs = parse_time('2013-09-03', format='utime'), which yields 1094169600.0 seconds in value. The argument time_obs is ignored for versions 1 and 2.
+        Observation times of the datapoints.
+        Must be in the format of, e.g., time_obs parse_time('2013-09-03', format='utime'),
+        which yields 1094169600.0 seconds in value.
+        The argument time_obs is ignored for versions 1 and 2.
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
         simultaneously with response_file kwarg. Default=False
