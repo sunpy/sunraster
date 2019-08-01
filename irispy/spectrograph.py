@@ -468,6 +468,8 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
     """
     if type(filenames) is str:
         filenames = [filenames]
+    if not filenames:
+        return
     for f, filename in enumerate(filenames):
         hdulist = fits.open(filename)
         hdulist.verify('fix')
