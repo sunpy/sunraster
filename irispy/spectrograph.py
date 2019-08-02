@@ -447,7 +447,7 @@ Axis Types: {axis_types}
             mask=self.mask, missing_axis=self.missing_axis)
 
 
-def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
+def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=True):
     """
     Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph instance.
 
@@ -469,7 +469,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
     if type(filenames) is str:
         filenames = [filenames]
     for f, filename in enumerate(filenames):
-        hdulist = fits.open(filename)
+        hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
         hdulist.verify('fix')
         if f == 0:
             # Determine number of raster positions in a scan
@@ -485,6 +485,8 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             else:
                 if type(spectral_windows) is str:
                     spectral_windows_req = [spectral_windows]
+                else:
+                    spectral_windows_req = spectral_windows
                 spectral_windows_req = np.asarray(spectral_windows_req, dtype="U")
                 window_is_in_obs = np.asarray(
                     [window in windows_in_obs for window in spectral_windows_req])
@@ -582,7 +584,10 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             if hdulist[window_fits_indices[i]].header["CDELT3"] == 0:
                 hdulist[window_fits_indices[i]].header["CDELT3"] = 1e-10
             wcs_ = WCS(hdulist[window_fits_indices[i]].header)
-            data_mask = hdulist[window_fits_indices[i]].data == -200.
+            if not memmap:
+                data_mask = hdulist[window_fits_indices[i]].data == -200.
+            else:
+                data_mask = None
             # Derive extra coords for this spectral window.
             window_extra_coords = copy.deepcopy(general_extra_coords)
             window_extra_coords.append(("exposure time", 0, exposure_times))
@@ -614,12 +619,15 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                                 "ENDOBS": parse_time(hdulist[0].header["ENDOBS"])
                                 }
             # Derive uncertainty of data
-            uncertainty = u.Quantity(np.sqrt(
-                (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
-                readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
+            if uncertainty:
+                out_uncertainty = u.Quantity(np.sqrt(
+                    (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
+                    readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
+            else:
+                out_uncertainty = None
             # Appending NDCube instance to the corresponding window key in dictionary's list.
             data_dict[window_name].append(
-                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, uncertainty,
+                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, out_uncertainty,
                                     DN_unit, single_file_meta, window_extra_coords,
                                     mask=data_mask))
         hdulist.close()
