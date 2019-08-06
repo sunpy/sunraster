@@ -28,8 +28,7 @@ from sunpy.util.net import check_download_file
 from ndcube import NDCube
 
 
-# Define some properties of IRIS detectors.  Source: IRIS instrument
-# paper.
+# Define some properties of IRIS detectors.  Source: IRIS instrument paper.
 DETECTOR_GAIN = {"NUV": 18., "FUV": 6., "SJI": 18.}
 DETECTOR_YIELD = {"NUV": 1., "FUV": 1.5, "SJI": 1.}
 SJI_DEFAULT_BSCALE = 0.25
