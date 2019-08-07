@@ -333,7 +333,8 @@ Axis Types: {axis_types}
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
-            spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \ self.wcs.wcs.cunit[spectral_wcs_index]
+            spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] *
+                self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]

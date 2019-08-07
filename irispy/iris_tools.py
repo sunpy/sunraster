@@ -819,7 +819,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit,
 
 
 def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
-        response_version, obs_wavelength, detector_type,
+        time_obs, obs_wavelength, detector_type,
         spectral_dispersion_per_pixel, solid_angle, undo=False):
     """
     Converts data quantities from counts/s to radiance (or vice versa).
