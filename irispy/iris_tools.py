@@ -369,7 +369,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     Returns
     -------
     fit_out: `numpy.array`
-        Yields the fit used to compute the effective area using the input        
+        Yields the fit used to compute the effective area using the input
     times ``time_obs``.
 
     """
