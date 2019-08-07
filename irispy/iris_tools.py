@@ -819,7 +819,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit,
 
 
 def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
-        time_obs, obs_wavelength, detector_type,
+        time_obs, response_version, obs_wavelength, detector_type,
         spectral_dispersion_per_pixel, solid_angle, undo=False):
     """
     Converts data quantities from counts/s to radiance (or vice versa).
@@ -836,6 +836,10 @@ def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
         time_obs parse_time('2013-09-03', format='utime'),
         which yields 1094169600.0 seconds in value.
         The argument time_obs is ignored for versions 1 and 2.
+        
+    response_version : `int`
+        Version number of effective area file to be used. Cannot be set
+        simultaneously with response_file or pre_launch kwarg. Default=4
 
     obs_wavelength: `astropy.units.Quantity`
         Wavelength at each element along spectral axis of data quantities.
