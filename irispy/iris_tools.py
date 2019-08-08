@@ -351,12 +351,8 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 
     Parameters
     ----------
-    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
-        Observation times of the datapoints.
-        Must be in the format of, e.g.,
-        time_obs=parse_time('2013-09-03', format='utime'),
-        which yields 1094169600.0 seconds in value.
-        The argument time_obs is ignored for versions 1 and 2.
+    time_obs: a `numpy.array`
+        A set of observation times contained in a numpy array.
 
     time_cal_coeffs: a numpy array of floats (with exactly two columns)
     - Start and end times of intervals of constant ``cal_coeffs[i]``.
@@ -371,7 +367,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     times ``time_obs``.
 
     """
-    time_obs = time_obs
+    time_obs = np.array([parse_time(time_obs, format = 'utime') for t in time_obs])
 
     size_time_cal_coeffs = time_cal_coeffs.shape
     size_cal_coeffs = cal_coeffs.shape

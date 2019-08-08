@@ -43,7 +43,7 @@ response_url = 'https://sohowww.nascom.nasa.gov/solarsoft/iris/response/iris_sra
 r = download_file(response_url)
 raw_response_data = scipy.io.readsav(r)
 iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
-time_obs = time_obs=parse_time('2013-09-03', format='utime')
+time_obs = parse_time('2013-09-03', format='utime')
 time_cal_coeffs0 = iris_response.get('C_F_TIME')
 time_cal_coeffs1 = iris_response.get('C_N_TIME')
 cal_coeffs0 = iris_response.get('COEFFS_FUV')[0,:,:]
@@ -158,7 +158,8 @@ def test_uncalculate_exposure_time_correction_error(input_arrays, old_unit, expo
                                                                exposure_time, force=force)
 
 def test_get_iris_response_not_equal_to_one():
-    assert pytest.raises(TypeError, iris_tools.get_iris_response, time_obs, pre_launch=False, response_version=4)
+    assert pytest.raises(KeyError, iris_tools.get_iris_response, time_obs,
+                         pre_launch=False, response_version=13)
 
 
 def test_get_iris_response_response_file():
