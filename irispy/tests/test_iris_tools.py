@@ -9,6 +9,7 @@ import numpy.testing as np_test
 import astropy.units as u
 from astropy.utils.data import download_file
 import scipy.io
+from sunpy.time import parse_time
 
 import irispy.iris_tools as iris_tools
 from irispy.iris_tools import fit_iris_xput
@@ -42,7 +43,7 @@ response_url = 'https://sohowww.nascom.nasa.gov/solarsoft/iris/response/iris_sra
 r = download_file(response_url)
 raw_response_data = scipy.io.readsav(r)
 iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
-time_obs = np.array([1.0941696e+09])
+time_obs = time_obs=parse_time('2013-09-03', format='utime')
 time_cal_coeffs0 = iris_response.get('C_F_TIME')
 time_cal_coeffs1 = iris_response.get('C_N_TIME')
 cal_coeffs0 = iris_response.get('COEFFS_FUV')[0,:,:]
@@ -157,7 +158,7 @@ def test_uncalculate_exposure_time_correction_error(input_arrays, old_unit, expo
                                                                exposure_time, force=force)
 
 def test_get_iris_response_not_equal_to_one():
-    assert pytest.raises(TypeError, iris_tools.get_iris_response, time_obs, pre_launch=False, response_version=3)
+    assert pytest.raises(TypeError, iris_tools.get_iris_response, time_obs, pre_launch=False, response_version=4)
 
 
 def test_get_iris_response_response_file():
@@ -235,13 +236,11 @@ version_load4 = iris_response_load4.version
 version_date_load4 = iris_response_load4.version_date
 
 # For testing of version 1
-
-iris_response1 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=1)
+iris_response1 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
+                                   response_version=1)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
-[(iris_response1["VERSION"], version_load1),
- (iris_response1["NAME_SG"], name_sg_load1),
+[
  (iris_response1["AREA_SG"], area_sg_load1),
- (iris_response1["NAME_SJI"], name_sji_load1),
  (iris_response1["AREA_SJI"], area_sji_load1)
  ])
 
@@ -249,41 +248,36 @@ def test_get_iris_response_version1(input_quantity, expected_quantity):
     np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
 
 # For testing of version 2
-iris_response2 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=2)
+iris_response2 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
+                                   response_version=2)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response2["VERSION"], version_load2),
- (iris_response2["NAME_SG"], name_sg_load2),
  (iris_response2["AREA_SG"], area_sg_load2),
- (iris_response2["NAME_SJI"], name_sji_load2),
- (iris_response2["AREA_SJI"], area_sji_load2)])
+ (iris_response2["AREA_SJI"], area_sji_load2)
+ ])
 
 def test_get_iris_response_version2(input_quantity, expected_quantity):
     np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
 
 # For testing of version 3
-iris_response3 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=3)
+iris_response3 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
+                                   response_version=3)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response3["VERSION"], version_load3),
- (iris_response3["NAME_SG"], name_sg_load3),
  (iris_response3["AREA_SG"], area_sg_load3),
- (iris_response3["NAME_SJI"], name_sji_load3),
- (iris_response3["AREA_SJI"], area_sji_load3),
+ (iris_response3["AREA_SJI"], area_sji_load3)
  ])
 
 def test_get_iris_response_version3(input_quantity, expected_quantity):
     np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
 
 # For testing of version 4
-iris_response4 = get_iris_response(time_obs=np.array([1.0941696e+09]), response_version=4)
+iris_response4 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
+                                   response_version=4)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response4["VERSION"], version_load4),
- (iris_response4["NAME_SG"], name_sg_load4),
  (iris_response4["AREA_SG"], area_sg_load4),
- (iris_response4["NAME_SJI"], name_sji_load4),
- (iris_response4["AREA_SJI"], area_sji_load4),
+ (iris_response4["AREA_SJI"], area_sji_load4)
  ])
 
 def test_get_iris_response_version4(input_quantity, expected_quantity):
@@ -302,12 +296,12 @@ def test_calculate_dust_mask(input_array, expected_array):
     np_test.assert_array_equal(iris_tools.calculate_dust_mask(input_array), expected_array)
 
 @pytest.mark.parametrize("input_arrays, expected_array", [
-    ([time_obs, time_cal_coeffs0, cal_coeffs0], iris_fit_expected0),
-    ([time_obs, time_cal_coeffs0, cal_coeffs1], iris_fit_expected1),
-    ([time_obs, time_cal_coeffs0, cal_coeffs2], iris_fit_expected2),
-    ([time_obs, time_cal_coeffs1, cal_coeffs3], iris_fit_expected3),
-    ([time_obs, time_cal_coeffs1, cal_coeffs4], iris_fit_expected4),
-    ([time_obs, time_cal_coeffs1, cal_coeffs5], iris_fit_expected5)])
+    ([time_obs.value, time_cal_coeffs0, cal_coeffs0], iris_fit_expected0),
+    ([time_obs.value, time_cal_coeffs0, cal_coeffs1], iris_fit_expected1),
+    ([time_obs.value, time_cal_coeffs0, cal_coeffs2], iris_fit_expected2),
+    ([time_obs.value, time_cal_coeffs1, cal_coeffs3], iris_fit_expected3),
+    ([time_obs.value, time_cal_coeffs1, cal_coeffs4], iris_fit_expected4),
+    ([time_obs.value, time_cal_coeffs1, cal_coeffs5], iris_fit_expected5)])
 
 def test_fit_iris_xput(input_arrays, expected_array):
     np_test.assert_almost_equal(fit_iris_xput(input_arrays[0], input_arrays[1], input_arrays[2]), expected_array, decimal=6)

@@ -84,18 +84,22 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     ----------
     time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
         Observation times of the datapoints.
-        Must be in the format of, e.g., time_obs parse_time('2013-09-03', format='utime'),
+        Must be in the format of, e.g.,
+        time_obs=parse_time('2013-09-03', format='utime'),
         which yields 1094169600.0 seconds in value.
         The argument time_obs is ignored for versions 1 and 2.
+        
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
-        simultaneously with response_file kwarg. Default=False
+        simultaneously with response_file kwarg. Default=False.
+        
     response_file: `int`
         Version number of effective area file to be used.  Cannot be set
-        simultaneously with pre_launch kwarg.  Default=latest
+        simultaneously with pre_launch kwarg.  Default=latest.
+        
     response_version : `int`
         Version number of effective area file to be used. Cannot be set
-        simultaneously with response_file or pre_launch kwarg. Default=latest
+        simultaneously with response_file or pre_launch kwarg. Default=latest.
 
     Returns
     -------
@@ -347,8 +351,12 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 
     Parameters
     ----------
-    time_obs: a numpy array of floats
-    - Times of datapoints.
+    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+        Observation times of the datapoints.
+        Must be in the format of, e.g.,
+        time_obs=parse_time('2013-09-03', format='utime'),
+        which yields 1094169600.0 seconds in value.
+        The argument time_obs is ignored for versions 1 and 2.
 
     time_cal_coeffs: a numpy array of floats (with exactly two columns)
     - Start and end times of intervals of constant ``cal_coeffs[i]``.
@@ -363,8 +371,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     times ``time_obs``.
 
     """
-    # Convert the observation time into an astropy ``astropy.time.Time`` object
-    time_obs = np.array([parse_time(time_obs, format = 'utime') for t in time_obs])
+    time_obs = time_obs
 
     size_time_cal_coeffs = time_cal_coeffs.shape
     size_cal_coeffs = cal_coeffs.shape
