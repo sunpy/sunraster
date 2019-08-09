@@ -241,8 +241,8 @@ iris_response1 = get_iris_response(time_obs=parse_time('2013-09-03', format='uti
                                    response_version=1)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response1["AREA_SG"], area_sg_load1),
- (iris_response1["AREA_SJI"], area_sji_load1)
+ (iris_response1["AREA_SG"].value, area_sg_load1),
+ (iris_response1["AREA_SJI"].value, area_sji_load1)
  ])
 
 def test_get_iris_response_version1(input_quantity, expected_quantity):
@@ -253,8 +253,8 @@ iris_response2 = get_iris_response(time_obs=parse_time('2013-09-03', format='uti
                                    response_version=2)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response2["AREA_SG"], area_sg_load2),
- (iris_response2["AREA_SJI"], area_sji_load2)
+ (iris_response2["AREA_SG"].value, area_sg_load2),
+ (iris_response2["AREA_SJI"].value, area_sji_load2)
  ])
 
 def test_get_iris_response_version2(input_quantity, expected_quantity):
@@ -265,8 +265,8 @@ iris_response3 = get_iris_response(time_obs=parse_time('2013-09-03', format='uti
                                    response_version=3)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response3["AREA_SG"], area_sg_load3),
- (iris_response3["AREA_SJI"], area_sji_load3)
+ (iris_response3["AREA_SG"].value, area_sg_load3),
+ (iris_response3["AREA_SJI"].value, area_sji_load3)
  ])
 
 def test_get_iris_response_version3(input_quantity, expected_quantity):
@@ -274,11 +274,11 @@ def test_get_iris_response_version3(input_quantity, expected_quantity):
 
 # For testing of version 4
 iris_response4 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
-                                   response_version=4)
+                                   response_version=3)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
- (iris_response4["AREA_SG"], area_sg_load4),
- (iris_response4["AREA_SJI"], area_sji_load4)
+ (iris_response4["AREA_SG"].value, area_sg_load4),
+ (iris_response4["AREA_SJI"].value, area_sji_load4)
  ])
 
 def test_get_iris_response_version4(input_quantity, expected_quantity):
