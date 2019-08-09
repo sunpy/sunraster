@@ -274,7 +274,7 @@ def test_get_iris_response_version3(input_quantity, expected_quantity):
 
 # For testing of version 4
 iris_response4 = get_iris_response(time_obs=parse_time('2013-09-03', format='utime'),
-                                   response_version=3)
+                                   response_version=4)
 @pytest.mark.parametrize("input_quantity, expected_quantity",
 [
  (iris_response4["AREA_SG"].value, area_sg_load4),
@@ -282,7 +282,7 @@ iris_response4 = get_iris_response(time_obs=parse_time('2013-09-03', format='uti
  ])
 
 def test_get_iris_response_version4(input_quantity, expected_quantity):
-    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=6)
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=2)
 
 def test_gaussian1d_on_linear_bg():
     pass
