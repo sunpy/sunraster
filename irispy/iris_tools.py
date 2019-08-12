@@ -932,8 +932,8 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, reponse_version,
 
     """
     # Get effective area and interpolate to observed wavelength grid.
-    eff_area_interp = _get_interpolated_effective_area(time_obs,response_version,
-        detector_type, obs_wavelength=wavelength)
+    eff_area_interp = _get_interpolated_effective_area(time_obs,
+        response_version, detector_type, obs_wavelength=wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
     return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
@@ -968,6 +968,8 @@ def _get_interpolated_effective_area(time_obs, response_version, detector_type, 
     
     """
     # Generalizing to the time of obs.
+    time_obs = time_obs
+    response_version = response_version
     iris_response = get_iris_response(time_obs, response_version,  *args, **kwargs)
     if detector_type == "FUV":
         detector_type_index = 0

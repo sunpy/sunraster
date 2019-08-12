@@ -308,7 +308,7 @@ Axis Types: {axis_types}
            inst_start=instance_start, inst_end=instance_end,
            shape=self.dimensions, axis_types=self.world_axis_physical_types)
 
-    def convert_to(self, new_unit_type):
+    def convert_to(self, new_unit_type, time_obs=None, response_version=4):
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
@@ -330,6 +330,8 @@ Axis Types: {axis_types}
 
         """
         detector_type = iris_tools.get_detector_type(self.meta)
+        time_obs = time_obs
+        response_version = response_version # Should default to latest
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
@@ -344,6 +346,7 @@ Axis Types: {axis_types}
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
+    
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
