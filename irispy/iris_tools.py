@@ -894,8 +894,8 @@ def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
     return new_data_quantities
 
 
-def calculate_photons_per_sec_to_radiance_factor(time_obs, reponse_version, wavelength,
-        detector_type, spectral_dispersion_per_pixel, solid_angle):
+def calculate_photons_per_sec_to_radiance_factor(time_obs, reponse_version,
+        wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
 
@@ -904,7 +904,7 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, reponse_version, wave
     time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
         Observation times of the datapoints.
         Must be in the format of, e.g.,
-        time_obs parse_time('2013-09-03', format='utime'),
+        time_obs=parse_time('2013-09-03', format='utime'),
         which yields 1094169600.0 seconds in value.
         The argument time_obs is ignored for versions 1 and 2.
         

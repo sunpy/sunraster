@@ -349,7 +349,8 @@ Axis Types: {axis_types}
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (self.data * self.unit, self.uncertainty.array * self.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle,
+                     time_obs, response_version, obs_wavelength, detector_type,
+                     spectral_dispersion_per_pixel, solid_angle,
                     undo=True)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
@@ -381,8 +382,8 @@ Axis Types: {axis_types}
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                         (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                         time_obs, obs_wavelength,
-                         detector_type, spectral_dispersion_per_pixel, solid_angle)
+                         time_obs, response_version, obs_wavelength, detector_type,
+                         spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
