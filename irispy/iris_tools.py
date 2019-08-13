@@ -268,13 +268,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                 iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
         else:
             for k in range(n_time_obs):
-                #interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), extrapolate=True)
-                #interpol_nuv = scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), kind='cubic', fill_value='extrapolate')
-                #tck = scipy.interpolate.splrep(iris_response["C_N_LAMBDA"].value, np.squeeze(iris_fit_nuv[k, :]), s=0, k=3)
-                #iris_response["AREA_SG"][1, w_nuv] = scipy.interpolate.splev(iris_response["LAMBDA"][w_nuv].value, tck, ext=0)
-                #iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
-                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), extrapolate=True)
-                iris_response['AREA_SG'][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
+                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]),  extrapolate=True, bc_type="natural", axis=0)
+                iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
 
         # 3. SJI effective areas
         if int(iris_response["VERSION"]) <= 3:  # Meaning for version 3 only

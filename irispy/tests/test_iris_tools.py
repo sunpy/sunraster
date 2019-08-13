@@ -282,7 +282,7 @@ iris_response4 = get_iris_response(time_obs=parse_time('2013-09-03', format='uti
  ])
 
 def test_get_iris_response_version4(input_quantity, expected_quantity):
-    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=2)
+    np_test.assert_almost_equal(input_quantity, expected_quantity, decimal=3)
 
 def test_gaussian1d_on_linear_bg():
     pass
