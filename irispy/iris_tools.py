@@ -131,6 +131,10 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             raise KeyError("Not a valid file path")
 
     # Ensure conflicting kwargs are not set.
+    if pre_launch:
+        pre_launch_set = True
+    else:
+        pre_launch_set = False
     if response_file:
         response_file_set = True
     else:
@@ -139,10 +143,9 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         response_version_set = True
     else:
         response_version_set = False
-    if pre_launch or response_file_set or response_version_set:
-        if pre_launch + response_file_set + response_version_set == 2 or \
-            pre_launch + response_file_set + response_version_set == 3:
-            raise ValueError("One and only one of kwargs pre_launch, response_file "
+    if pre_launch_set + response_file_set + response_version_set == 2 or \
+        pre_launch_set + response_file_set + response_version_set == 3:
+        raise ValueError("One and only one of kwargs pre_launch, response_file "
                          "and response_version must be set.")
     # If pre_launch set, define response_version to 2.
     if pre_launch:
