@@ -151,10 +151,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     if pre_launch:
         response_version = 2
     if response_file_set is False:
-        try:
-            response_version = 4
-        except Exception:
-            raise("Version number not recognized.")
+        response_version = 4
     # If response_file not set, define appropriate response file
     # based on version.
     if not response_file:

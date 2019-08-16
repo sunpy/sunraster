@@ -312,6 +312,8 @@ Axis Types: {axis_types}
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
+        Takes into consideration also the observation time and response version. 
+        
         The presence or absence of the exposure time correction is
         preserved in the conversions.
 
@@ -322,6 +324,17 @@ Axis Types: {axis_types}
            "DN": Relevant IRIS data number based on detector type.
            "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
+           
+        time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+           Observation times of the datapoints.
+           Must be in the format of, e.g.,
+           time_obs=parse_time('2013-09-03', format='utime'),
+           which yields 1094169600.0 seconds in value.
+           The argument time_obs is ignored for versions 1 and 2.
+        
+        response_version: `int`
+            Version number of effective area file to be used. Cannot be set
+            simultaneously with response_file or pre_launch kwarg. Default=4.
 
         Returns
         -------
