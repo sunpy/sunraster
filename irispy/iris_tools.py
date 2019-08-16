@@ -84,18 +84,22 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     ----------
     time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
         Observation times of the datapoints.
-        Must be in the format of, e.g., time_obs parse_time('2013-09-03', format='utime'),
+        Must be in the format of, e.g.,
+        time_obs=parse_time('2013-09-03', format='utime'),
         which yields 1094169600.0 seconds in value.
         The argument time_obs is ignored for versions 1 and 2.
+        
     pre_launch: `bool`
         Equivalent to setting response_version=2.  Cannot be set
-        simultaneously with response_file kwarg. Default=False
+        simultaneously with response_file kwarg. Default=False.
+        
     response_file: `int`
         Version number of effective area file to be used.  Cannot be set
-        simultaneously with pre_launch kwarg.  Default=latest
+        simultaneously with pre_launch kwarg.  Default=latest.
+        
     response_version : `int`
         Version number of effective area file to be used. Cannot be set
-        simultaneously with response_file or pre_launch kwarg. Default=latest
+        simultaneously with response_file or pre_launch kwarg. Default=latest.
 
     Returns
     -------
@@ -219,8 +223,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         # Change DATE tag in data with version < 2 to VERSION_DATE to
         # be consistent with more recent versions.
         iris_response["VERSION_DATE"] = Time(datetime.datetime(int(iris_response["DATE"][0:4]),
-                                                          int(iris_response["DATE"][4:6]),
-                                                          int(iris_response["DATE"][6:8])))
+                int(iris_response["DATE"][4:6]),
+                int(iris_response["DATE"][6:8])))
         del(iris_response["DATE"])
 
     if int(iris_response["VERSION"]) > 2 and time_obs is not None:
@@ -242,7 +246,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             iris_fit_fuv[:, j] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
         # Interpolate onto lambda grid, separately for each of the two FUV CCD's.
         for j in range(2):
-            w_fuv = np.logical_and(iris_response["LAMBDA"]/u.nm >= lambran_fuv[j, 0], iris_response["LAMBDA"]/u.nm  <= lambran_fuv[j, 1])
+            w_fuv = np.logical_and(iris_response["LAMBDA"].value >= lambran_fuv[j, 0], iris_response["LAMBDA"].value  <= lambran_fuv[j, 1])
             for k in range(n_time_obs):
                 interpol_fuv = scipy.interpolate.interp1d(iris_response["C_F_LAMBDA"][j:j+2], np.squeeze(iris_fit_fuv[k, j:j+2]), fill_value='extrapolate')
                 iris_response["AREA_SG"][0, w_fuv] = interpol_fuv(iris_response["LAMBDA"][w_fuv])
@@ -256,16 +260,17 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         detector_nuv = "NUV"
         for j in range(shp_nuv[0]):
             iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
-            # Interpolate onto lambda grid
-            w_nuv = np.where(np.logical_and(iris_response["LAMBDA"]/u.nm >= lambran_nuv[0], iris_response["LAMBDA"]/u.nm <= lambran_nuv[1]))
+        # Interpolate onto lambda grid
+        w_nuv = np.where(np.logical_and(iris_response["LAMBDA"].value >= lambran_nuv[0], iris_response["LAMBDA"].value <= lambran_nuv[1]))
         if int(iris_response["VERSION"]) <= 3:
             for k in range(n_time_obs):
                 interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
                 iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
         else:
             for k in range(n_time_obs):
-                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), extrapolate=True)
-        
+                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]),  extrapolate=True, bc_type="natural", axis=0)
+                iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
+
         # 3. SJI effective areas
         if int(iris_response["VERSION"]) <= 3:  # Meaning for version 3 only
             shp_sji = iris_response["COEFFS_SJI"].shape
@@ -329,7 +334,12 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 for k in range(n_time_obs):
                     iris_response["AREA_SJI"][j] = iris_response["AREA_SJI"][j] * iris_fit_sji[k]
-                
+    
+    if not isinstance(iris_response["AREA_SG"], Quantity):
+        iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
+    if not isinstance(iris_response["AREA_SJI"], Quantity):
+        iris_response["AREA_SJI"] = Quantity(iris_response["AREA_SJI"], unit=u.cm**2)
+
     return iris_response
 
 
@@ -347,8 +357,9 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 
     Parameters
     ----------
-    time_obs: a numpy array of floats
-    - Times of datapoints.
+    time_obs: a `numpy.array`
+        A set of observation times as `astropy.time.Time` objects contained
+        in a numpy array.
 
     time_cal_coeffs: a numpy array of floats (with exactly two columns)
     - Start and end times of intervals of constant ``cal_coeffs[i]``.
@@ -363,8 +374,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     times ``time_obs``.
 
     """
-    # Convert the observation time into an astropy ``astropy.time.Time`` object
-    time_obs = np.array([parse_time(time_obs, format = 'utime') for t in time_obs])
+    time_obs = np.array([parse_time(time_obs, format='utime')])
 
     size_time_cal_coeffs = time_cal_coeffs.shape
     size_cal_coeffs = cal_coeffs.shape
