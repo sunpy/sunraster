@@ -263,10 +263,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         detector_nuv = "NUV"
         for j in range(shp_nuv[0]):
             iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
-
         # Interpolate onto lambda grid
         w_nuv = np.where(np.logical_and(iris_response["LAMBDA"].value >= lambran_nuv[0], iris_response["LAMBDA"].value <= lambran_nuv[1]))
-
         if int(iris_response["VERSION"]) <= 3:
             for k in range(n_time_obs):
                 interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
