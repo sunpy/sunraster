@@ -139,14 +139,19 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         response_version_set = True
     else:
         response_version_set = False
-        if response_file_set is False:
-            response_version = 4
-    if response_file_set+pre_launch+response_version_set > 1:
-        raise ValueError("One and only one of kwargs pre_launch, response_file "
+    if pre_launch or response_file_set or response_version_set:
+        if pre_launch + response_file_set + response_version_set == 2 or \
+            pre_launch + response_file_set + response_version_set == 3:
+            raise ValueError("One and only one of kwargs pre_launch, response_file "
                          "and response_version must be set.")
     # If pre_launch set, define response_version to 2.
     if pre_launch:
         response_version = 2
+    if response_file_set is False:
+        try:
+            response_version = 4
+        except Exception:
+            raise("Version number not recognized.")
     # If response_file not set, define appropriate response file
     # based on version.
     if not response_file:
@@ -259,8 +264,10 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         detector_nuv = "NUV"
         for j in range(shp_nuv[0]):
             iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
+
         # Interpolate onto lambda grid
         w_nuv = np.where(np.logical_and(iris_response["LAMBDA"].value >= lambran_nuv[0], iris_response["LAMBDA"].value <= lambran_nuv[1]))
+
         if int(iris_response["VERSION"]) <= 3:
             for k in range(n_time_obs):
                 interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
@@ -333,7 +340,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                 iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 for k in range(n_time_obs):
                     iris_response["AREA_SJI"][j] = iris_response["AREA_SJI"][j] * iris_fit_sji[k]
-    
+
     if not isinstance(iris_response["AREA_SG"], Quantity):
         iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
     if not isinstance(iris_response["AREA_SJI"], Quantity):
@@ -894,7 +901,7 @@ def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
     return new_data_quantities
 
 
-def calculate_photons_per_sec_to_radiance_factor(time_obs, reponse_version,
+def calculate_photons_per_sec_to_radiance_factor(time_obs, response_version,
         wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
