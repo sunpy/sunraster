@@ -85,7 +85,11 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
         Observation times of the datapoints.
         Must be in the format of, e.g.,
+<<<<<<< HEAD
         time_obs=parse_time('2013-09-03', format='utime'),
+=======
+        time_obs parse_time('2013-09-03', format='utime'),
+>>>>>>> bcdfe6a... Update intensity methods between instrument and physical units
         which yields 1094169600.0 seconds in value.
         The argument time_obs is ignored for versions 1 and 2.
         
@@ -99,7 +103,11 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         
     response_version : `int`
         Version number of effective area file to be used. Cannot be set
+<<<<<<< HEAD
         simultaneously with response_file or pre_launch kwarg. Default=latest.
+=======
+        simultaneously with response_file or pre_launch kwarg. Default=4
+>>>>>>> bcdfe6a... Update intensity methods between instrument and physical units
 
     Returns
     -------
@@ -444,9 +452,7 @@ def _gaussian1d_on_linear_bg(x, amplitude=None, mean=None, standard_deviation=No
     return amplitude * np.exp(-((x - mean) / standard_deviation) ** 2) + constant_term + linear_term * x
 
 
-def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_pixel_range=None,
-                                            spline_smoothing=False, fit_individual_profiles=False,
-                                            spacecraft_velocity=None, orbital_phase=None, roll_angle=None):
+def _calculate_orbital_wavelength_variation(data_array, date_data_created, slit_pixel_range=None, spline_smoothing=False, fit_individual_profiles=False, spacecraft_velocity=None, orbital_phase=None, roll_angle=None):
     """Calculates orbital corrections of spectral line positions using level 2 files.
 
     For data generated from the April 2014 pipeline, thermal and spacecraft velocity components
@@ -811,9 +817,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit, exposure_tim
     return new_data_arrays, new_unit
 
 
-def convert_or_undo_photons_per_sec_to_radiance(
-        data_quantities, obs_wavelength, detector_type,
-        spectral_dispersion_per_pixel, solid_angle, undo=False):
+def convert_or_undo_photons_per_sec_to_radiance(data_quantities, time_obs, pre_launch, response_version, obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle, undo=False):
     """
     Converts data quantities from counts/s to radiance (or vice versa).
 
@@ -823,6 +827,21 @@ def convert_or_undo_photons_per_sec_to_radiance(
         Quantities to be converted.  Must have units of counts/s or
         radiance equivalent counts, e.g. erg / cm**2 / s / sr / Angstrom.
 
+    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+        Observation times of the datapoints.
+        Must be in the format of, e.g.,
+        time_obs parse_time('2013-09-03', format='utime'),
+        which yields 1094169600.0 seconds in value.
+        The argument time_obs is ignored for versions 1 and 2.
+        
+    pre_launch: `bool`
+        Equivalent to setting response_version=2.  Cannot be set
+        simultaneously with response_file kwarg. Default=False
+
+    response_version : `int`
+        Version number of effective area file to be used. Cannot be set
+        simultaneously with response_file or pre_launch kwarg. Default=4
+    
     obs_wavelength: `astropy.units.Quantity`
         Wavelength at each element along spectral axis of data quantities.
 
@@ -862,8 +881,7 @@ def convert_or_undo_photons_per_sec_to_radiance(
                     "Invalid unit provided.  As kwarg undo=False, "
                     "unit must be equivalent to {0}.  Error found for {1}th element "
                     "of data_quantities. Unit: {2}".format(u.photon/u.s, i, data.unit))
-    photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(
-        obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+    photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(time_obs, pre_launch, response_version, obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
     # Change shape of arrays so they are compatible for broadcasting
     # with data and uncertainty arrays.
     photons_per_sec_to_radiance_factor = \
@@ -878,12 +896,27 @@ def convert_or_undo_photons_per_sec_to_radiance(
     return new_data_quantities
 
 
-def calculate_photons_per_sec_to_radiance_factor(time_obs, time_cal_coeffs, cal_coeffs, wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
+def calculate_photons_per_sec_to_radiance_factor(time_obs, pre_launch, response_version, wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for given wavelengths.
 
     Parameters
     ----------
+    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+        Observation times of the datapoints.
+        Must be in the format of, e.g.,
+        time_obs parse_time('2013-09-03', format='utime'),
+        which yields 1094169600.0 seconds in value.
+        The argument time_obs is ignored for versions 1 and 2.
+    
+    pre_launch: `bool`
+        Equivalent to setting response_version=2.  Cannot be set
+        simultaneously with response_file kwarg. Default=False
+    
+    response_version : `int`
+        Version number of effective area file to be used. Cannot be set
+        simultaneously with response_file or pre_launch kwarg. Default=4
+    
     wavelength: `astropy.units.Quantity`
         Wavelengths for which counts/s-to-radiance factor is to be calculated
 
@@ -903,23 +936,32 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, time_cal_coeffs, cal_
         for input wavelengths.
 
     """
-    # Get best fit by the method of least squares
-    iris_fit = fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs)
     # Get effective area and interpolate to observed wavelength grid.
-    eff_area_interp = _get_interpolated_effective_area(iris_fit, detector_type, wavelength)
+    eff_area_interp = _get_interpolated_effective_area(time_obs, pre_launch, response_version, detector_type, obs_wavelength=wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
     return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
 
-def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength, *args, **kwargs):
+def _get_interpolated_effective_area(time_obs, pre_launch, response_version, detector_type, obs_wavelength, *args, **kwargs):
     """
     To compute the interpolated time-dependent effective area.
     
     Parameters
     ----------
-    iris_fit: `numpy.array`
-        The best fit for the iris response obtained using the method of least
-        sqaures based on the observation times and input coefficients.
+    time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+        Observation times of the datapoints.
+        Must be in the format of, e.g.,
+        time_obs parse_time('2013-09-03', format='utime'),
+        which yields 1094169600.0 seconds in value.
+        The argument time_obs is ignored for versions 1 and 2.
+    
+    pre_launch: `bool`
+        Equivalent to setting response_version=2.  Cannot be set
+        simultaneously with response_file kwarg. Default=False
+    
+    response_version : `int`
+        Version number of effective area file to be used. Cannot be set
+        simultaneously with response_file or pre_launch kwarg. Default=4
     
     detector_type: `str`
         Detector type: 'FUV' or 'NUV'.
@@ -933,8 +975,8 @@ def _get_interpolated_effective_area(iris_fit, detector_type, obs_wavelength, *a
         The effective area(s) determined by interpolation with a spline fit.
     
     """
-    # This needs to be generalized to the time of OBS once that functionality is written!
-    iris_response = get_iris_response(**kwargs)
+    # Generalizing to the time of obs.
+    iris_response = get_iris_response(time_obs, pre_launch, response_version, *args, **kwargs)
     if detector_type == "FUV":
         detector_type_index = 0
     elif detector_type == "NUV":

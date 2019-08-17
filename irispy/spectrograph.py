@@ -333,8 +333,7 @@ Axis Types: {axis_types}
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
-            spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \
-                                            self.wcs.wcs.cunit[spectral_wcs_index]
+            spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
@@ -379,9 +378,7 @@ Axis Types: {axis_types}
                 except ValueError(iris_tools.APPLY_EXPOSURE_TIME_ERROR):
                     pass
                 # Convert to radiance units.
-                new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
-                    (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+                new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance((cube.data*cube.unit, cube.uncertainty.array*cube.unit), time_obs, pre_launch, response_version, obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
