@@ -308,10 +308,12 @@ Axis Types: {axis_types}
            inst_start=instance_start, inst_end=instance_end,
            shape=self.dimensions, axis_types=self.world_axis_physical_types)
 
-    def convert_to(self, new_unit_type):
+    def convert_to(self, new_unit_type, time_obs=None, response_version=4):
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
+        Takes into consideration also the observation time and response version. 
+        
         The presence or absence of the exposure time correction is
         preserved in the conversions.
 
@@ -322,6 +324,17 @@ Axis Types: {axis_types}
            "DN": Relevant IRIS data number based on detector type.
            "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
+           
+        time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+           Observation times of the datapoints.
+           Must be in the format of, e.g.,
+           time_obs=parse_time('2013-09-03', format='utime'),
+           which yields 1094169600.0 seconds in value.
+           The argument time_obs is ignored for versions 1 and 2.
+        
+        response_version: `int`
+            Version number of effective area file to be used. Cannot be set
+            simultaneously with response_file or pre_launch kwarg. Default=4.
 
         Returns
         -------
@@ -330,11 +343,13 @@ Axis Types: {axis_types}
 
         """
         detector_type = iris_tools.get_detector_type(self.meta)
+        time_obs = time_obs
+        response_version = response_version # Should default to latest
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
             spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \
-                                            self.wcs.wcs.cunit[spectral_wcs_index]
+                self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
@@ -344,12 +359,14 @@ Axis Types: {axis_types}
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
+    
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (self.data * self.unit, self.uncertainty.array * self.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle,
+                     time_obs, response_version, obs_wavelength, detector_type,
+                     spectral_dispersion_per_pixel, solid_angle,
                     undo=True)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
@@ -380,8 +397,9 @@ Axis Types: {axis_types}
                     pass
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
-                    (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+                        (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
+                         time_obs, response_version, obs_wavelength, detector_type,
+                         spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
