@@ -68,9 +68,9 @@ scaled_F = False
 cube = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                    extra_coords=extra_coords, scaled=scaled_T)
 cube_2D = IRISMapCube(data_2D, wcs_2D, uncertainty=uncertainty_2D, mask=mask_cube, unit=unit,
-                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, False, True])
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axes=[False, False, True])
 cube_1D = IRISMapCube(data_1D, wcs_1D, uncertainty=uncertainty_1D, mask=mask_cube, unit=unit,
-                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, True, True])
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axes=[False, True, True])
 cube_F = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                      extra_coords=extra_coords, scaled=scaled_F)
 cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty_4D, mask=mask_4D, unit=unit,
