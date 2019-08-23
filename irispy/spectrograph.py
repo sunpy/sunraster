@@ -447,7 +447,7 @@ Axis Types: {axis_types}
             mask=self.mask, missing_axis=self.missing_axis)
 
 
-def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=True):
+def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):
     """
     Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph instance.
 
