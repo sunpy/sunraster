@@ -149,7 +149,7 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     # If pre_launch set, define response_version to 2.
     if pre_launch:
         response_version = 2
-    if response_file_set is False:
+    if (response_file_set is False) and (response_version_set is False):
         response_version = 4
     # If response_file not set, define appropriate response file
     # based on version.
