@@ -312,8 +312,8 @@ Axis Types: {axis_types}
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
-        Takes into consideration also the observation time and response version. 
-        
+        Takes into consideration also the observation time and response version.
+
         The presence or absence of the exposure time correction is
         preserved in the conversions.
 
@@ -324,14 +324,14 @@ Axis Types: {axis_types}
            "DN": Relevant IRIS data number based on detector type.
            "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
-           
+
         time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
            Observation times of the datapoints.
            Must be in the format of, e.g.,
            time_obs=parse_time('2013-09-03', format='utime'),
            which yields 1094169600.0 seconds in value.
            The argument time_obs is ignored for versions 1 and 2.
-        
+
         response_version: `int`
             Version number of effective area file to be used. Cannot be set
             simultaneously with response_file or pre_launch kwarg. Default=4.
@@ -359,7 +359,7 @@ Axis Types: {axis_types}
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
-    
+
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
@@ -486,8 +486,11 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
     """
     if type(filenames) is str:
         filenames = [filenames]
+    if isinstance(filenames, list):
+        raise TypeError("filenames must be a string or list of strings giving"
+                        " the filenames to read.")
     if not filenames:
-        return
+        raise ValueError("No filenames provided.")
     for f, filename in enumerate(filenames):
         hdulist = fits.open(filename)
         hdulist.verify('fix')
