@@ -264,7 +264,7 @@ class IRISSpectrogramCube(NDCube):
     """
 
     def __init__(self, data, wcs, uncertainty, unit, meta, extra_coords,
-                 mask=None, copy=False, missing_axis=None):
+                 mask=None, copy=False, missing_axes=None):
         # Check required meta data is provided.
         required_meta_keys = ["detector type"]
         if not all([key in list(meta) for key in required_meta_keys]):
@@ -278,20 +278,20 @@ class IRISSpectrogramCube(NDCube):
         # Initialize IRISSpectrogramCube.
         super(IRISSpectrogramCube, self).__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-            unit=unit, extra_coords=extra_coords, copy=copy, missing_axis=missing_axis)
+            unit=unit, extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
     def __getitem__(self, item):
         result = super(IRISSpectrogramCube, self).__getitem__(item)
         return IRISSpectrogramCube(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axis),
-            mask=result.mask, missing_axis=result.missing_axis)
+            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
+            mask=result.mask, missing_axes=result.missing_axes)
 
     def __repr__(self):
         if self.extra_coords["time"]["axis"] is None:
             axis_missing = True
         else:
-            axis_missing = self.missing_axis[::-1][self.extra_coords["time"]["axis"]]
+            axis_missing = self.missing_axes[::-1][self.extra_coords["time"]["axis"]]
         if axis_missing is True:
             instance_start = instance_end = self.extra_coords["time"]["value"]
         else:
@@ -308,10 +308,12 @@ Axis Types: {axis_types}
            inst_start=instance_start, inst_end=instance_end,
            shape=self.dimensions, axis_types=self.world_axis_physical_types)
 
-    def convert_to(self, new_unit_type):
+    def convert_to(self, new_unit_type, time_obs=None, response_version=4):
         """
         Converts data, unit and uncertainty attributes to new unit type.
 
+        Takes into consideration also the observation time and response version. 
+        
         The presence or absence of the exposure time correction is
         preserved in the conversions.
 
@@ -322,6 +324,17 @@ Axis Types: {axis_types}
            "DN": Relevant IRIS data number based on detector type.
            "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
+           
+        time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+           Observation times of the datapoints.
+           Must be in the format of, e.g.,
+           time_obs=parse_time('2013-09-03', format='utime'),
+           which yields 1094169600.0 seconds in value.
+           The argument time_obs is ignored for versions 1 and 2.
+        
+        response_version: `int`
+            Version number of effective area file to be used. Cannot be set
+            simultaneously with response_file or pre_launch kwarg. Default=4.
 
         Returns
         -------
@@ -330,11 +343,13 @@ Axis Types: {axis_types}
 
         """
         detector_type = iris_tools.get_detector_type(self.meta)
+        time_obs = time_obs
+        response_version = response_version # Should default to latest
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
             spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \
-                                            self.wcs.wcs.cunit[spectral_wcs_index]
+                self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
@@ -344,20 +359,22 @@ Axis Types: {axis_types}
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
+    
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (self.data * self.unit, self.uncertainty.array * self.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle,
+                     time_obs, response_version, obs_wavelength, detector_type,
+                     spectral_dispersion_per_pixel, solid_angle,
                     undo=True)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogramCube(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-                    mask=self.mask, missing_axis=self.missing_axis)
+                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+                    mask=self.mask, missing_axes=self.missing_axes)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
             else:
@@ -380,8 +397,9 @@ Axis Types: {axis_types}
                     pass
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
-                    (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+                        (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
+                         time_obs, response_version, obs_wavelength, detector_type,
+                         spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
@@ -389,8 +407,8 @@ Axis Types: {axis_types}
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogramCube(
             new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -443,8 +461,8 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogramCube with correction applied/undone.
         return IRISSpectrogramCube(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
 
 def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):

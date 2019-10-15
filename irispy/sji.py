@@ -83,7 +83,7 @@ class IRISMapCube(NDCube):
     """
 
     def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
-                 mask=None, extra_coords=None, copy=False, missing_axis=None,
+                 mask=None, extra_coords=None, copy=False, missing_axes=None,
                  scaled=None):
         """
         Initialization of Slit Jaw Imager
@@ -96,7 +96,7 @@ class IRISMapCube(NDCube):
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
-                         copy=copy, missing_axis=missing_axis)
+                         copy=copy, missing_axes=missing_axes)
 
     def __repr__(self):
         # Conversion of the start date of OBS
@@ -205,10 +205,10 @@ class IRISMapCube(NDCube):
         # Return new instance of IRISMapCube with correction applied/undone.
         return IRISMapCube(
             data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
-            unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+            unit=new_unit, meta=self.meta, mask=self.mask, missing_axes=self.missing_axes,
             scaled=self.scaled,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
-                                                                   self.missing_axis))
+                                                                   self.missing_axes))
 
     def apply_dust_mask(self, undo=False):
         """
