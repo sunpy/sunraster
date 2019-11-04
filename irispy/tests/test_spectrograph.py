@@ -4,12 +4,12 @@
 import os.path
 import pytest
 import copy
-import datetime
 
 import numpy as np
 import astropy.wcs as wcs
 from astropy.io import fits
 import astropy.units as u
+from astropy.time import Time, TimeDelta
 from ndcube.utils.wcs import WCS
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
@@ -50,13 +50,12 @@ meta0 = {"detector type": "FUV", "OBSID": 1, "spectral window": "C II 1336"}
 
 # Define sample extra coords
 extra_coords0 = [("time", 0,
-                  np.array([datetime.datetime(2017, 1, 1)+datetime.timedelta(seconds=i)
-                             for i in range(time_dim_len)])),
-                ("exposure time", 0, EXPOSURE_TIME)]
+                  Time('2017-01-01') + TimeDelta(np.arange(time_dim_len), format='sec')),
+                 ("exposure time", 0, EXPOSURE_TIME)]
 extra_coords1 = [("time", 0,
-                  np.array([datetime.datetime(2017, 1, 1)+datetime.timedelta(seconds=i)
-                             for i in range(time_dim_len, time_dim_len*2)])),
-                ("exposure time", 0, EXPOSURE_TIME)]
+                  (Time('2017-01-01') +
+                   TimeDelta(np.arange(time_dim_len, time_dim_len*2), format='sec'))),
+                 ("exposure time", 0, EXPOSURE_TIME)]
 
 # Define IRISSpectrogramCubes in various units.
 spectrogram_DN0 = IRISSpectrogramCube(
