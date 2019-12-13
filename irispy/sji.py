@@ -455,7 +455,7 @@ Axis Types:\t\t {axis_types}
             cube.apply_dust_mask(undo=undo)
 
 
-def read_iris_sji_level2_fits(filenames, memmap=False):
+def read_iris_sji_level2_fits(filenames, uncertainty=True, memmap=False):
     """
     Read IRIS level 2 SJI FITS from an OBS into an IRISMapCube instance.
 
@@ -490,7 +490,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
             mask = None
             scaled = False
             unit = iris_tools.DN_UNIT["SJI_UNSCALED"]
-            uncertainty = None
+            out_uncertainty = None
         elif not memmap:
             data_nan_masked[data == BAD_PIXEL_VALUE_SCALED] = np.nan
             mask = data_nan_masked == BAD_PIXEL_VALUE_SCALED
@@ -499,9 +499,12 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
             unit = iris_tools.DN_UNIT["SJI"]
             readout_noise = iris_tools.READOUT_NOISE["SJI"]
             # Derive uncertainty of data for NDCube from fits file.
-            uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
-                                             + readout_noise.to(u.photon).value**2),
-                                     unit=u.photon).to(unit).value
+            if uncertainty:
+                out_uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+                                                      + readout_noise.to(u.photon).value**2),
+                                             unit=u.photon).to(unit).value
+            else:
+                out_uncertainty = None
         # Derive exposure time from detector.
         exposure_times = hdulist[1].data[:, hdulist[1].header["EXPTIMES"]]
         # Derive extra coordinates for NDCube from fits file.
@@ -540,7 +543,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                 'FOVY': hdulist[0].header['FOVY'] * u.arcsec,
                 'XCEN': hdulist[0].header['XCEN'] * u.arcsec,
                 'YCEN': hdulist[0].header['YCEN'] * u.arcsec}
-        list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
+        list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=out_uncertainty,
                                          unit=unit, meta=meta, mask=mask,
                                          extra_coords=extra_coords, scaled=scaled))
         hdulist.close()
