@@ -465,9 +465,17 @@ def read_iris_sji_level2_fits(filenames, uncertainty=True, memmap=False):
         Filename or filenames to be read.  They must all be associated with the same
         OBS number.
 
+    uncertainty : `bool`
+        Default value is `True`.
+        If `True`, will compute the uncertainty for the data (slower and
+        uses more memory). If `memmap=True`, the uncertainty is never computed.
+
     memmap : `bool`
         Default value is `False`.
-        If the user wants to use it, he has to set `True`
+        If `True`, will not load arrays into memory, and will only read from
+        the file into memory when needed. This option is faster and uses a
+        lot less memory. However, because FITS scaling is not done on-the-fly,
+        the data units will be unscaled, not the usual data numbers (DN).
 
     Returns
     -------

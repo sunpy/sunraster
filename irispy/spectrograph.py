@@ -486,6 +486,18 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
         Spectral windows to extract from files.  Default=None, implies, extract all
         spectral windows.
 
+    uncertainty : `bool`
+        Default value is `True`.
+        If `True`, will compute the uncertainty for the data (slower and
+        uses more memory). If `memmap=True`, the uncertainty is never computed.
+
+    memmap : `bool`
+        Default value is `False`.
+        If `True`, will not load arrays into memory, and will only read from
+        the file into memory when needed. This option is faster and uses a
+        lot less memory. However, because FITS scaling is not done on-the-fly,
+        the data units will be unscaled, not the usual data numbers (DN).
+
     Returns
     -------
     result: `irispy.spectrograph.IRISSpectrograph`
