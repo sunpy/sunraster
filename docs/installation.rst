@@ -2,12 +2,12 @@
 Installation
 ============
 
-IRISpy requires Python 3.5+, SunPy 0.9+, ndcube 1.0.1+, astropy and
+SlitSpectrographPy requires Python 3.5+, SunPy 0.9+, ndcube 1.0.1+, astropy and
 matplotlib.
 
 .. warning::
     
-    IRISPy is still under heavy development and has not yet seen its first
+    SlitSpectrographPy is still under heavy development and has not yet seen its first
     release.  The API can change at any time and so should not be
     relied upon.  However, we are striving towards releasing a stable
     version.  If you would like to help by providing user feedback,
@@ -20,11 +20,11 @@ Installing the Development Version
 ----------------------------------
 
 This section outlines how to install the development version of
-IRISpy. The two primary packages on which IRISpy relies are `ndcube`_
+SlitSpectrographPy. The two primary packages on which SlitSpectrographPy relies are `ndcube`_
 and `SunPy`_. Both of these have stable released versions that work
-with IRISpy. However, some developers may want to use the latest
-updates of these packages in their work on IRISpy. Below we will first
-outline how to install IRISpy with its stable dependencies, and then
+with SlitSpectrographPy. However, some developers may want to use the latest
+updates of these packages in their work on SlitSpectrographPy. Below we will first
+outline how to install SlitSpectrographPy with its stable dependencies, and then
 with the development versions of ndcube and SunPy.
 
 To install these packages we will use a combination of conda, conda
@@ -39,57 +39,57 @@ Stable Dependencies Install
 Create Conda Environment
 """"""""""""""""""""""""
 The first step is to create a conda environment (let's call it
-``irispy-dev``) in which to install the development version of IRISpy.
+``slitspectrographpy-dev``) in which to install the development version of SlitSpectrographPy.
 This will allow you to keep your root environment clean of development
 packages.  From the command line, type:
 
 .. code-block:: console
 
 		conda config --append channels conda-forge
-		conda create -n irispy-dev sunpy hypothesis pytest-mock pip sphinx coverage ipython jupyter ndcube
+		conda create -n slitspectrographpy-dev sunpy hypothesis pytest-mock pip sphinx coverage ipython jupyter ndcube
 
-The first line opens a conda channel so that IRISpy and its
+The first line opens a conda channel so that SlitSpectrographPy and its
 dependencies can be installed. The second line creates the
-``irispy-dev`` conda environment with a list of dependencies. Next,
+``slitspectrographpy-dev`` conda environment with a list of dependencies. Next,
 you must activate that environment, i.e. switch into it.  Windows
 users should type:
 
 .. code-block:: console
 
-		activate irispy-dev
+		activate slitspectrographpy-dev
 
 while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		source activate irispy-dev
+		source activate slitspectrographpy-dev
 
-Clone IRISpy Repository
+Clone SlitSpectrographPy Repository
 """""""""""""""""""""""
 
-The second step is to clone the `IRISpy repository`_ from `GitHub`_ into
-a directory called ``irispy-git``. From the directory in which you
-want ``irispy-git`` to reside, type:
+The second step is to clone the `SlitSpectrographPy repository`_ from `GitHub`_ into
+a directory called ``slitspectrographpy-git``. From the directory in which you
+want ``slitspectrographpy-git`` to reside, type:
 
 .. code-block:: console
 
-		git clone https://github.com/sunpy/irispy.git irispy-git
+		git clone https://github.com/sunpy/slitspectrographpy.git slitspectrographpy-git
 
-Install IRISpy
+Install SlitSpectrographPy
 """"""""""""""
-Finally, we can install the IRISpy development version.
+Finally, we can install the SlitSpectrographPy development version.
 
 .. code-block:: console
 
-		cd irispy-git
+		cd slitspectrographpy-git
 		pip install -e .
 
-You should now be ready to use IRISpy. To check it's installed, open
+You should now be ready to use SlitSpectrographPy. To check it's installed, open
 an Python/IPython/Jupyter Notebook session from any directory and try:
 
 .. code-block:: python
 
-		import irispy
+		import slitspectrographpy
 
 To make sure you have the latest updates, regularly do
 
@@ -103,30 +103,30 @@ Development Dependencies Install
 Create Conda Environment
 """"""""""""""""""""""""
 The first step is to create a conda environment (let's call it
-``irispy-dev``) in which to install the development version of IRISpy.
+``slitspectrographpy-dev``) in which to install the development version of SlitSpectrographPy.
 This will allow you to keep your root environment clean of development
 packages.  From the command line, type:
 
 .. code-block:: console
 
 		conda config --append channels conda-forge
-		conda create -n irispy-dev sunpy hypothesis pytest-mock pip sphinx coverage ipython jupyter ndcube
+		conda create -n slitspectrographpy-dev sunpy hypothesis pytest-mock pip sphinx coverage ipython jupyter ndcube
 
-The first line opens a conda channel so that IRISpy and its
+The first line opens a conda channel so that SlitSpectrographPy and its
 dependencies can be installed. The second line creates the
-``irispy-dev`` conda environment with a list of dependencies. Next,
+``slitspectrographpy-dev`` conda environment with a list of dependencies. Next,
 you must activate that environment, i.e. switch into it.  Windows
 users should type:
 
 .. code-block:: console
 
-		activate irispy-dev
+		activate slitspectrographpy-dev
 
 while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		source activate irispy-dev
+		source activate slitspectrographpy-dev
 
 Remove Stable Versions of SunPy and ndcube
 """"""""""""""""""""""""""""""""""""""""""
@@ -135,7 +135,7 @@ We installed the stable versions of SunPy and ndcube above in
 order to get get all their dependencies. Now that is done, the second
 step is to remove the stable versions of SunPy and ndcube, leaving the
 dependencies intact.
-CAUTION: Make sure you are in (have activated) the ``irispy-dev``
+CAUTION: Make sure you are in (have activated) the ``slitspectrographpy-dev``
 conda environment otherwise the next step will remove SunPy and ndcube
 from the wrong conda environment. From the command line in any
 directory, type:
@@ -147,13 +147,13 @@ directory, type:
 
 .. _clone_repos:
 
-Clone Development Versions of SunPy, ndcube and IRISpy
+Clone Development Versions of SunPy, ndcube and SlitSpectrographPy
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Let's make a directory and then clone (download) the
-development versions of `SunPy,`_ `ndcube,`_ and `IRISpy,`_ from
+development versions of `SunPy,`_ `ndcube,`_ and `SlitSpectrographPy,`_ from
 `GitHub`_ into subdirectories.  Let's call them ``sunpy-git``,
-``ndcube-git``, ``irispy-git``.  On the command line from the
+``ndcube-git``, ``slitspectrographpy-git``.  On the command line from the
 directory in which you want your repos to live, type:
 
 .. code-block:: console
@@ -162,7 +162,7 @@ directory in which you want your repos to live, type:
 		cd github_repos
 		git clone https://github.com/sunpy/sunpy.git sunpy-git
 		git clone https://github.com/sunpy/ndcube.git ndcube-git
-		git clone https://github.com/sunpy/irispy.git irispy-git
+		git clone https://github.com/sunpy/slitspectrographpy.git slitspectrographpy-git
 
 If you already have these repos cloned, make sure they are up-to-date
 but by pulling the latest version of the master branches. For example,
@@ -175,14 +175,14 @@ for sunpy, do:
 
 assuming that ``origin`` is the remote pointing to the main sunpy
 repo, i.e. https://github.com/sunpy/sunpy.git. The same should be done
-for ndcube and irispy. To determine the correct remote name , ``cd``
+for ndcube and slitspectrographpy. To determine the correct remote name , ``cd``
 into the repo's directory and do
 
 .. code-block:: console
 
 		git remote -v
 
-Install the Development Versions of SunPy, ndcube and IRISpy
+Install the Development Versions of SunPy, ndcube and SlitSpectrographPy
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: console
@@ -191,25 +191,25 @@ Install the Development Versions of SunPy, ndcube and IRISpy
 		pip install -e .
 		cd ~/github_repos/ndcube-git
 		pip install -e .
-		cd ~/github_repos/irispy-got
+		cd ~/github_repos/slitspectrographpy-got
 		pip install -e .
 
-You should now be ready to use IRISpy. To check it's installed, open
+You should now be ready to use SlitSpectrographPy. To check it's installed, open
 an Python/IPython/Jupyter Notebook session from any directory and try:
 
 .. code-block:: python
 
-		import irispy
+		import slitspectrographpy
 
-N.B. To ensure you continue to have the latest version of IRISpy, be
-sure to regularly update the sunpy, ndcube and irispy git repos as
+N.B. To ensure you continue to have the latest version of SlitSpectrographPy, be
+sure to regularly update the sunpy, ndcube and slitspectrographpy git repos as
 discussed at the end of :ref:`clone_repos`.
 
 .. _ndcube: http://docs.sunpy.org/projects/ndcube/en/stable/
 .. _SunPy: http://sunpy.org
 .. _anaconda website: https://docs.anaconda.com/anaconda/install.html
-.. _IRISpy repository: https://github.com/sunpy/irispy
+.. _SlitSpectrographPy repository: https://github.com/sunpy/slitspectrographpy
 .. _GitHub: https://github.com/
 .. _SunPy,: https://github.com/sunpy/sunpy
 .. _ndcube,: https://github.com/sunpy/ndcube
-.. _IRISpy,: https://github.com/sunpy/irispy
+.. _SlitSpectrographPy,: https://github.com/sunpy/slitspectrographpy

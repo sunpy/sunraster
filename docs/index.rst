@@ -1,14 +1,14 @@
-***************************
-Welcome to the IRISPy Guide
-***************************
+***************************************
+Welcome to the SlitSpectrographPy Guide
+***************************************
 
-Welcome to the IRISpy User Guide. IRISpy is a SunPy-affiliated
+Welcome to the SlitSpectrographPy User Guide. SlitSpectrographPy is a SunPy-affiliated
 package designed for reading, manipulating and visualizing data taken
-with the Interface Region Imaging Spectrometer (IRIS).
+with slit spectrograph instruments.
 
 .. warning::
     
-    IRISPy is still under heavy development and has not yet seen its first
+    SlitSpectrographPy is still under heavy development and has not yet seen its first
     release.  The API can change at any time and so should not be
     relied upon.  However, we are striving towards releasing a stable
     version.  If you would like to help by providing user feedback,

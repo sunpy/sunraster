@@ -1,9 +1,8 @@
-# Contributing to IRISpy
---------------------------
+# Contributing to SlitSpectrographPy
+------------------------------------
 
-IRISpy is an open project that enourages everyone to contribute in any way possible.
-This document descibes how to contribute code and documentation to the IRISpy 
-repository.
+SlitSpectrographPy is an open project that enourages everyone to contribute in any way possible.
+This document descibes how to contribute code and documentation to the SlitSpectrographPy repository.
 
 ## Basic Contribution Workflow
 
@@ -39,5 +38,5 @@ the beginning of the PR, i.e. `[0.6] My bug fix`. This makes it easier to filter
 For more information on contributing to SunPy check out the following:
 
 * The SunPy [Developers Guide](http://docs.sunpy.org/en/stable/dev.html).
-* The [Pull Request Review](https://github.com/sunpy/irispy/wiki/Pull-Request-Review-Procedure) wiki page.
+* The [Pull Request Review](https://github.com/sunpy/slitspectrographpy/wiki/Pull-Request-Review-Procedure) wiki page.
 * The SunPy IRC channel #SunPy on irc.freenode.net

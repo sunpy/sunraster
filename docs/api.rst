@@ -3,10 +3,7 @@
 Reference/API
 =============
 
-.. automodapi:: irispy
+.. automodapi:: slitspectrographpy
 
-.. automodapi:: irispy.sji
+.. automodapi:: slitspectrographpy.spectrograph
 
-.. automodapi:: irispy.spectrograph
-
-.. automodapi:: irispy.iris_tools

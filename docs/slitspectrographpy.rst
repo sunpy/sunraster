@@ -1,0 +1,4 @@
+SlitSpectrographPy
+==================
+
+.. automodapi:: irispy
