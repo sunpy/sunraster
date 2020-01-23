@@ -14,6 +14,16 @@ from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
 __all__ = ['SlitSpectrogramCube', 'SlitSpectrogramCubeSequence']
 
+# Define some custom error messages.
+APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
+                             "been applied since the unit already includes "
+                             "inverse time. To apply exposure time correction "
+                             "anyway, set 'force' kwarg to True.")
+UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
+                            "been undone since the unit does not include "
+                            "inverse time. To undo exposure time correction "
+                            "anyway, set 'force' kwarg to True.")
+
 class SlitSpectrogramCubeSequence(NDCubeSequence):
     """Class for holding, slicing and plotting spectrogram data.
 
@@ -125,7 +135,7 @@ class SlitSpectrogramCube(NDCube):
         Note however that it is not always possible to save the input as reference.
         Default is False.
     """
-    def __init__(self, data, wcs, uncertainty, unit, meta, extra_coords,
+    def __init__(self, data, wcs, extra_coords, unit, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
         # Check extra_coords contains required coords.
         required_extra_coords_keys = ["time", "exposure time"]
@@ -141,8 +151,9 @@ class SlitSpectrogramCube(NDCube):
     def __getitem__(self, item):
         result = super(SlitSpectrogramCube, self).__getitem__(item)
         return SlitSpectrogramCube(
-            result.data, result.wcs, result.uncertainty, result.unit, result.meta,
+            result.data, result.wcs,
             convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
+            result.unit,result.uncertainty, result.meta,
             mask=result.mask, missing_axes=result.missing_axes)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
@@ -195,9 +206,9 @@ class SlitSpectrogramCube(NDCube):
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
         # Return new instance of SlitSpectrogramCube with correction applied/undone.
         return SlitSpectrogramCube(
-            new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
+            new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
-            mask=self.mask, missing_axes=self.missing_axes)
+            new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
 
 
 def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
