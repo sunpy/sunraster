@@ -11,6 +11,9 @@ from astropy.time import Time, TimeDelta
 from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.wcs import WCS
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+import ndcube.utils.sequence
+
+from slitspectrographpy import utils
 
 __all__ = ['SlitSpectrogramCube', 'SlitSpectrogramCubeSequence']
 
@@ -39,14 +42,30 @@ class SlitSpectrogramCubeSequence(NDCubeSequence):
     meta: `dict` or header object
         Metadata associated with the sequence.
 
-    common_axis: `int`
-        The axis of the NDCubes corresponding to time.
+    slit_step_axis: `int`
+        The axis of the Raster instances corresponding to time.
 
     """
-    def __init__(self, data_list, meta=None, common_axis=0):
+    def __init__(self, data_list, meta=None, slit_step_axis=0):
         # Initialize Sequence.
-        super(SlitSpectrogramCubeSequence, self).__init__(
-            data_list, meta=meta, common_axis=common_axis)
+        super().__init__(data_list, meta=meta)
+        self._slit_step_axis = slit_step_axis
+
+    @property
+    def slice_as_SnS(self):
+        """
+        Method to slice instance as though data were taken as a sit-and-stare,
+        i.e. slit position and raster number are combined into a single axis.
+        """
+        return _SnSSlicer(self)
+
+    @property
+    def slice_as_raster(self):
+        """
+        Method to slice instance as though data were 4D,
+        i.e. raster number, slit step position, position along slit, wavelength.
+        """
+        return _SequenceSlicer(self)
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
@@ -92,6 +111,7 @@ class SlitSpectrogramCubeSequence(NDCubeSequence):
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
+
 
 class SlitSpectrogramCube(NDCube):
     """
@@ -144,12 +164,11 @@ class SlitSpectrogramCube(NDCube):
             raise ValueError("The following extra coords must be supplied: {0} vs. {1} from {2}".format(
                 required_extra_coords_keys, extra_coords_keys, extra_coords))
         # Initialize SlitSpectrogramCube.
-        super(SlitSpectrogramCube, self).__init__(
-            data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-            unit=unit, extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
+        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
+                         extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
     def __getitem__(self, item):
-        result = super(SlitSpectrogramCube, self).__getitem__(item)
+        result = super().__getitem__(item)
         return SlitSpectrogramCube(
             result.data, result.wcs,
             convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
@@ -277,3 +296,28 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
         new_unit = old_unit*u.s
     return new_data_arrays, new_unit
+
+
+class _SnSSlicer:
+    """
+    Helper class to make slicing in index_as_cube sliceable/indexable like a
+    numpy array.
+    Parameters
+    ----------
+    seq : `ndcube.NDCubeSequence`
+        Object of NDCubeSequence.
+    """
+
+    def __init__(self, seq):
+        self.seq = seq
+
+    def __getitem__(self, item):
+        return utils.sequence._slice_sequence_as_SnS(self.seq, item)
+
+
+class _SequenceSlicer:
+    def __init__(self, seq):
+        self.seq = seq
+
+    def __getitem__(self, item):
+        return ndcube.utils.sequence.slice_sequence(self.seq, item)
