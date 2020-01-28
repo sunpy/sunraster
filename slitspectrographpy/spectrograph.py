@@ -27,7 +27,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
                             "inverse time. To undo exposure time correction "
                             "anyway, set 'force' kwarg to True.")
 
-class SlitSpectrogramCubeSequence(NDCubeSequence):
+class RasterSequence(NDCubeSequence):
     """Class for holding, slicing and plotting spectrogram data.
 
     This class contains all the functionality of its super class with
@@ -36,7 +36,7 @@ class SlitSpectrogramCubeSequence(NDCubeSequence):
     Parameters
     ----------
     data_list: `list`
-        List of `SlitSpectrogramCube` objects from the same spectral window and OBS ID.
+        List of `Raster` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
     meta: `dict` or header object
@@ -112,10 +112,11 @@ class SlitSpectrogramCubeSequence(NDCubeSequence):
         else:
             self.data = converted_data_list
 
-
-class SlitSpectrogramCube(NDCube):
+class Raster(NDCube):
     """
-    Class representing SlitSpectrogramCube data described by a single WCS.
+    Class representing a sit-and-stare or single raster of slit spectrogram data.
+
+    Must be described by a single WCS.
 
     Parameters
     ----------
@@ -169,7 +170,7 @@ class SlitSpectrogramCube(NDCube):
 
     def __getitem__(self, item):
         result = super().__getitem__(item)
-        return SlitSpectrogramCube(
+        return Raster(
             result.data, result.wcs,
             convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
             result.unit,result.uncertainty, result.meta,
@@ -231,7 +232,7 @@ class SlitSpectrogramCube(NDCube):
 
 
 def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
-                                       force=False):
+                                        force=False):
     """
     Applies exposure time correction to data arrays.
     Parameters
@@ -265,7 +266,7 @@ def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time
 
 
 def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
-        exposure_time, force=False):
+                                          exposure_time, force=False):
     """
     Removes exposure time correction from data arrays.
     Parameters
