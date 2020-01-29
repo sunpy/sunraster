@@ -48,6 +48,26 @@ class RasterSequence(NDCubeSequence):
         # Initialize Sequence.
         super().__init__(data_list, meta=meta, common_axis=common_axis)
 
+    @property
+    def spectral_axis(self):
+        return [raster.spectral_axis for raster in self.data]
+
+    @property
+    def time(self):
+        return [raster.time for raster in self.data]
+
+    @property
+    def exposure_time(self):
+        return [raster.exposure_time for raster in self.data]
+
+    @property
+    def lon(self):
+        return [raster.lon for raster in self.data]
+
+    @property
+    def lat(self):
+        return [raster.lat for raster in self.data]
+
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
