@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
-import copy
-
 import numpy as np
 import astropy.units as u
 from ndcube import NDCube, NDCubeSequence
