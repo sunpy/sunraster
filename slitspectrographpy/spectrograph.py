@@ -248,14 +248,14 @@ class Raster(NDCube):
 
         Returns
         -------
-        result: `SlitSpectrogramCube`
+        result: `Raster`
             New SlitSpectrogramCube in new units.
 
         """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
-        exposure_time_s = self.extra_coords["exposure time"]["value"].to(u.s).value
-        if not self.extra_coords["exposure time"]["value"].isscalar:
+        exposure_time_s = self.exposure_time.to(u.s).value
+        if not np.isscalar(exposure_time_s):
             if len(self.dimensions) == 1:
                 pass
             elif len(self.dimensions) == 2:
@@ -264,7 +264,7 @@ class Raster(NDCube):
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "SlitSpectrogramCube dimensions must be 2 or 3. Dimensions={0}".format(
+                    "Raster dimensions must be 2 or 3. Dimensions={0}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -273,8 +273,8 @@ class Raster(NDCube):
         else:
             new_data_arrays, new_unit = _calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of SlitSpectrogramCube with correction applied/undone.
-        return SlitSpectrogramCube(
+        # Return new instance of Raster with correction applied/undone.
+        return Raster(
             new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
