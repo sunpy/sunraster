@@ -26,6 +26,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
                             "been undone since the unit does not include "
                             "inverse time. To undo exposure time correction "
                             "anyway, set 'force' kwarg to True.")
+AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
 
 class RasterSequence(NDCubeSequence):
     """Class for holding, slicing and plotting spectrogram data.
@@ -66,6 +67,26 @@ class RasterSequence(NDCubeSequence):
         i.e. raster number, slit step position, position along slit, wavelength.
         """
         return _SequenceSlicer(self)
+
+    @property
+    def spectral_axis(self):
+        return [raster.spectral_axis for raster in self.data]
+
+    @property
+    def time(self):
+        return [raster.time for raster in self.data]
+
+    @property
+    def exposure_time(self):
+        return [raster.exposure_time for raster in self.data]
+
+    @property
+    def lon(self):
+        return [raster.lon for raster in self.data]
+
+    @property
+    def lat(self):
+        return [raster.lat for raster in self.data]
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
@@ -158,15 +179,43 @@ class Raster(NDCube):
     """
     def __init__(self, data, wcs, extra_coords, unit, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
-        # Check extra_coords contains required coords.
-        required_extra_coords_keys = ["time", "exposure time"]
-        extra_coords_keys = [coord[0] for coord in extra_coords]
-        if not all([key in extra_coords_keys for key in required_extra_coords_keys]):
-            raise ValueError("The following extra coords must be supplied: {0} vs. {1} from {2}".format(
-                required_extra_coords_keys, extra_coords_keys, extra_coords))
         # Initialize SlitSpectrogramCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
+
+        # Determine labels and location of each key real world coordinate.
+        supported_spectral_names = ["em.wl", "em.energy", "em.freq",
+                                    "wavelength", "energy", "frequency", "freq", "lambda"]
+        supported_spectral_names += [name.upper() for name in supported_spectral_names]
+        supported_spectral_names += [name.capitalize() for name in supported_spectral_names]
+        self._supported_spectral_names = supported_spectral_names
+        self._spectral_name = self._find_axis_name(self._supported_spectral_names)
+
+        supported_time_names = ["time"]
+        supported_time_names += [name.upper() for name in supported_time_names]
+        supported_time_names += [name.capitalize() for name in supported_time_names]
+        self._supported_time_names = supported_time_names
+        self._time_name = self._find_axis_name(self._supported_time_names)
+
+        supported_exposure_names = [
+                "exposure time", "exposure_time", "exposure times", "exposure_times",
+                "exp time", "exp_time", "exp times", "exp_times"]
+        supported_exposure_names += [name.upper() for name in supported_exposure_names]
+        supported_exposure_names += [name.capitalize() for name in supported_exposure_names]
+        self._supported_exposure_time_names = supported_exposure_names
+        self._exposure_time_name = self._find_axis_name(self._supported_exposure_time_names)
+
+        supported_longitude_names = [".lon", "longitude", "lon"]
+        supported_longitude_names += [name.upper() for name in supported_longitude_names]
+        supported_longitude_names += [name.capitalize() for name in supported_longitude_names]
+        self._supported_longitude_names = supported_longitude_names
+        self._longitude_name = self._find_axis_name(self._supported_longitude_names)
+
+        supported_latitude_names = [".lat", "latitude", "lat"]
+        supported_latitude_names += [name.upper() for name in supported_latitude_names]
+        supported_latitude_names += [name.capitalize() for name in supported_latitude_names]
+        self._supported_latitude_names = supported_latitude_names
+        self._latitude_name = self._find_axis_name(self._supported_latitude_names)
 
     def __getitem__(self, item):
         result = super().__getitem__(item)
@@ -175,6 +224,46 @@ class Raster(NDCube):
             convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
             result.unit,result.uncertainty, result.meta,
             mask=result.mask, missing_axes=result.missing_axes)
+
+    @property
+    def spectral_axis(self):
+        if not self._spectral_name:
+            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
+                             "{0}".format(self._supported_spectral_names))
+        else:
+            return self._get_axis_coord(*self._spectral_name)
+
+    @property
+    def time(self):
+        if not self._time_name:
+            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
+                             "{0}".format(self._supported_time_name))
+        else:
+            return self._get_axis_coord(*self._time_name)
+
+    @property
+    def exposure_time(self):
+        if not self._exposure_time_name:
+            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
+                             "{0}".format(self._supported_exposure_time_spectral_name))
+        else:
+            return self._get_axis_coord(*self._exposure_time_name)
+
+    @property
+    def lon(self):
+        if not self._longitude_name:
+            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
+                             "{0}".format(self._supported_longitude_spectral_name))
+        else:
+            return self._get_axis_coord(*self._longitude_name)
+
+    @property
+    def lat(self):
+        if not self._latitude_name:
+            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
+                             "{0}".format(self._supported_latitude_spectral_name))
+        else:
+            return self._get_axis_coord(*self._latitude_name)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -199,14 +288,14 @@ class Raster(NDCube):
 
         Returns
         -------
-        result: `SlitSpectrogramCube`
+        result: `Raster`
             New SlitSpectrogramCube in new units.
 
         """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
-        exposure_time_s = self.extra_coords["exposure time"]["value"].to(u.s).value
-        if not self.extra_coords["exposure time"]["value"].isscalar:
+        exposure_time_s = self.exposure_time.to(u.s).value
+        if not np.isscalar(exposure_time_s):
             if len(self.dimensions) == 1:
                 pass
             elif len(self.dimensions) == 2:
@@ -215,7 +304,7 @@ class Raster(NDCube):
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "SlitSpectrogramCube dimensions must be 2 or 3. Dimensions={0}".format(
+                    "Raster dimensions must be 2 or 3. Dimensions={0}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -224,11 +313,44 @@ class Raster(NDCube):
         else:
             new_data_arrays, new_unit = _calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of SlitSpectrogramCube with correction applied/undone.
-        return SlitSpectrogramCube(
+        # Return new instance of Raster with correction applied/undone.
+        return Raster(
             new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
+
+    def _find_axis_name(self, supported_names):
+        axis_name = None
+        n_names = len(supported_names)
+        i = 0
+        while axis_name is None:
+            if i >= n_names:
+                break
+            # Check WCS.
+            wcs_name_index = ([supported_names[i] in world_axis_type
+                               for world_axis_type in self.world_axis_physical_types])
+            if sum(wcs_name_index) == 1:
+                wcs_name_index = \
+                        int(np.arange(len(self.world_axis_physical_types))[wcs_name_index])
+                axis_name = self.world_axis_physical_types[wcs_name_index]
+                loc = "wcs"
+
+            # If label not contained in WCS, check extra coords.
+            if axis_name is None:
+                if supported_names[i] in self.extra_coords.keys():
+                    axis_name = supported_names[i]
+                    loc = "extra_coords"
+
+        if axis_name is None:
+            return axis_name
+        else:
+            return (axis_name, loc)
+
+    def _get_axis_coord(self, axis_name, coord_loc):
+        if coord_loc == "wcs":
+            return self.axis_world_coords(axis_name)
+        elif coord_loc == "extra_coords":
+            return self.extra_coords[axis_name]["value"]
 
 
 def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
