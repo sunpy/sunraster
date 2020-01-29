@@ -1,0 +1,63 @@
+OBS-ID,Spectral WL,Raster step,Raster FOV,Spectral cadence,SJI WL,SJI cad,SJI FOV,Description,Total Datarate (Mbit/s)
+10,default,0.33,3 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small dense raster,1.1
+11,default,0.33,6.33 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium dense raster,2.3
+12,default,0.33,21 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large dense raster,5.3
+13,default,0.33,132 x175 ,400s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large dense raster,8
+14,default,0.33,0.3 x30 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sit-and-stare,2.1
+15,default,0.33,0.3 x60 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sit-and-stare,4.3
+16,default,0.33,0.3 x120 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sit-and-stare,9.1
+17,default,0.33,0.3 x175 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sit-and-stare,13.8
+18,default,1,9 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sparse raster,1.1
+19,default,1,19 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sparse raster,2.3
+20,default,1,63 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sparse raster,5.2
+21,default,1,127 x175 ,128s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sparse raster,7.9
+22,default,2,18 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small coarse raster,1.1
+23,default,2,38 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium coarse raster,2.3
+24,default,2,126 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large coarse raster,5.2
+25,default,2,126 x175 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large coarse raster,8
+26,default,1  0.33  1 ,2 x30  1.67 x30  2 x30  t: 5.67 x30 ,12s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sparse/dense/sparse raster,1.1
+27,default,1  0.33  1 ,4 x60  3 x60  4 x60  t: 11 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sparse/dense/sparse raster,2.4
+28,default,1  0.33  1 ,11 x120  11.67 x120  11 x120  t: 33.67 x120 ,60s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sparse/dense/sparse raster,5.1
+29,default,1  0.33  1 ,39 x175  39.33 x175  39 x175  t:117.66 x175 ,200s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sparse/dense/sparse raster,13.1
+30,default,0.33,31.66 x175 ,96s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Synoptic dense raster,8.5
+31,default,1,35 x175 ,36s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Synoptic sparse raster,7.4
+32,default,0.33,0.33 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step dense raster,2.8
+33,default,1,1 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step sparse raster,1.9
+34,default,2,2 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step coarse raster,1.9
+35,default,0.33,1 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step dense raster,1.9
+36,default,1,3 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step sparse raster,1.9
+37,default,2,6 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step coarse raster,1.9
+38,default,0.33,3x175,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Small dense long raster,8
+39,default,0.33,6x175,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Medium dense long raster,8
+40,default,0.33,21x175,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Large dense long raster,8
+42,default,0.33,3 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small dense raster (tight timing),1.1
+43,default,0.33,6.33 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium dense raster (tight timing),2.3
+44,default,0.33,21 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large dense raster (tight timing),5.3
+45,default,0.33,132 x175 ,400s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large dense raster (tight timing),8
+46,default,0.33,0.3 x30 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sit-and-stare (tight timing),2.1
+47,default,0.33,0.3 x60 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sit-and-stare (tight timing),4.3
+48,default,0.33,0.3 x120 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sit-and-stare (tight timing),9.1
+49,default,0.33,0.3 x175 ,1s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sit-and-stare (tight timing),13.8
+50,default,1,9 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sparse raster (tight timing),1.1
+51,default,1,19 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sparse raster (tight timing),2.3
+52,default,1,63 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sparse raster (tight timing),5.2
+53,default,1,127 x175 ,128s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sparse raster (tight timing),7.9
+54,default,2,18 x30 ,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small coarse raster (tight timing),1.1
+55,default,2,38 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium coarse raster (tight timing),2.3
+56,default,2,126 x120 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large coarse raster (tight timing),5.2
+57,default,2,126 x175 ,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large coarse raster (tight timing),8
+58,default,1  0.33  1 ,2 x30  1.67 x30  2 x30  t: 5.67 x30 ,12s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,30 x30 ,Small sparse/dense/sparse raster (tight timing),1.1
+59,default,1  0.33  1 ,4 x60  3 x60  4 x60  t: 11 x60 ,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,60 x60 ,Medium sparse/dense/sparse raster (tight timing),2.4
+60,default,1  0.33  1 ,11 x120  11.67 x120  11 x120  t: 33.67 x120 ,60s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,120 x120 ,Large sparse/dense/sparse raster (tight timing),5.1
+61,default,1  0.33  1 ,39 x175  39.33 x175  39 x175  t:117.66 x175 ,200s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Very large sparse/dense/sparse raster (tight timing),13.1
+62,default,0.33,31.66 x175 ,96s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Synoptic dense raster (tight timing),8.5
+63,default,1,35 x175 ,36s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175 x175 ,Synoptic sparse raster (tight timing),7.4
+64,default,0.33,0.33 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step dense raster (tight timing),2.8
+65,default,1,1 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step sparse raster (tight timing),1.9
+66,default,2,2 x50 ,2s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Two-step coarse raster (tight timing),1.9
+67,default,0.33,1 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step dense raster (tight timing),1.9
+68,default,1,3 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step sparse raster (tight timing),1.9
+69,default,2,6 x50 ,4s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,50 x50 ,Four-step coarse raster (tight timing),1.9
+70,default,0.33,3x175,10s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Small dense long raster (tight timing),8
+71,default,0.33,6x175,20s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Medium dense long raster (tight timing),8
+72,default,0.33,21x175,64s,C II Si IV Mg II h/k Mg II wing,10s 10s 10s 10s,175x175,Large dense long raster (tight timing),8
