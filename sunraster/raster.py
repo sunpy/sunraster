@@ -9,7 +9,7 @@ from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 import ndcube.utils.sequence
 
-from rasterpy import utils
+from sunraster import utils
 
 __all__ = ['Raster', 'RasterSequence']
 

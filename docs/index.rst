@@ -1,14 +1,14 @@
-*****************************
-Welcome to the RasterPy Guide
-*****************************
+******************************
+Welcome to the SunRaster Guide
+******************************
 
-Welcome to the RasterPy User Guide. RasterPy is a SunPy-affiliated
+Welcome to the SunRaster User Guide. SunRaster is a SunPy-affiliated
 package designed for reading, manipulating and visualizing data taken
 with slit spectrograph instruments.
 
 .. warning::
     
-    RasterPy is still under heavy development and has not yet seen its first
+    SunRaster is still under heavy development and has not yet seen its first
     release.  The API can change at any time and so should not be
     relied upon.  However, we are striving towards releasing a stable
     version.  If you would like to help by providing user feedback,

@@ -3,7 +3,7 @@
 Reference/API
 =============
 
-.. automodapi:: rasterpy
+.. automodapi:: sunraster
 
-.. automodapi:: rasterpy.raster
+.. automodapi:: sunraster.raster
 

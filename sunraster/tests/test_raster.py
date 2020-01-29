@@ -13,7 +13,7 @@ from astropy.time import Time, TimeDelta
 from ndcube.utils.wcs import WCS
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
-from rasterpy.raster import Raster, RasterSequence
+from sunraster.raster import Raster, RasterSequence
 
 # Define an sample wcs object
 h0 = {

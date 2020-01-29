@@ -1,4 +1,0 @@
-RasterPy
-========
-
-.. automodapi:: rasterpy

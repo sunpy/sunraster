@@ -25,7 +25,7 @@ def _slice_sequence_as_SnS(sequence, item):
 
     Parameters
     ----------
-    sequence: `rasterpy.RasterSequence`
+    sequence: `sunraster.RasterSequence`
         The sequence to be sliced.
 
     item: `int`, `slice` or `tuple` of `int` and/or `slice`.

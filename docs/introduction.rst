@@ -1,19 +1,19 @@
-An Introduction to RasterPy
-=====================================
+An Introduction to SunRaster
+============================
 
 .. warning::
     
-    RasterPy is still under heavy development and has not yet seen its first
-    release. If you want to help develop and test RasterPy, follow these
+    SunRaster is still under heavy development and has not yet seen its first
+    release. If you want to help develop and test SunRaster, follow these
     `installation instructions
-    <https://github.com/sunpy/irispy/wiki/RasterPy-Installation-Instructions>`_.
+    <https://github.com/sunpy/irispy/wiki/SunRaster-Installation-Instructions>`_.
 
-What is RasterPy?
+What is SunRaster?
 --------------------------
 
-RasterPy is a free, open-source, SunPy-affiliated package that provides
+SunRaster is a free, open-source, SunPy-affiliated package that provides
 tools to manipulate and visualize slit spectrograph data using the Python
-programming language.  The RasterPy classes link the observations
+programming language.  The SunRaster classes link the observations
 with various forms of supporting data including: measurement
 uncertainties; units; a data mask to mark pixels with
 unreliable or unphysical data values; WCS (World Coordinate System)
@@ -28,7 +28,7 @@ repetitive data conversions and avoid confusion by always tracking the
 unit of the data through those conversions.  This leads to more
 efficient and accurate science.
 
-RasterPy classes inherit more fundamental functionality from the
+SunRaster classes inherit more fundamental functionality from the
 `ndcube`_ package.  A powerful, generic slicing API (application
 programmable interface) allows users to manipulate the same data
 object as if it were 3D (time, latitude, wavelength) or 4D (raster
@@ -36,16 +36,16 @@ number, longitude, latitude, wavelength), which is very useful
 when dealing with scanning slit-spectrograph data.  The 
 API simultaneously slices not only the data, but the uncertainties,
 data mask, and WCS transformations leading to faster and less
-error-prone data analysis.  The RasterPy classes also inherit the
+error-prone data analysis.  The SunRaster classes also inherit the
 ability to crop by real world coordinates, useful when locating a
 region of interest using information from other observatories, and a
 visualization suite which allows users to easily and intuitively
 visually inspect their data.
 
-This guide will explain in detail the capabilities offered by RasterPy
+This guide will explain in detail the capabilities offered by SunRaster
 and how to utilize them.  It will describe the different data classes,
-as well as how to install RasterPy, contact the development team, and
-contribute to the package.  RasterPy is open-source and
+as well as how to install SunRaster, contact the development team, and
+contribute to the package.  SunRaster is open-source and
 community-developed and we are always glad to welcome new contributors
 and users.
 
