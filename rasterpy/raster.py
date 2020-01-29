@@ -5,11 +5,7 @@ import copy
 
 import numpy as np
 import astropy.units as u
-from astropy.io import fits
-from astropy.table import Table
-from astropy.time import Time, TimeDelta
 from ndcube import NDCube, NDCubeSequence
-from ndcube.utils.wcs import WCS
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 import ndcube.utils.sequence
 
