@@ -13,9 +13,9 @@ from ndcube.utils.wcs import WCS
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 import ndcube.utils.sequence
 
-from slitspectrographpy import utils
+from rasterpy import utils
 
-__all__ = ['SlitSpectrogramCube', 'SlitSpectrogramCubeSequence']
+__all__ = ['Raster', 'RasterSequence']
 
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
@@ -116,10 +116,10 @@ class RasterSequence(NDCubeSequence):
 
         Returns
         -------
-        result: `None` or `SlitSpectrogramCubeSequence`
-            If copy=False, the original SlitSpectrogramCubeSequence is modified with the
+        result: `None` or `RasterSequence`
+            If copy=False, the original RasterSequence is modified with the
             exposure time correction applied (undone).
-            If copy=True, a new SlitSpectrogramCubeSequence is returned with the correction
+            If copy=True, a new RasterSequence is returned with the correction
             applied (undone).
 
         """
@@ -128,7 +128,7 @@ class RasterSequence(NDCubeSequence):
             converted_data_list.append(cube.apply_exposure_time_correction(undo=undo,
                                                                            force=force))
         if copy is True:
-            return SlitSpectrogramCubeSequence(
+            return RasterSequence(
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
@@ -179,7 +179,7 @@ class Raster(NDCube):
     """
     def __init__(self, data, wcs, extra_coords, unit, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
-        # Initialize SlitSpectrogramCube.
+        # Initialize Raster.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
@@ -289,7 +289,7 @@ class Raster(NDCube):
         Returns
         -------
         result: `Raster`
-            New SlitSpectrogramCube in new units.
+            New Raster in new units.
 
         """
         # Get exposure time in seconds and change array's shape so that

@@ -13,7 +13,7 @@ from astropy.time import Time, TimeDelta
 from ndcube.utils.wcs import WCS
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
-from slitspectrographpy.spectrograph import SlitSpectrogramCube, SlitSpectrogramCubeSequence
+from rasterpy.raster import Raster, RasterSequence
 
 # Define an sample wcs object
 h0 = {
@@ -44,37 +44,37 @@ extra_coords1 = [("time", 0,
 # Define meta data
 meta_seq = {"a": 0}
 
-# Define SlitSpectrogramCubes in various units.
-spectrogram_DN0 = SlitSpectrogramCube(
+# Define Rasters in various units.
+spectrogram_DN0 = Raster(
     SOURCE_DATA_DN, wcs0, extra_coords0, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN_per_s0 = SlitSpectrogramCube(
+spectrogram_DN_per_s0 = Raster(
     SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords0, u.ct/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time)
-spectrogram_DN_per_s_per_s0 = SlitSpectrogramCube(
+spectrogram_DN_per_s_per_s0 = Raster(
     SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords0, u.ct/u.s/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
-spectrogram_DN_s0 = SlitSpectrogramCube(
+spectrogram_DN_s0 = Raster(
     SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords0, u.ct*u.s,
     SOURCE_UNCERTAINTY_DN*single_exposure_time)
-spectrogram_DN1 = SlitSpectrogramCube(
+spectrogram_DN1 = Raster(
     SOURCE_DATA_DN, wcs0, extra_coords1, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN_per_s1 = SlitSpectrogramCube(
+spectrogram_DN_per_s1 = Raster(
     SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords1, u.ct/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time)
-spectrogram_DN_per_s_per_s1 = SlitSpectrogramCube(
+spectrogram_DN_per_s_per_s1 = Raster(
     SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords1, u.ct/u.s/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
-spectrogram_DN_s1 = SlitSpectrogramCube(
+spectrogram_DN_s1 = Raster(
     SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
     SOURCE_UNCERTAINTY_DN*single_exposure_time)
 
-# Define SlitSpectrogramCubeSequences
-sequence_DN = SlitSpectrogramCubeSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq)
-sequence_DN_per_s = SlitSpectrogramCubeSequence(
+# Define RasterSequences
+sequence_DN = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq)
+sequence_DN_per_s = RasterSequence(
         [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq)
-sequence_DN_per_s_per_s = SlitSpectrogramCubeSequence(
+sequence_DN_per_s_per_s = RasterSequence(
     [spectrogram_DN_per_s_per_s0, spectrogram_DN_per_s_per_s1], meta=meta_seq)
-sequence_DN_s = SlitSpectrogramCubeSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq)
+sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq)
 
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
     (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
@@ -82,7 +82,7 @@ sequence_DN_s = SlitSpectrogramCubeSequence([spectrogram_DN_s0, spectrogram_DN_s
     (spectrogram_DN_per_s0, False, True, spectrogram_DN_per_s_per_s0),
     (spectrogram_DN0, True, True, spectrogram_DN_s0)
 ])
-def test_SlitSpectrogramCube_apply_exposure_time_correction(input_cube, undo,
+def test_Raster_apply_exposure_time_correction(input_cube, undo,
                                                             force, expected_cube):
     output_cube = input_cube.apply_exposure_time_correction(undo=undo, force=force)
     assert_cubes_equal(output_cube, expected_cube)
@@ -94,7 +94,7 @@ def test_SlitSpectrogramCube_apply_exposure_time_correction(input_cube, undo,
     (sequence_DN_per_s, False, True, sequence_DN_per_s_per_s),
     (sequence_DN, True, True, sequence_DN_s)
 ])
-def test_SlitSpectrogramCubeSequence_apply_exposure_time_correction(
+def test_RasterSequence_apply_exposure_time_correction(
         input_sequence, undo, force, expected_sequence):
     output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True,
                                                                     force=force)

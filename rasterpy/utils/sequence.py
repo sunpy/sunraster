@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import numpy as np
-
 import ndcube.utils.sequence
 
 SequenceSlice = namedtuple("SequenceSlice", "sequence_index slit_step_item")
@@ -26,7 +25,7 @@ def _slice_sequence_as_SnS(sequence, item):
 
     Parameters
     ----------
-    sequence: `slitspectrographpy.RasterSequence`
+    sequence: `rasterpy.RasterSequence`
         The sequence to be sliced.
 
     item: `int`, `slice` or `tuple` of `int` and/or `slice`.

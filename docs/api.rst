@@ -3,7 +3,7 @@
 Reference/API
 =============
 
-.. automodapi:: slitspectrographpy
+.. automodapi:: rasterpy
 
-.. automodapi:: slitspectrographpy.spectrograph
+.. automodapi:: rasterpy.raster
 

@@ -1,9 +1,9 @@
 ==================================
-Contributing to SlitSpectrographPy
+Contributing to RasterPy
 ==================================
 
 We are always enthusiastic to welcome new users and developers who
-want to enhance the SlitSpectrographPy.  You can contribute in several ways, from
+want to enhance the RasterPy.  You can contribute in several ways, from
 providing feedback, reporting bugs, contributing code, and reviewing
 pull requests.  There is a role for almost any level of engagement.
 
@@ -11,7 +11,7 @@ Providing Feedback
 ------------------
 
 We could always use more voices and opinions in the discussions about
-SlitSpectrographPy and its development from both users and developers. There are a
+RasterPy and its development from both users and developers. There are a
 number of ways to make your voice heard.  Whether it be constructive
 criticism, inquiries about current or future capabilities, or
 flattering praise, we would love to hear from you.  You can contact us
@@ -35,17 +35,17 @@ Contributing Code
 -----------------
 
 If you would like to contribute code, it is strongly
-recommended that you first discuss your aims with the SlitSpectrographPy
+recommended that you first discuss your aims with the RasterPy
 community.  We strive to be an open and welcoming community for 
 developers of all experience levels. Discussing your ideas
 before you start can give you new insights that will make your
 development easier, lead to a better end product, and reduce the
 chances of your work being regetfully rejected because of an issue you
 weren't aware of, e.g. the functionality already exists elsewhere.
-See :ref:`getting_help` to contact the SlitSpectrographPy community.
+See :ref:`getting_help` to contact the RasterPy community.
 
 In the rest of this section we will go through the steps needed to set
-up your system so you can contribute code to SlitSpectrographPy.  This is done
+up your system so you can contribute code to RasterPy.  This is done
 using `git`_ version control software and `GitHub`_,  a website that
 allows you to upload, update, and share code repositories (repos).  If
 you are new to code development or git and GitHub you can learn more
@@ -57,25 +57,25 @@ from the following guides:
 * `SunPy version control guide`_
 
 The principles in the SunPy guides for contributing code and
-utilizing GitHub and git are exactly the same for SlitSpectrographPy
-except that we contribute to the SlitSpectrographPy repository rather than the
+utilizing GitHub and git are exactly the same for RasterPy
+except that we contribute to the RasterPy repository rather than the
 SunPy one.  If you are a more seasoned developer and would
 like to get furhter information, you can check out the `SunPy
 Developer's Guide`_.
 
-Before you can contribute code to SlitSpectrographPy, you first need to install
-the development version of SlitSpectrographPy.  To find out how, see
+Before you can contribute code to RasterPy, you first need to install
+the development version of RasterPy.  To find out how, see
 :ref:`dev_install`.
 
-Next, you will have to create a new online version of the SlitSpectrographPy
+Next, you will have to create a new online version of the RasterPy
 repo on your own GitHub account, a process known as "forking".  (If you
 don't have a GitHub account, `sign up here`_.)  Sign into your GitHub
-account and then go to the main `SlitSpectrographPy GitHub repository`_.  Click
+account and then go to the main `RasterPy GitHub repository`_.  Click
 the "Fork" button in the top right corner of the page.  A pop-up
 window should appear asking to you to confirm which GitHub account you
 wish to fork to.  Once you've done that, you should have a new
-version of the SlitSpectrographPy repo on your own GitHub account.  It should
-reside at a URL like https:/github.com/my_github_handle/slitspectrographpy.
+version of the RasterPy repo on your own GitHub account.  It should
+reside at a URL like https:/github.com/my_github_handle/rasterpy.
 
 Next, we need to link our newly forked online repo with the one we
 created on our local machine as part of the installation.  To do
@@ -88,48 +88,48 @@ the command line and type:
 
 		$ git remote -v
 
-If you have installed the SlitSpectrographPy development version as outlined in
+If you have installed the RasterPy development version as outlined in
 :ref:`dev_install`, you will have one remote called ``origin`` pointing to
-https://github.com/sunpy/slitspectrographpy.  Let's now add a remote to the repo
+https://github.com/sunpy/rasterpy.  Let's now add a remote to the repo
 in your GitHub account called ``my_repo``.  In a terminal, from the local
 repo directory, type:
 
 .. code-block:: console
 
-		$ git remote add my_repo https:/github.com/my_github_handle/slitspectrographpy
+		$ git remote add my_repo https:/github.com/my_github_handle/rasterpy
 
 where you replace ``my_github_handle`` with your GitHub name.  Now you
 can check that the remote has been added by again typing ``git remote -v``.
 
 Now you're ready to get coding!  The following subsection will outline
-an example workflow for contributing to slitspectrographpy.
+an example workflow for contributing to rasterpy.
 
 .. _contributing_workflow:
 
 Example Workflow for Contributing Code
 --------------------------------------
 
-To make changes to the development version of SlitSpectrographPy, we must first
+To make changes to the development version of RasterPy, we must first
 activate the environment in which it is installed.  Recall during
-installation, we named this environment  ``slitspectrographpy-dev``.  From any
+installation, we named this environment  ``rasterpy-dev``.  From any
 directory on the command line, Windows users should type:
 
 .. code-block:: console
 
-		> activate slitspectrographpy-dev
+		> activate rasterpy-dev
 
 while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		$ source activate slitspectrographpy-dev
+		$ source activate rasterpy-dev
 
-Next, change into the local SlitSpectrographPy repo directory, ``slitspectrographpy-git``.
-When you are making changes to SlitSpectrographPy, it is strongly recommended that
+Next, change into the local RasterPy repo directory, ``rasterpy-git``.
+When you are making changes to RasterPy, it is strongly recommended that
 you use a different `git branch`_ for each set of related new features
 and/or bug fixes. `Git branches`_ are a way of having different
 versions of the same code within the repo simultaneously. Assuming you
-have just installed the SlitSpectrographPy development version, you will only have
+have just installed the RasterPy development version, you will only have
 one branch, called ``master``.  It is recommended you do not do any
 development on the ``master`` branch, but rather keep it as an clean copy
 of the latest ``origin master`` branch.  If you have more than one
@@ -157,7 +157,7 @@ version from the main repo.
 
 This updates the local branch you are on (in this case, ``master``) with
 the version of the ``master`` branch stored in the ``origin`` remote,
-i.e. the original SlitSpectrographPy GitHub repo.
+i.e. the original RasterPy GitHub repo.
 
 Let's now create a new branch called ``my_fix`` on which to develop
 our new feature of bugfix.  Type:
@@ -233,15 +233,15 @@ developer has accidentally committed extra files using this command
 and has wasted time undoing their mistake.
 
 Say it's the next day and you want to continue working on your bugfix.
-Open a terminal, activate your ``slitspectrographpy-dev`` conda environent, change
-into the ``slitspectrographpy-git`` directory and make sure you are on the correct
+Open a terminal, activate your ``rasterpy-dev`` conda environent, change
+into the ``rasterpy-git`` directory and make sure you are on the correct
 branch.  Also make sure you pull any new updates from the ``origin``
 ``master` branch to your local ``my_fix`` branch:
 
 .. code-block:: console
 
-		$ source activate slitspectrographpy-dev # For Windows users, type "activate slitspectrographpy-dev"
-		$ cd slitspectrographpy-git
+		$ source activate rasterpy-dev # For Windows users, type "activate rasterpy-dev"
+		$ cd rasterpy-git
 		$ git branch
 		$ git checkout my_fix
 		$ git pull origin master
@@ -265,17 +265,17 @@ a PR:
 
 #. In a browser, go to your GitHub account and find your version of the git
    repo.  The URL should look like this:
-   https://github.com/my_github_handle/slitspectrographpy/
+   https://github.com/my_github_handle/rasterpy/
 #. There should be a green button on the right marked "Compare & pull
    request".  Click it.  If it is not there, click on the "Pull
    Requests" tab near the top of the page.  The URL should look like this:
-   https://github.com/my_github_handle/slitspectrographpy/pulls.
+   https://github.com/my_github_handle/rasterpy/pulls.
    Then click on the green "New Pull Request" button.  This will open
    a new page with four drop-down menus near the top.
-#. Set the "base fork" drop-down menu to "sunpy/slitspectrographpy" and the
+#. Set the "base fork" drop-down menu to "sunpy/rasterpy" and the
    "base" drop-down to "master".  This describes the repo and branch
    the changes are to be merged into.  Set the "head fork" drop-down
-   menu to "my_github_handle/slitspectrographpy" and the "compare" drop-down to
+   menu to "my_github_handle/rasterpy" and the "compare" drop-down to
    "my_fix". This sets the repo and branch in which you have made the
    changes you want to merge.
 #. Enter a title and a description of the PR in the appropriate
@@ -300,7 +300,7 @@ will then be automatically updated with the new commits.  Once you've
 made all changes and the online tests have passed, those reviewing
 your code can approve the PR.  Approved PRs can then be merged by
 those with write permissions to the repo.  Congratulations!  You have
-just contributed to SlitSpectrographPy!
+just contributed to RasterPy!
 
 Be sure to pull your the newly contributed changes to your local
 master branch by doing:
@@ -310,15 +310,15 @@ master branch by doing:
 		$ git checkout master
 		$ git pull origin master
 
-You are now ready to start using the newly improved SlitSpectrographPy development
-version of SlitSpectrographPy, including your changes!
+You are now ready to start using the newly improved RasterPy development
+version of RasterPy, including your changes!
 
 If you have questions about this guide or while making contributions,
 ndcube and SunPy developers are always happy to help.  See
 :ref:`getting_help`.  Happy coding and talk to you soon!
 
-.. _issue tracker: https://github.com/sunpy/slitspectrographpy/issues
-.. _SlitSpectrographPy GitHub repository: https://github.com/sunpy/slitspectrographpy
+.. _issue tracker: https://github.com/sunpy/rasterpy/issues
+.. _RasterPy GitHub repository: https://github.com/sunpy/rasterpy
 .. _GitHub: https://github.com/
 .. _git: https://git-scm.com/
 .. _SunPy Newcomer's Guide: http://docs.sunpy.org/en/stable/dev_guide/newcomers.html

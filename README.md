@@ -1,4 +1,4 @@
-# SlitSpectrographPy
+# RasterPy
 
 ## License
 
