@@ -43,8 +43,8 @@ class RasterSequence(NDCubeSequence):
     """
     def __init__(self, data_list, meta=None, slit_step_axis=0):
         # Initialize Sequence.
-        super().__init__(data_list, meta=meta)
-        self._slit_step_axis = slit_step_axis
+        super().__init__(data_list, meta=meta, common_axis=slit_step_axis)
+        self._slit_step_axis = self._common_axis
 
     def __repr__(self):
         return (
