@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
-import os.path
-import pytest
 import copy
+import os.path
 
-import numpy as np
-import astropy.wcs as wcs
-from astropy.io import fits
-import astropy.units as u
-from astropy.time import Time, TimeDelta
-from ndcube.utils.wcs import WCS
-from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
-
-from irispy.spectrograph import IRISSpectrogramCube, IRISSpectrogramCubeSequence, IRISSpectrograph, read_iris_spectrograph_level2_fits
 import irispy.data.test
+import numpy as np
+import pytest
 from irispy import iris_tools
+from irispy.spectrograph import (
+    IRISSpectrogramCube,
+    IRISSpectrogramCubeSequence,
+    IRISSpectrograph,
+    read_iris_spectrograph_level2_fits,
+)
+from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
+from ndcube.utils.wcs import WCS
+
+import astropy.units as u
+from astropy.io import fits
+from astropy.time import Time, TimeDelta
 
 testpath = irispy.data.test.rootdir
 
@@ -125,7 +129,9 @@ def iris_l2_test_raster():
 
 
 def test_fits_data_comparison(iris_l2_test_raster):
-    """Make sure the data is the same in pyfits and irispy"""
+    """
+    Make sure the data is the same in pyfits and irispy.
+    """
     hdulist = fits.open(os.path.join(
         testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
     spectral_window1 = hdulist[0].header["TDESC1"]

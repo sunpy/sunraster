@@ -1,7 +1,7 @@
 from collections import namedtuple
 
-import numpy as np
 import ndcube.utils.sequence
+import numpy as np
 
 SequenceSlice = namedtuple("SequenceSlice", "sequence_index slit_step_item")
 """
@@ -21,7 +21,8 @@ by sequence_index attribute.
 
 def _slice_sequence_as_SnS(sequence, item):
     """
-    Enables RasterSequence instance to be indexed as if it were a single sit-and-stare cube.
+    Enables RasterSequence instance to be indexed as if it were a single sit-
+    and-stare cube.
 
     Parameters
     ----------
@@ -42,7 +43,6 @@ def _slice_sequence_as_SnS(sequence, item):
     >>> # Return same slice using this function
     >>> _index_sequence_as_cube(cs, (slice(0, cubeB.shape[0]), 0,
     ...                             (slice(0, cubeB.shape[2])) # doctest: +SKIP
-
     """
     # Convert item to a list of single Raster items for each relevant raster.
     n_slit_steps = np.array([c.data.shape[sequence._slit_step_axis] for c in sequence.data])
@@ -54,7 +54,8 @@ def _slice_sequence_as_SnS(sequence, item):
 
 def convert_SnS_item_to_sequence_items(SnS_item, slit_step_axis, n_slit_steps):
     """
-    Converts an item input to RasterSequence.slice_as_SnS to a list of SequenceSlice objects.
+    Converts an item input to RasterSequence.slice_as_SnS to a list of
+    SequenceSlice objects.
 
     Parameters
     ----------
@@ -72,7 +73,6 @@ def convert_SnS_item_to_sequence_items(SnS_item, slit_step_axis, n_slit_steps):
     sequence_items: `list` of SequenceItem `namedtuple`.
         The slice/index items for each relevant Raster within the RasterSequence
         which together represent the original input slice/index item.
-
     """
     invalid_item_error_message = "Invalid index/slice input."
     # Case 1: Item is int and slit step axis is 0.
@@ -292,7 +292,6 @@ def _convert_sequence_slice_to_sequence_item(sequence_slice, slit_step_axis, SnS
     sequence_item: SequenceItem `namedtuple`.
         Describes sequence index of a Raster within a RasterSequence and the
         slice/index item to be applied to the whole Raster.
-
     """
     if SnS_item is None and slit_step_axis == 0:
         sequence_item = SequenceItem(sequence_slice.sequence_index,

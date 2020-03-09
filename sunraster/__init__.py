@@ -1,15 +1,24 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
-This is an Astropy affiliated package.
+sunraster
+=========
+
+Does stuff.
 """
+import os
+import sys
+import logging
 
-# Affiliated packages may add whatever they like to this file, but
-# should keep this content at the top.
-# ----------------------------------------------------------------------------
-from ._sunpy_init import *
-# ----------------------------------------------------------------------------
+from .version import __version__
 
-if not _ASTROPY_SETUP_:
-    # For egg_info test builds to pass, put package imports here.
-    from .raster import Raster, RasterSequence
+# Enforce Python version check during package import.
+__minimum_python_version__ = "3.6"
+
+
+class UnsupportedPythonError(Exception):
+    pass
+
+
+if sys.version_info < tuple(int(val) for val in __minimum_python_version__.split('.')):
+    # This has to be .format to keep backwards compatibly.
+    raise UnsupportedPythonError(
+        f"sunraster does not support Python < {__minimum_python_version__}")

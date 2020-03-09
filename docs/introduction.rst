@@ -2,11 +2,11 @@ An Introduction to sunraster
 ============================
 
 .. warning::
-    
+
     sunraster is still under heavy development and has not yet seen its first
     release. If you want to help develop and test sunraster, follow these
     `installation instructions
-    <https://github.com/sunpy/irispy/wiki/sunraster-Installation-Instructions>`_.
+    <https://github.com/sunpy/sunraster/wiki/sunraster-Installation-Instructions>`_.
 
 What is sunraster?
 ------------------
@@ -33,7 +33,7 @@ sunraster classes inherit more fundamental functionality from the
 programmable interface) allows users to manipulate the same data
 object as if it were 3D (time, latitude, wavelength) or 4D (raster
 number, longitude, latitude, wavelength), which is very useful
-when dealing with scanning slit-spectrograph data.  The 
+when dealing with scanning slit-spectrograph data.  The
 API simultaneously slices not only the data, but the uncertainties,
 data mask, and WCS transformations leading to faster and less
 error-prone data analysis.  The sunraster classes also inherit the

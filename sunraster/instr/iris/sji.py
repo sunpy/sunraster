@@ -1,20 +1,21 @@
-'''
-This module provides movie tools for level 2 IRIS SJI fits file
-'''
+"""
+This module provides movie tools for level 2 IRIS SJI fits file.
+"""
 
 import warnings
 
 import numpy as np
-from astropy.io import fits
-import astropy.units as u
-from astropy.wcs import WCS
-from astropy.time import Time, TimeDelta
-from sunpy.map import GenericMap
-from ndcube import NDCube
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-from ndcube.ndcube_sequence import NDCubeSequence
-
 from irispy import iris_tools
+from ndcube import NDCube
+from ndcube.ndcube_sequence import NDCubeSequence
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+
+import astropy.units as u
+from astropy.io import fits
+from astropy.time import Time, TimeDelta
+from astropy.wcs import WCS
+
+from sunpy.map import GenericMap
 
 __all__ = ['IRISMapCube', 'IRISMapCubeSequence', 'read_iris_sji_level2_fits']
 
@@ -26,7 +27,7 @@ BAD_PIXEL_VALUE_UNSCALED = -32768
 
 class IRISMapCube(NDCube):
     """
-    IRISMapCube
+    IRISMapCube.
 
     Class representing SJI Images described by a single WCS
 
@@ -85,7 +86,7 @@ class IRISMapCube(NDCube):
                  mask=None, extra_coords=None, copy=False, missing_axes=None,
                  scaled=None):
         """
-        Initialization of Slit Jaw Imager
+        Initialization of Slit Jaw Imager.
         """
         warnings.warn("This class is still in early stages of development. API not stable.")
         # Set whether SJI data is scaled or not.
@@ -153,7 +154,8 @@ class IRISMapCube(NDCube):
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -176,7 +178,6 @@ class IRISMapCube(NDCube):
         -------
         result: `IRISMapCube`
             A new IRISMapCube is returned with the correction applied (undone).
-
         """
         # Raise an error if this method is called while memmap is used
         if not self.scaled:
@@ -212,7 +213,8 @@ class IRISMapCube(NDCube):
 
     def apply_dust_mask(self, undo=False):
         """
-        Applies or undoes an update of the mask with the dust particles positions.
+        Applies or undoes an update of the mask with the dust particles
+        positions.
 
         Parameters
         ----------
@@ -239,7 +241,8 @@ class IRISMapCube(NDCube):
 
 
 class IRISMapCubeSequence(NDCubeSequence):
-    """Class for holding, slicing and plotting IRIS SJI data.
+    """
+    Class for holding, slicing and plotting IRIS SJI data.
 
     This class contains all the functionality of its super class with
     some additional functionalities.
@@ -255,7 +258,6 @@ class IRISMapCubeSequence(NDCubeSequence):
 
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
-
     """
     def __init__(self, data_list, meta=None, common_axis=0):
         # Initialize IRISMapCubeSequence.
@@ -317,8 +319,8 @@ Axis Types:\t\t {axis_types}
     def plot(self, axes=None, plot_axis_indices=None, axes_coordinates=None,
              axes_units=None, data_unit=None, **kwargs):
         """
-        Visualizes data in the IRISMapCubeSequence with the sequence axis folded
-        into the common axis.
+        Visualizes data in the IRISMapCubeSequence with the sequence axis
+        folded into the common axis.
 
         Based on the cube-like dimensionality of the sequence and value of plot_axis_indices
         kwarg, a Line/Image Plot/Animation is produced.
@@ -385,7 +387,6 @@ Axis Types:\t\t {axis_types}
         Returns
         -------
         return : ndcube.mixins.sequence_plotting.plot_as_cube
-
         """
         return self.plot_as_cube(axes=axes, plot_axis_indices=plot_axis_indices,
                                  axes_coordinates=axes_coordinates,
@@ -393,7 +394,8 @@ Axis Types:\t\t {axis_types}
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -424,7 +426,6 @@ Axis Types:\t\t {axis_types}
             time correction applied (undone).
             If copy=True, a new IRISMapCubeSequence is returned with the correction
             applied (undone).
-
         """
         corrected_data = [cube.apply_exposure_time_correction(undo=undo, force=force)
                           for cube in self.data]
@@ -436,7 +437,8 @@ Axis Types:\t\t {axis_types}
 
     def apply_dust_mask(self, undo=False):
         """
-        Applies or undoes an update of all the masks with the dust particles positions.
+        Applies or undoes an update of all the masks with the dust particles
+        positions.
 
         Parameters
         ----------
@@ -449,7 +451,6 @@ Axis Types:\t\t {axis_types}
         -------
         result :
             Rewrite all self.data[i] mask with/without the dust positions.
-
         """
         for cube in self.data:
             cube.apply_dust_mask(undo=undo)
@@ -472,7 +473,6 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
     Returns
     -------
     result: `irispy.sji.IRISMapCube` or `irispy.sji.IRISMapCubeSequence`
-
     """
     list_of_cubes = []
     if type(filenames) is str:

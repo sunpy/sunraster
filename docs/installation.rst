@@ -6,7 +6,7 @@ sunraster requires Python 3.5+, SunPy 0.9+, ndcube 1.0.1+, astropy and
 matplotlib.
 
 .. warning::
-    
+
     sunraster is still under heavy development and has not yet seen its first
     release.  The API can change at any time and so should not be
     relied upon.  However, we are striving towards releasing a stable
@@ -76,7 +76,7 @@ want ``sunraster-git`` to reside, type:
 		git clone https://github.com/sunpy/sunraster.git sunraster-git
 
 Install sunraster
-""""""""""""""
+"""""""""""""""""
 Finally, we can install the sunraster development version.
 
 .. code-block:: console

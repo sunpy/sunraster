@@ -1,5 +1,11 @@
+version: 2
+
+# We have to use conda for fun
 conda:
-  file: .rtd-environment.yml
+  environment: .rtd-environment.yml
 
 python:
-   setup_py_install: true
+   version: 3.7
+   install:
+      - method: pip
+        path: .
