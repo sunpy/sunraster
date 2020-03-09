@@ -43,8 +43,26 @@ class RasterSequence(NDCubeSequence):
     """
     def __init__(self, data_list, meta=None, slit_step_axis=0):
         # Initialize Sequence.
-        super().__init__(data_list, meta=meta)
-        self._slit_step_axis = slit_step_axis
+        super().__init__(data_list, meta=meta, common_axis=slit_step_axis)
+        self._slit_step_axis = self._common_axis
+
+    def __repr__(self):
+        return (
+            """RasterSequence
+--------------
+Start time: {start_time}
+Pixel dimensions (raster scans, slit steps, slit height, spectral): {dimensions}
+Longitude range: {lon_range}
+Latitude range: {lat_range}
+Spectral range: {spectral_range}
+Data unit: {unit}
+""".format(dimensions=self.dimensions,
+           start_time=self.time[0],
+           lon_range=u.Quantity([self.lon.min(), self.lon.max()]),
+           lat_range=u.Quantity([self.lat.min(), self.lat.max()]),
+           spectral_range=u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()]),
+           unit=self.data[0].unit)
+)
 
     @property
     def slice_as_SnS(self):
@@ -64,23 +82,23 @@ class RasterSequence(NDCubeSequence):
 
     @property
     def spectral_axis(self):
-        return [raster.spectral_axis for raster in self.data]
+        return u.Quantity([raster.spectral_axis for raster in self.data])
 
     @property
     def time(self):
-        return [raster.time for raster in self.data]
+        return np.concatenate([raster.time for raster in self.data])
 
     @property
     def exposure_time(self):
-        return [raster.exposure_time for raster in self.data]
+        return np.concatenate([raster.exposure_time for raster in self.data])
 
     @property
     def lon(self):
-        return [raster.lon for raster in self.data]
+        return u.Quantity([raster.lon for raster in self.data])
 
     @property
     def lat(self):
-        return [raster.lat for raster in self.data]
+        return u.Quantity([raster.lat for raster in self.data])
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
@@ -210,6 +228,26 @@ class Raster(NDCube):
         supported_latitude_names += [name.capitalize() for name in supported_latitude_names]
         self._supported_latitude_names = supported_latitude_names
         self._latitude_name = self._find_axis_name(self._supported_latitude_names)
+
+    def __repr__(self):
+        return (
+            """Raster
+------
+Start time: {start_time}
+Pixel dimensions (Slit steps, Slit height, Spectral): {dimensions}
+Longitude range: {lon_range}
+Latitude range: {lat_range}
+Spectral range: {spectral_range}
+Data unit: {unit}
+""".format(dimensions=self.dimensions,
+           start_time=self.time[0],
+           lon_range=u.Quantity([self.lon.min(), self.lon.max()]),
+           lat_range=u.Quantity([self.lat.min(), self.lat.max()]),
+           spectral_range=u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()]),
+           unit=self.unit)
+)
+
+
 
     def __getitem__(self, item):
         result = super().__getitem__(item)

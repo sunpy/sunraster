@@ -1,7 +1,7 @@
-# Contributing to SunRaster
+# Contributing to sunraster
 ---------------------------
 
-SunRaster is an open project that enourages everyone to contribute in any way possible.
+sunraster is an open project that enourages everyone to contribute in any way possible.
 This document describes how to contribute code and documentation to the SunRaster repository.
 
 ## Basic Contribution Workflow
