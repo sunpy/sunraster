@@ -31,7 +31,7 @@ conf.read(['setup.cfg'])
 metadata = dict(conf.items('metadata'))
 
 PACKAGENAME = metadata.get('package_name', 'sunraster')
-DESCRIPTION = metadata.get('description', 'SunRaster')
+DESCRIPTION = metadata.get('description', 'sunraster')
 AUTHOR = metadata.get('author', 'SunPy Developers')
 AUTHOR_EMAIL = metadata.get('author_email', '')
 LICENSE = metadata.get('license', 'unknown')
