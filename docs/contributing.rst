@@ -1,9 +1,9 @@
-=========================
-Contributing to sunraster
-=========================
+=============================
+Contributing to ``sunraster``
+=============================
 
 We are always enthusiastic to welcome new users and developers who
-want to enhance the sunraster.  You can contribute in several ways, from
+want to enhance the ``sunraster``.  You can contribute in several ways, from
 providing feedback, reporting bugs, contributing code, and reviewing
 pull requests.  There is a role for almost any level of engagement.
 
@@ -11,7 +11,7 @@ Providing Feedback
 ------------------
 
 We could always use more voices and opinions in the discussions about
-sunraster and its development from both users and developers. There are a
+``sunraster`` and its development from both users and developers. There are a
 number of ways to make your voice heard.  Whether it be constructive
 criticism, inquiries about current or future capabilities, or
 flattering praise, we would love to hear from you.  You can contact us
@@ -37,17 +37,17 @@ Contributing Code
 -----------------
 
 If you would like to contribute code, it is strongly
-recommended that you first discuss your aims with the sunraster
+recommended that you first discuss your aims with the ``sunraster``
 community.  We strive to be an open and welcoming community for 
 developers of all experience levels. Discussing your ideas
 before you start can give you new insights that will make your
 development easier, lead to a better end product, and reduce the
 chances of your work being regetfully rejected because of an issue you
 weren't aware of, e.g. the functionality already exists elsewhere.
-See :ref:`getting_help` to contact the sunraster community.
+See :ref:`getting_help` to contact the ``sunraster`` community.
 
 In the rest of this section we will go through the steps needed to set
-up your system so you can contribute code to sunraster.  This is done
+up your system so you can contribute code to ``sunraster``.  This is done
 using `git`_ version control software and `GitHub`_,  a website that
 allows you to upload, update, and share code repositories (repos).  If
 you are new to code development or git and GitHub you can learn more
@@ -59,24 +59,24 @@ from the following guides:
 * `SunPy version control guide`_
 
 The principles in the SunPy guides for contributing code and
-utilizing GitHub and git are exactly the same for sunraster
-except that we contribute to the sunraster repository rather than the
+utilizing GitHub and git are exactly the same for ``sunraster``
+except that we contribute to the ``sunraster`` repository rather than the
 SunPy one.  If you are a more seasoned developer and would
 like to get furhter information, you can check out the `SunPy
 Developer's Guide`_.
 
-Before you can contribute code to sunraster, you first need to install
-the development version of sunraster.  To find out how, see
+Before you can contribute code to ``sunraster``, you first need to install
+the development version of ``sunraster``.  To find out how, see
 :ref:`dev_install`.
 
-Next, you will have to create a new online version of the sunraster
+Next, you will have to create a new online version of the ``sunraster``
 repo on your own GitHub account, a process known as "forking".  (If you
-don't have a GitHub account, `sign up here`_.)  Sign into your GitHub
+don't have an account, sign up at `GitHub`_.)  Sign into your GitHub
 account and then go to the main `sunraster GitHub repository`_.  Click
 the "Fork" button in the top right corner of the page.  A pop-up
 window should appear asking to you to confirm which GitHub account you
 wish to fork to.  Once you've done that, you should have a new
-version of the sunraster repo on your own GitHub account.  It should
+version of the ``sunraster`` repo on your own GitHub account.  It should
 reside at a URL like https:/github.com/my_github_handle/sunraster.
 
 Next, we need to link our newly forked online repo with the one we
@@ -88,9 +88,9 @@ the command line and type:
 
 .. code-block:: console
 
-		$ git remote -v
+  git remote -v
 
-If you have installed the sunraster development version as outlined in
+If you have installed the ``sunraster`` development version as outlined in
 :ref:`dev_install`, you will have one remote called ``origin`` pointing to
 https://github.com/sunpy/sunraster.  Let's now add a remote to the repo
 in your GitHub account called ``my_repo``.  In a terminal, from the local
@@ -98,40 +98,40 @@ repo directory, type:
 
 .. code-block:: console
 
-		$ git remote add my_repo https:/github.com/my_github_handle/sunraster
+  git remote add my_repo https:/github.com/my_github_handle/sunraster
 
 where you replace ``my_github_handle`` with your GitHub name.  Now you
 can check that the remote has been added by again typing ``git remote -v``.
 
 Now you're ready to get coding!  The following subsection will outline
-an example workflow for contributing to sunraster.
+an example workflow for contributing to ``sunraster``.
 
 .. _contributing_workflow:
 
 Example Workflow for Contributing Code
 --------------------------------------
 
-To make changes to the development version of sunraster, we must first
+To make changes to the development version of ``sunraster``, we must first
 activate the environment in which it is installed.  Recall during
 installation, we named this environment  ``sunraster-dev``.  From any
 directory on the command line, Windows users should type:
 
 .. code-block:: console
 
-		> activate sunraster-dev
+  activate sunraster-dev
 
 while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		$ conda activate sunraster-dev
+  conda activate sunraster-dev
 
-Next, change into the local sunraster repo directory, ``sunraster-git``.
-When you are making changes to sunraster, it is strongly recommended that
+Next, change into the local ``sunraster`` repo directory, ``sunraster-git``.
+When you are making changes to ``sunraster``, it is strongly recommended that
 you use a different `git branch`_ for each set of related new features
 and/or bug fixes. `Git branches`_ are a way of having different
 versions of the same code within the repo simultaneously. Assuming you
-have just installed the sunraster development version, you will only have
+have just installed the ``sunraster`` development version, you will only have
 one branch, called ``master``.  It is recommended you do not do any
 development on the ``master`` branch, but rather keep it as an clean copy
 of the latest ``origin master`` branch.  If you have more than one
@@ -141,32 +141,32 @@ are on, type in the terminal:
 
 .. code-block:: console
 
-		$ git branch
+  git branch
 
 If you are not on the ``master`` branch, let's start by changing to it
 (known as checking out the branch):
 
 .. code-block:: console
 
-		$ git checkout master
+  git checkout master
 
 Now, let's ensure we have the latest updates to the development
 version from the main repo.
 
 .. code-block:: console
 
-		$ git pull origin master
+  git pull origin master
 
 This updates the local branch you are on (in this case, ``master``) with
 the version of the ``master`` branch stored in the ``origin`` remote,
-i.e. the original sunraster GitHub repo.
+i.e. the original ``sunraster`` GitHub repo.
 
 Let's now create a new branch called ``my_fix`` on which to develop
 our new feature of bugfix.  Type:
 
 .. code-block:: console
 
-		$ git checkout -b my_fix
+  git checkout -b my_fix
 
 This will not only create the new branch but also check it out. The
 new branch will now be an exact copy of the branch from which you
@@ -185,13 +185,13 @@ list of files that we've changed by typing:
 
 .. code-block:: console
 
-		$ git status
+  git status
 
 We can also get a summary of those changes, line by line:
 
 .. code-block:: console
 
-		$ git diff
+  git diff
 
 Once we're happy with the changes, we must add the changed files to
 the set to be included in the commit.  We do not have
@@ -199,21 +199,21 @@ to include all changed file.  We can add files one by one:
 
 .. code-block:: console
 
-		$ git add file1.py
-		$ git add file2.py
+  git add file1.py
+  git add file2.py
 
 or add all changed files at once:
 
 .. code-block:: console
 
-		$ git add --all
+  git add --all
 
 Be sure to check what files have changed before using this option to
 make sure you know what you are committing.  Finally, to commit, type:
 
 .. code-block:: console
 
-		$ git commit
+  git commit
 
 This will open a text editor, usually VI, and allow you to enter a
 commit message to describe the changes you've made.  A commit message
@@ -226,7 +226,7 @@ desired:
 
 .. code-block:: console
 
-		$ git commit -am 'My first commit.'
+  git commit -am 'My first commit.'
 
 where ``'My first commit.'`` is the commit message.  But CAUTION!
 This adds and commits all changed files.  So make sure you know what
@@ -242,11 +242,11 @@ branch.  Also make sure you pull any new updates from the ``origin``
 
 .. code-block:: console
 
-		$ conda activate sunraster-dev # For Windows users, type "activate sunraster-dev"
-		$ cd sunraster-git
-		$ git branch
-		$ git checkout my_fix
-		$ git pull origin master
+  conda activate sunraster-dev # For Windows users, type "activate sunraster-dev"
+  cd sunraster-git
+  git branch
+  git checkout my_fix
+  git pull origin master
 
 Assuming there are no updates that conflict with the changes you made
 the other day, you're ready to continue working.  If there are
@@ -260,7 +260,7 @@ remote:
 
 .. code-block:: console
 
-		$ git push my_repo my_fix
+  git push my_repo my_fix
 
 Now your changes are available on GitHub.  Follow the steps below to open
 a PR:
@@ -302,21 +302,21 @@ will then be automatically updated with the new commits.  Once you've
 made all changes and the online tests have passed, those reviewing
 your code can approve the PR.  Approved PRs can then be merged by
 those with write permissions to the repo.  Congratulations!  You have
-just contributed to sunraster!
+just contributed to ``sunraster``!
 
 Be sure to pull your the newly contributed changes to your local
 master branch by doing:
 
 .. code-block:: console
 
-		$ git checkout master
-		$ git pull origin master
+  git checkout master
+  git pull origin master
 
-You are now ready to start using the newly improved sunraster development
-version of sunraster, including your changes!
+You are now ready to start using the newly improved ``sunraster`` development
+version of ``sunraster``, including your changes!
 
 If you have questions about this guide or making contributions,
-sunraster and SunPy developers are always happy to help.  See
+``sunraster`` and SunPy developers are always happy to help.  See
 :ref:`getting_help`.  Happy coding and talk to you soon!
 
 .. _issue tracker: https://github.com/sunpy/sunraster/issues
@@ -330,4 +330,5 @@ sunraster and SunPy developers are always happy to help.  See
 .. _SunPy Developer's Guide: http://docs.sunpy.org/en/stable/dev_guide
 .. _pull requests: https://help.github.com/articles/about-pull-requests/
 .. _Git branches: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
-.. _git remotes: https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes
+.. _git branch: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
+.. _git remote: https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes

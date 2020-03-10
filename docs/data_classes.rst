@@ -4,7 +4,7 @@
 Data Classes
 ============
 
-The sunraster package provides a number of data classes for manipulating and
+The ``sunraster`` package provides a number of data classes for manipulating and
 visualization spectrograph data. These include `~sunraster.Raster` and 
 `~sunraster.RasterSequence`.
 
@@ -13,7 +13,7 @@ visualization spectrograph data. These include `~sunraster.Raster` and
 Raster
 ------
 
-The fundamental data class of the sunraster package is `~sunraster.Raster`. 
+The fundamental data class of the ``sunraster`` package is `~sunraster.Raster`. 
 It is designed to handle data from a single raster scan or sit-and-stare. 
 `~sunraster.Raster` stores its data as a single 3-D array whose 
 transformations between pixel and real world coordinates are described by 
@@ -128,6 +128,8 @@ represented by each axis.  The axis names are in accordance with the
 International Virtual Observatory Alliance (IVOA)
 `UCD1+ controlled vocabulary <http://www.ivoa.net/documents/REC/UCD/UCDlist-20070402.html>`_.
 Here the shape and axis types are given in data order, not WCS order.
+
+.. _raster_slicing:
 
 Slicing
 ^^^^^^^
@@ -271,4 +273,8 @@ In addition, the units of the axes or the data can be set by the
 ``unit_x_axis``, ``unit_y_axis``, unit kwargs.  However, if not set,
 these are derived from the `~sunraster.Raster` wcs and unit attributes.
 
+.. _rastersequence:
 
+RasterSequence
+--------------
+Still to complete.
