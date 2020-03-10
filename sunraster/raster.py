@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# Author: Daniel Ryan <ryand5@tcd.ie>
-
+import ndcube.utils.sequence
 import numpy as np
-import astropy.units as u
 from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-import ndcube.utils.sequence
+
+import astropy.units as u
 
 from sunraster import utils
 
@@ -23,7 +21,8 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
 
 class RasterSequence(NDCubeSequence):
-    """Class for holding, slicing and plotting spectrogram data.
+    """
+    Class for holding, slicing and plotting spectrogram data.
 
     This class contains all the functionality of its super class with
     some additional functionalities.
@@ -39,7 +38,6 @@ class RasterSequence(NDCubeSequence):
 
     slit_step_axis: `int`
         The axis of the Raster instances corresponding to time.
-
     """
     def __init__(self, data_list, meta=None, slit_step_axis=0):
         # Initialize Sequence.
@@ -75,8 +73,8 @@ Data unit: {unit}
     @property
     def slice_as_raster(self):
         """
-        Method to slice instance as though data were 4D,
-        i.e. raster number, slit step position, position along slit, wavelength.
+        Method to slice instance as though data were 4D, i.e. raster number,
+        slit step position, position along slit, wavelength.
         """
         return _SequenceSlicer(self)
 
@@ -102,7 +100,8 @@ Data unit: {unit}
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -133,7 +132,6 @@ Data unit: {unit}
             exposure time correction applied (undone).
             If copy=True, a new RasterSequence is returned with the correction
             applied (undone).
-
         """
         converted_data_list = []
         for cube in self.data:
@@ -147,7 +145,8 @@ Data unit: {unit}
 
 class Raster(NDCube):
     """
-    Class representing a sit-and-stare or single raster of slit spectrogram data.
+    Class representing a sit-and-stare or single raster of slit spectrogram
+    data.
 
     Must be described by a single WCS.
 
@@ -261,7 +260,7 @@ Data unit: {unit}
     def spectral_axis(self):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
-                             "{0}".format(self._supported_spectral_names))
+                             f"{self._supported_spectral_names}")
         else:
             return self._get_axis_coord(*self._spectral_name)
 
@@ -269,7 +268,7 @@ Data unit: {unit}
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
-                             "{0}".format(self._supported_time_name))
+                             f"{self._supported_time_name}")
         else:
             return self._get_axis_coord(*self._time_name)
 
@@ -277,7 +276,7 @@ Data unit: {unit}
     def exposure_time(self):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
-                             "{0}".format(self._supported_exposure_time_spectral_name))
+                             f"{self._supported_exposure_time_spectral_name}")
         else:
             return self._get_axis_coord(*self._exposure_time_name)
 
@@ -285,7 +284,7 @@ Data unit: {unit}
     def lon(self):
         if not self._longitude_name:
             raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
-                             "{0}".format(self._supported_longitude_spectral_name))
+                             f"{self._supported_longitude_spectral_name}")
         else:
             return self._get_axis_coord(*self._longitude_name)
 
@@ -293,13 +292,14 @@ Data unit: {unit}
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
-                             "{0}".format(self._supported_latitude_spectral_name))
+                             f"{self._supported_latitude_spectral_name}")
         else:
             return self._get_axis_coord(*self._latitude_name)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
-        Applies or undoes exposure time correction to data and uncertainty and adjusts unit.
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
         already include inverse time.  This can be overridden so that correction
@@ -322,7 +322,6 @@ Data unit: {unit}
         -------
         result: `Raster`
             New Raster in new units.
-
         """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
@@ -336,7 +335,7 @@ Data unit: {unit}
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "Raster dimensions must be 2 or 3. Dimensions={0}".format(
+                    "Raster dimensions must be 2 or 3. Dimensions={}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:

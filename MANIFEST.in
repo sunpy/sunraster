@@ -1,40 +1,27 @@
 include README.rst
-include CHANGES.rst
+include CHANGELOG.rst
 
-include ez_setup.py
-include ah_bootstrap.py
+include setup.py
 include setup.cfg
+include pyproject.toml
+include LICENSE.rst
+include CITATION.rst
+include sunpy/CITATION.rst
+include licenses/*.rst
+include README.rst
 
-recursive-include sunraster *.pyx *.c *.pxd
+recursive-include sunpy *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include cextern *
 recursive-include scripts *
 
+# Include the docs and examples
+recursive-include docs *
+recursive-include examples *
 prune build
 prune docs/_build
 prune docs/api
 
-
-# the next few stanzas are for astropy_helpers.  It's derived from the
-# astropy_helpers/MANIFEST.in, but requires additional includes for the actual
-# package directory and egg-info.
-
-include astropy_helpers/README.rst
-include astropy_helpers/CHANGES.rst
-include astropy_helpers/LICENSE.rst
-recursive-include astropy_helpers/licenses *
-
-include astropy_helpers/ez_setup.py
-include astropy_helpers/ah_bootstrap.py
-
-recursive-include astropy_helpers/astropy_helpers *.py *.pyx *.c *.h
-recursive-include astropy_helpers/astropy_helpers.egg-info *
-# include the sphinx stuff with "*" because there are css/html/rst/etc.
-recursive-include astropy_helpers/astropy_helpers/sphinx *
-
-prune astropy_helpers/build
-prune astropy_helpers/astropy_helpers/tests
-
-
+# Globally exclude compiled files
 global-exclude *.pyc *.o

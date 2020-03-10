@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
-# Author: Daniel Ryan <ryand5@tcd.ie>
-
-import os.path
-import pytest
-import copy
 
 import numpy as np
-import astropy.wcs as wcs
-from astropy.io import fits
+import pytest
+from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
+from ndcube.utils.wcs import WCS
+
 import astropy.units as u
 from astropy.time import Time, TimeDelta
-from ndcube.utils.wcs import WCS
-from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
 from sunraster.raster import Raster, RasterSequence
 
