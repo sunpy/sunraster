@@ -2,12 +2,14 @@
 
 import numpy as np
 import pandas as pd
-from astropy import units as u
 from pkg_resources import resource_filename
+
+from astropy import units as u
 
 
 class ObsId(dict):
-    """A class to convert the IRIS OBS ID to human-readable format.
+    """
+    A class to convert the IRIS OBS ID to human-readable format.
 
     Parameters
     ----------
@@ -71,8 +73,8 @@ class ObsId(dict):
     @staticmethod
     def __exptime_to_quant(exptime):
         """
-        Converts an 'exptime' string (used in IRIS tables and OBS_DESC)
-        to a Quantity instance in seconds.
+        Converts an 'exptime' string (used in IRIS tables and OBS_DESC) to a
+        Quantity instance in seconds.
         """
         if exptime == "Exposure 1s":
             return 1. * u.s

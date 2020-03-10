@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import os
-import pytest
-
-import numpy as np
-import numpy.testing as np_test
-import astropy.units as u
-from astropy.utils.data import download_file
-import scipy.io
-from sunpy.time import parse_time
 
 import irispy.iris_tools as iris_tools
-from irispy.iris_tools import fit_iris_xput
-from irispy.iris_tools import get_iris_response
+import numpy as np
+import numpy.testing as np_test
+import pytest
+import scipy.io
+from irispy.iris_tools import fit_iris_xput, get_iris_response
+
+import astropy.units as u
+from astropy.utils.data import download_file
+
+from sunpy.time import parse_time
 
 DETECTOR_TYPE_KEY = "detector type"
 

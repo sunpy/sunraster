@@ -4,16 +4,16 @@
 import copy
 
 import numpy as np
+from irispy import iris_tools
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+from ndcube.utils.wcs import WCS
+
 import astropy.units as u
 from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time, TimeDelta
-from ndcube.utils.wcs import WCS
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+
 from sunraster.raster import Raster, RasterSequence
-
-
-from irispy import iris_tools
 
 __all__ = ['IRISSpectrograph', 'IRISSpectrogramCube', 'IRISSpectrogramCubeSequence']
 
@@ -85,7 +85,9 @@ class IRISSpectrograph(object):
 
     @property
     def spectral_windows(self):
-        """Returns a table of info on the spectral windows."""
+        """
+        Returns a table of info on the spectral windows.
+        """
         colnames = ("spectral window", "detector type", "brightest wavelength", "min wavelength",
                     "max wavelength")
         spectral_window_list = []
@@ -96,7 +98,8 @@ class IRISSpectrograph(object):
 
 
 class IRISSpectrogramCubeSequence(RasterSequence):
-    """Class for holding, slicing and plotting IRIS spectrogram data.
+    """
+    Class for holding, slicing and plotting IRIS spectrogram data.
 
     This class contains all the functionality of its super class with
     some additional functionalities.
@@ -112,7 +115,6 @@ class IRISSpectrogramCubeSequence(RasterSequence):
 
     slit_step_axis: `int`
         The axis of the NDCubes corresponding to time.
-
     """
     def __init__(self, data_list, meta=None, slit_step_axis=0):
         detector_type_key = "detector type"
@@ -150,7 +152,8 @@ Roll: {roll}
 
     def convert_to(self, new_unit_type, copy=False):
         """
-        Converts data, uncertainty and unit of each spectrogram in sequence to new unit.
+        Converts data, uncertainty and unit of each spectrogram in sequence to
+        new unit.
 
         Parameters
         ----------
@@ -164,7 +167,6 @@ Roll: {roll}
             If True a new instance with the converted data values is return.
             If False, the current instance is overwritten.
             Default=False
-
         """
         converted_data_list = []
         for cube in self.data:
@@ -303,7 +305,6 @@ Roll: {roll}
         -------
         result: `IRISSpectrogramCube`
             New IRISSpectrogramCube in new units.
-
         """
         detector_type = iris_tools.get_detector_type(self.meta)
         time_obs = time_obs
@@ -320,7 +321,7 @@ Roll: {roll}
             solid_angle = self.wcs.wcs.cdelt[lat_wcs_index] * \
                           self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
             # Get wavelength for each pixel.
-            spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
+            (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
 
         if new_unit_type == "DN" or new_unit_type == "photons":
@@ -376,7 +377,8 @@ Roll: {roll}
 
 def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):
     """
-    Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph instance.
+    Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph
+    instance.
 
     Parameters
     ----------
@@ -391,7 +393,6 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
     Returns
     -------
     result: `irispy.spectrograph.IRISSpectrograph`
-
     """
     if type(filenames) is str:
         filenames = [filenames]
@@ -400,7 +401,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
         hdulist.verify('fix')
         if f == 0:
             # Determine number of raster positions in a scan
-            raster_positions_per_scan = int(hdulist[0].header["NRASTERP"])
+            int(hdulist[0].header["NRASTERP"])
             # Collecting the window observations.
             windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
                                        for i in range(1, hdulist[0].header["NWIN"]+1)])
@@ -471,7 +472,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
         # Determine extra coords for this raster.
         times = (Time(hdulist[0].header["STARTOBS"]) +
                  TimeDelta(hdulist[-2].data[:, hdulist[-2].header["TIME"]], format='sec'))
-        raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
+        np.arange(int(hdulist[0].header["NRASTERP"]))
         pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
         pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
         xcenix = hdulist[-2].data[:, hdulist[-2].header["XCENIX"]] * u.arcsec

@@ -15,7 +15,7 @@ The cost of using the development version is a less stable code-base. We will ou
 how to perform both types of install below.
 
 .. warning::
-    
+
     sunraster is still under heavy development and has not yet seen its first
     release.  The API can change at any time and so should not be
     relied upon.  However, we are striving towards releasing a stable

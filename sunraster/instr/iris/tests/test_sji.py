@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # """Tests for functions in sji.py"""
-import pytest
 import numpy as np
-from astropy import units as u
-from astropy.time import Time, TimeDelta
-from ndcube.utils.wcs import WCS
-
+import pytest
 from irispy import iris_tools
 from irispy.sji import IRISMapCube, IRISMapCubeSequence
+from ndcube.utils.wcs import WCS
+
+from astropy import units as u
+from astropy.time import Time
 
 # Sample data for IRISMapCube tests
 data = np.array([[[1, 2, 3, 4], [2, 4, 5, 3], [0, 1, 2, 3]],

@@ -2,11 +2,11 @@ An Introduction to sunraster
 ============================
 
 .. warning::
-    
+
     sunraster is still under heavy development and has not yet seen its first
     release. If you want to help develop and test sunraster, follow these
     `installation instructions
-    <https://github.com/sunpy/irispy/wiki/sunraster-Installation-Instructions>`_.
+    <https://github.com/sunpy/sunraster/wiki/sunraster-Installation-Instructions>`_.
 
 What is sunraster?
 ------------------
