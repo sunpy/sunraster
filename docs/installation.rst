@@ -5,6 +5,15 @@ Installation
 sunraster requires Python 3.5+, SunPy 0.9+, ndcube 1.0.1+, astropy and
 matplotlib.
 
+Below we will outline how to install sunraster.
+The stable version of sunraster should be reliable and mostly bug free.
+(If you do find a bug in the stable version please let us know.
+See the :ref:`reporting_bugs` section of this guide to learn how.)
+However, if users would like to get new features at soon as possible or
+help to develop sunraster, they will have to install the development version.
+The cost of using the development version is a less stable code-base. We will outline
+how to perform both types of install below.
+
 .. warning::
     
     sunraster is still under heavy development and has not yet seen its first
@@ -13,6 +22,39 @@ matplotlib.
     version.  If you would like to help by providing user feedback,
     reporting bugs, or contributing code, install the development
     version as outlined below.
+
+.. _stable_install:
+
+Installing the Stable Version
+-----------------------------
+
+There are two options for installing the stable version of sunraster. The first is
+via the anaconda distribution using the conda-forge channel.  For more
+information on installing the anaconda distribution, see the `anaconda
+website`_.
+
+.. code-block:: console
+
+>------->-------$ conda install --channel conda-forge sunraster
+
+To update sunraster do:
+
+.. code-block:: console
+
+>------->-------$ conda update sunraster
+
+The second option for installing the stable version of sunraster is via
+pip.
+
+.. code-block:: console
+
+>------->-------$ pip install sunraster
+
+Then to update sunraster do:
+
+.. code-block:: console
+
+>------->-------$ pip install sunraster --upgrade
 
 .. _dev_install:
 
@@ -23,7 +65,7 @@ This section outlines how to install the development version of
 sunraster. The two primary packages on which sunraster relies are `ndcube`_
 and `SunPy`_. Both of these have stable released versions that work
 with sunraster. However, some developers may want to use the latest
-updates of these packages in their work on sunraster. Below we will first
+updates of these packages in their work with sunraster. Below we will first
 outline how to install sunraster with its stable dependencies, and then
 with the development versions of ndcube and SunPy.
 
@@ -62,13 +104,13 @@ while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		source activate sunraster-dev
+		conda activate sunraster-dev
 
 Clone sunraster Repository
 """"""""""""""""""""""""""
 
 The second step is to clone the `sunraster repository`_ from `GitHub`_ into
-a directory called ``sunraster-git``. From the directory in which you
+a directory.  Let's call it ``sunraster-git``. From the directory in which you
 want ``sunraster-git`` to reside, type:
 
 .. code-block:: console
@@ -76,7 +118,7 @@ want ``sunraster-git`` to reside, type:
 		git clone https://github.com/sunpy/sunraster.git sunraster-git
 
 Install sunraster
-""""""""""""""
+"""""""""""""""""
 Finally, we can install the sunraster development version.
 
 .. code-block:: console

@@ -24,5 +24,7 @@ Contents
 
    introduction
    installation
+   raster
+   contributing
    getting_help
    api

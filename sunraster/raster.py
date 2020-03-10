@@ -22,6 +22,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
                             "anyway, set 'force' kwarg to True.")
 AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
 
+
 class RasterSequence(NDCubeSequence):
     """Class for holding, slicing and plotting spectrogram data.
 
@@ -145,6 +146,7 @@ Data unit: {unit}
         else:
             self.data = converted_data_list
 
+
 class Raster(NDCube):
     """
     Class representing a sit-and-stare or single raster of slit spectrogram data.
@@ -246,8 +248,6 @@ Data unit: {unit}
            spectral_range=u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()]),
            unit=self.unit)
 )
-
-
 
     def __getitem__(self, item):
         result = super().__getitem__(item)

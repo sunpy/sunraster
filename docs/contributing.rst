@@ -18,6 +18,8 @@ flattering praise, we would love to hear from you.  You can contact us
 on the SunPy matrix channel or SunPy mailing lists.  See 
 :ref:`getting_help`.
 
+.. _reporting_bugs:
+
 Reporting Bugs
 --------------
 
@@ -122,7 +124,7 @@ while Linux and MacOS users should type:
 
 .. code-block:: console
 
-		$ source activate sunraster-dev
+		$ conda activate sunraster-dev
 
 Next, change into the local sunraster repo directory, ``sunraster-git``.
 When you are making changes to sunraster, it is strongly recommended that
@@ -177,7 +179,7 @@ fix the bug.  We now want to commit that change.  Committing is a bit
 like saving except that it records the state of the entire code base,
 not just the file you've changed. You can then revert to this state at
 any time, even after new commits have been made.  So if you mess up in
-the future you can always go back to a version thats worked.  This is
+the future you can always go back to a version that worked.  This is
 why it's called version controlling.  Before committing, we can see a
 list of files that we've changed by typing:
 
@@ -240,7 +242,7 @@ branch.  Also make sure you pull any new updates from the ``origin``
 
 .. code-block:: console
 
-		$ source activate sunraster-dev # For Windows users, type "activate sunraster-dev"
+		$ conda activate sunraster-dev # For Windows users, type "activate sunraster-dev"
 		$ cd sunraster-git
 		$ git branch
 		$ git checkout my_fix
@@ -313,8 +315,8 @@ master branch by doing:
 You are now ready to start using the newly improved sunraster development
 version of sunraster, including your changes!
 
-If you have questions about this guide or while making contributions,
-ndcube and SunPy developers are always happy to help.  See
+If you have questions about this guide or making contributions,
+sunraster and SunPy developers are always happy to help.  See
 :ref:`getting_help`.  Happy coding and talk to you soon!
 
 .. _issue tracker: https://github.com/sunpy/sunraster/issues
