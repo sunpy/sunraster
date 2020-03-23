@@ -1,9 +1,10 @@
+import textwrap
+
+import astropy.units as u
 import ndcube.utils.sequence
 import numpy as np
 from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-
-import astropy.units as u
 
 from sunraster import utils
 
@@ -20,6 +21,28 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
                             "anyway, set 'force' kwarg to True.")
 AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
 
+# Define supported coordinate names for coordinate properties.
+SUPPORTED_LONGITUDE_NAMES = [".lon", "longitude", "lon"]
+SUPPORTED_LONGITUDE_NAMES += [name.upper() for name in SUPPORTED_LONGITUDE_NAMES]
+SUPPORTED_LONGITUDE_NAMES += [name.capitalize() for name in SUPPORTED_LONGITUDE_NAMES]
+
+SUPPORTED_LATITUDE_NAMES = [".lat", "latitude", "lat"]
+SUPPORTED_LATITUDE_NAMES += [name.upper() for name in SUPPORTED_LATITUDE_NAMES]
+SUPPORTED_LATITUDE_NAMES += [name.capitalize() for name in SUPPORTED_LATITUDE_NAMES]
+
+SUPPORTED_SPECTRAL_NAMES = ["em.wl", "em.energy", "em.freq", "wavelength", "energy",
+                            "frequency", "freq", "lambda"]
+SUPPORTED_SPECTRAL_NAMES += [name.upper() for name in SUPPORTED_SPECTRAL_NAMES]
+SUPPORTED_SPECTRAL_NAMES += [name.capitalize() for name in SUPPORTED_SPECTRAL_NAMES]
+
+SUPPORTED_TIME_NAMES = ["time"]
+SUPPORTED_TIME_NAMES += [name.upper() for name in SUPPORTED_TIME_NAMES]
+SUPPORTED_TIME_NAMES += [name.capitalize() for name in SUPPORTED_TIME_NAMES]
+
+SUPPORTED_EXPOSURE_NAMES = ["exposure time", "exposure_time", "exposure times",
+                            "exposure_times", "exp time", "exp_time", "exp times", "exp_times"]
+SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES]
+SUPPORTED_EXPOSURE_NAMES += [name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES]
 
 class RasterSequence(NDCubeSequence):
     """
@@ -190,77 +213,62 @@ class Raster(NDCube):
         Note however that it is not always possible to save the input as reference.
         Default is False.
     """
-    def __init__(self, data, wcs, extra_coords, unit, uncertainty=None, meta=None,
+    def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
         # Initialize Raster.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
         # Determine labels and location of each key real world coordinate.
-        supported_spectral_names = ["em.wl", "em.energy", "em.freq",
-                                    "wavelength", "energy", "frequency", "freq", "lambda"]
-        supported_spectral_names += [name.upper() for name in supported_spectral_names]
-        supported_spectral_names += [name.capitalize() for name in supported_spectral_names]
-        self._supported_spectral_names = supported_spectral_names
-        self._spectral_name = self._find_axis_name(self._supported_spectral_names)
+        self._longitude_name = self._find_axis_name(SUPPORTED_LONGITUDE_NAMES)
+        self._latitude_name = self._find_axis_name(SUPPORTED_LATITUDE_NAMES)
+        self._spectral_name = self._find_axis_name(SUPPORTED_SPECTRAL_NAMES)
+        self._time_name = self._find_axis_name(SUPPORTED_TIME_NAMES)
+        self._exposure_time_name = self._find_axis_name(SUPPORTED_EXPOSURE_NAMES)
 
-        supported_time_names = ["time"]
-        supported_time_names += [name.upper() for name in supported_time_names]
-        supported_time_names += [name.capitalize() for name in supported_time_names]
-        self._supported_time_names = supported_time_names
-        self._time_name = self._find_axis_name(self._supported_time_names)
-
-        supported_exposure_names = [
-                "exposure time", "exposure_time", "exposure times", "exposure_times",
-                "exp time", "exp_time", "exp times", "exp_times"]
-        supported_exposure_names += [name.upper() for name in supported_exposure_names]
-        supported_exposure_names += [name.capitalize() for name in supported_exposure_names]
-        self._supported_exposure_time_names = supported_exposure_names
-        self._exposure_time_name = self._find_axis_name(self._supported_exposure_time_names)
-
-        supported_longitude_names = [".lon", "longitude", "lon"]
-        supported_longitude_names += [name.upper() for name in supported_longitude_names]
-        supported_longitude_names += [name.capitalize() for name in supported_longitude_names]
-        self._supported_longitude_names = supported_longitude_names
-        self._longitude_name = self._find_axis_name(self._supported_longitude_names)
-
-        supported_latitude_names = [".lat", "latitude", "lat"]
-        supported_latitude_names += [name.upper() for name in supported_latitude_names]
-        supported_latitude_names += [name.capitalize() for name in supported_latitude_names]
-        self._supported_latitude_names = supported_latitude_names
-        self._latitude_name = self._find_axis_name(self._supported_latitude_names)
-
-    def __repr__(self):
-        return (
-            """Raster
-------
-Start time: {start_time}
-Pixel dimensions (Slit steps, Slit height, Spectral): {dimensions}
-Longitude range: {lon_range}
-Latitude range: {lat_range}
-Spectral range: {spectral_range}
-Data unit: {unit}
-""".format(dimensions=self.dimensions,
-           start_time=self.time[0],
-           lon_range=u.Quantity([self.lon.min(), self.lon.max()]),
-           lat_range=u.Quantity([self.lat.min(), self.lat.max()]),
-           spectral_range=u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()]),
-           unit=self.unit)
-)
+    def __str__(self):
+        if self._time_name:
+            time_period = (self.time[0], self.time[-1])
+        else:
+            time_period = None
+        if self._longitude_name:
+            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+        else:
+            lon_range = None
+        if self._latitude_name:
+            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+        else:
+            lat_range = None
+        if self._spectral_name:
+            spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
+        else:
+            spectral_range = None
+        return (textwrap.dedent(f"""\
+                Raster
+                ------
+                Time Period: {time_period}
+                Pixel dimensions (Slit steps, Slit height, Spectral): {self.dimensions}
+                Longitude range: {lon_range}
+                Latitude range: {lat_range}
+                Spectral range: {spectral_range}
+                Data unit: {self.unit}"""))
 
     def __getitem__(self, item):
         result = super().__getitem__(item)
-        return Raster(
-            result.data, result.wcs,
-            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
-            result.unit,result.uncertainty, result.meta,
-            mask=result.mask, missing_axes=result.missing_axes)
+        if result.extra_coords is None:
+            extra_coords = None
+        else:
+            extra_coords = convert_extra_coords_dict_to_input_format(result.extra_coords,
+                                                                     result.missing_axes)
+        return self.__class__(result.data, result.wcs, extra_coords, result.unit,
+                              result.uncertainty, result.meta, mask=result.mask,
+                              missing_axes=result.missing_axes)
 
     @property
     def spectral_axis(self):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
-                             f"{self._supported_spectral_names}")
+                             f"{SUPPORTED_SPECTRAL_NAMES}")
         else:
             return self._get_axis_coord(*self._spectral_name)
 
@@ -268,7 +276,7 @@ Data unit: {unit}
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
-                             f"{self._supported_time_name}")
+                             f"{SUPPORTED_TIMES_NAMES}")
         else:
             return self._get_axis_coord(*self._time_name)
 
@@ -276,7 +284,7 @@ Data unit: {unit}
     def exposure_time(self):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
-                             f"{self._supported_exposure_time_spectral_name}")
+                             f"{SUPPORTED_EXPOSURE_NAMES}")
         else:
             return self._get_axis_coord(*self._exposure_time_name)
 
@@ -284,7 +292,7 @@ Data unit: {unit}
     def lon(self):
         if not self._longitude_name:
             raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
-                             f"{self._supported_longitude_spectral_name}")
+                             f"{SUPPORTED_LONGITUDE_NAMES}")
         else:
             return self._get_axis_coord(*self._longitude_name)
 
@@ -292,7 +300,7 @@ Data unit: {unit}
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
-                             f"{self._supported_latitude_spectral_name}")
+                             f"{SUPPORTED_LATITUDE_NAME}")
         else:
             return self._get_axis_coord(*self._latitude_name)
 
@@ -353,6 +361,10 @@ Data unit: {unit}
     def _find_axis_name(self, supported_names):
         axis_name = None
         n_names = len(supported_names)
+        if self.extra_coords is not None:
+            extra_coord_keys = self.extra_coords.keys()
+        else:
+            extra_coord_keys = None
         i = 0
         while axis_name is None:
             if i >= n_names:
@@ -367,10 +379,11 @@ Data unit: {unit}
                 loc = "wcs"
 
             # If label not contained in WCS, check extra coords.
-            if axis_name is None:
-                if supported_names[i] in self.extra_coords.keys():
+            if axis_name is None and extra_coord_keys is not None:
+                if supported_names[i] in extra_coord_keys:
                     axis_name = supported_names[i]
                     loc = "extra_coords"
+            i += 1
 
         if axis_name is None:
             return axis_name
