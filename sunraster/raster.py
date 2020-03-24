@@ -68,23 +68,32 @@ class RasterSequence(NDCubeSequence):
         super().__init__(data_list, meta=meta, common_axis=slit_step_axis)
         self._slit_step_axis = self._common_axis
 
-    def __repr__(self):
-        return (
-            """RasterSequence
---------------
-Start time: {start_time}
-Pixel dimensions (raster scans, slit steps, slit height, spectral): {dimensions}
-Longitude range: {lon_range}
-Latitude range: {lat_range}
-Spectral range: {spectral_range}
-Data unit: {unit}
-""".format(dimensions=self.dimensions,
-           start_time=self.time[0],
-           lon_range=u.Quantity([self.lon.min(), self.lon.max()]),
-           lat_range=u.Quantity([self.lat.min(), self.lat.max()]),
-           spectral_range=u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()]),
-           unit=self.data[0].unit)
-)
+    def __str__(self):
+        if self.data[0]._time_name:
+            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
+        else:
+            time_period = None
+        if self.data[0]._longitude_name:
+            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+        else:
+            lon_range = None
+        if self.data[0]._latitude_name:
+            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+        else:
+            lat_range = None
+        if self.data[0]._spectral_name:
+            spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
+        else:
+            spectral_range = None
+        return (textwrap.dedent(f"""\
+                RasterSequence
+                --------------
+                Time Range: {time_period}
+                Pixel Dimensions (raster scans, slit steps, slit height, spectral): {self.dimensions}
+                Longitude range: {lon_range}
+                Latitude range: {lat_range}
+                Spectral range: {spectral_range}
+                Data unit: {self.data[0].unit}"""))
 
     @property
     def slice_as_SnS(self):
