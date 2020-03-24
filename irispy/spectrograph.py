@@ -2,16 +2,15 @@
 # Author: Daniel Ryan <ryand5@tcd.ie>
 
 import copy
-import datetime
 
 import numpy as np
 import astropy.units as u
 from astropy.io import fits
 from astropy.table import Table
+from astropy.time import Time, TimeDelta
 from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.wcs import WCS
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-from sunpy.time import parse_time
 
 from irispy import iris_tools
 
@@ -57,6 +56,7 @@ class IRISSpectrograph(object):
             ["\n{0:>15} : {1:20} pix".format(name,
                 str([int(dim.value) for dim in self.data[name].dimensions]))
                 for name in self.spectral_windows["spectral window"]])
+        roll = self.meta.get("SAT_ROT", None)
         obs_start = self.meta["STARTOBS"]
         obs_end = self.meta["ENDOBS"]
         time_start = self.data[spectral_window][0].extra_coords["time"]["value"].min()
@@ -75,10 +75,11 @@ class IRISSpectrograph(object):
            "OBS Description: {obsdesc}\n"
            "OBS Period: {obs_period}\n"
            "Instance period: {inst_period}\n"
+           "Roll: {roll}\n"
            "OBS Number unique raster positions: {nraster}\n"
            "Spectral windows: dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
            "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
-                             obs_period=obs_period, inst_period=instance_period,
+                             obs_period=obs_period, roll=roll, inst_period=instance_period,
                              nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
 
     @property
@@ -131,6 +132,7 @@ class IRISSpectrogramCubeSequence(NDCubeSequence):
             data_list, meta=meta, common_axis=common_axis)
 
     def __repr__(self):
+        roll = self[0].meta.get("SAT_ROT", None)
         return """IRISSpectrogramCubeSequence
 ---------------------
 {obs_repr}
@@ -138,11 +140,13 @@ class IRISSpectrogramCubeSequence(NDCubeSequence):
 Sequence period: {inst_start} -- {inst_end}
 Sequence Shape: {seq_shape}
 Axis Types: {axis_types}
+Roll: {roll}
 
 """.format(obs_repr=_produce_obs_repr_string(self.data[0].meta),
            inst_start=self[0].extra_coords["time"]["value"][0],
            inst_end=self[-1].extra_coords["time"]["value"][-1],
-           seq_shape=self.dimensions, axis_types=self.world_axis_physical_types)
+           seq_shape=self.dimensions, axis_types=self.world_axis_physical_types,
+           roll=roll)
 
     def convert_to(self, new_unit_type, copy=False):
         """
@@ -264,7 +268,7 @@ class IRISSpectrogramCube(NDCube):
     """
 
     def __init__(self, data, wcs, uncertainty, unit, meta, extra_coords,
-                 mask=None, copy=False, missing_axis=None):
+                 mask=None, copy=False, missing_axes=None):
         # Check required meta data is provided.
         required_meta_keys = ["detector type"]
         if not all([key in list(meta) for key in required_meta_keys]):
@@ -278,25 +282,26 @@ class IRISSpectrogramCube(NDCube):
         # Initialize IRISSpectrogramCube.
         super(IRISSpectrogramCube, self).__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-            unit=unit, extra_coords=extra_coords, copy=copy, missing_axis=missing_axis)
+            unit=unit, extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
     def __getitem__(self, item):
         result = super(IRISSpectrogramCube, self).__getitem__(item)
         return IRISSpectrogramCube(
             result.data, result.wcs, result.uncertainty, result.unit, result.meta,
-            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axis),
-            mask=result.mask, missing_axis=result.missing_axis)
+            convert_extra_coords_dict_to_input_format(result.extra_coords, result.missing_axes),
+            mask=result.mask, missing_axes=result.missing_axes)
 
     def __repr__(self):
+        roll = self.meta.get("SAT_ROT", None)
         if self.extra_coords["time"]["axis"] is None:
             axis_missing = True
         else:
-            axis_missing = self.missing_axis[::-1][self.extra_coords["time"]["axis"]]
+            axis_missing = self.missing_axes[::-1][self.extra_coords["time"]["axis"]]
         if axis_missing is True:
             instance_start = instance_end = self.extra_coords["time"]["value"]
         else:
-            instance_start = self.extra_coords["time"]["value"][0],
-            instance_end = self.extra_coords["time"]["value"][-1]
+            instance_start = self.extra_coords["time"]["value"][0].isot
+            instance_end = self.extra_coords["time"]["value"][-1].isot
         return """IRISSpectrogramCube
 ---------------------
 {obs_repr}
@@ -304,13 +309,17 @@ class IRISSpectrogramCube(NDCube):
 Spectrogram period: {inst_start} -- {inst_end}
 Data shape: {shape}
 Axis Types: {axis_types}
+Roll: {roll}
 """.format(obs_repr=_produce_obs_repr_string(self.meta),
            inst_start=instance_start, inst_end=instance_end,
-           shape=self.dimensions, axis_types=self.world_axis_physical_types)
+           shape=self.dimensions, axis_types=self.world_axis_physical_types,
+           roll=roll)
 
-    def convert_to(self, new_unit_type):
+    def convert_to(self, new_unit_type, time_obs=None, response_version=4):
         """
         Converts data, unit and uncertainty attributes to new unit type.
+
+        Takes into consideration also the observation time and response version.
 
         The presence or absence of the exposure time correction is
         preserved in the conversions.
@@ -323,6 +332,17 @@ Axis Types: {axis_types}
            "photons": photon counts
            "radiance": Perorms radiometric calibration conversion.
 
+        time_obs: an `astropy.time.Time` object, as a kwarg, valid for version > 2
+           Observation times of the datapoints.
+           Must be in the format of, e.g.,
+           time_obs=Time('2013-09-03', format='utime'),
+           which yields 1094169600.0 seconds in value.
+           The argument time_obs is ignored for versions 1 and 2.
+
+        response_version: `int`
+            Version number of effective area file to be used. Cannot be set
+            simultaneously with response_file or pre_launch kwarg. Default=4.
+
         Returns
         -------
         result: `IRISSpectrogramCube`
@@ -330,11 +350,13 @@ Axis Types: {axis_types}
 
         """
         detector_type = iris_tools.get_detector_type(self.meta)
+        time_obs = time_obs
+        response_version = response_version # Should default to latest
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
             spectral_dispersion_per_pixel = self.wcs.wcs.cdelt[spectral_wcs_index] * \
-                                            self.wcs.wcs.cunit[spectral_wcs_index]
+                self.wcs.wcs.cunit[spectral_wcs_index]
             # Get solid angle from slit width for a pixel.
             lat_wcs_index = ["HPLT" in c for c in self.wcs.wcs.ctype]
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
@@ -344,20 +366,22 @@ Axis Types: {axis_types}
             # Get wavelength for each pixel.
             spectral_data_index = (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
+
         if new_unit_type == "DN" or new_unit_type == "photons":
             if self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (self.data * self.unit, self.uncertainty.array * self.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle,
+                     time_obs, response_version, obs_wavelength, detector_type,
+                     spectral_dispersion_per_pixel, solid_angle,
                     undo=True)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
                 self = IRISSpectrogramCube(
                     new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-                    mask=self.mask, missing_axis=self.missing_axis)
+                    convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+                    mask=self.mask, missing_axes=self.missing_axes)
             if new_unit_type == "DN":
                 new_unit = iris_tools.DN_UNIT[detector_type]
             else:
@@ -380,8 +404,9 @@ Axis Types: {axis_types}
                     pass
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
-                    (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                    obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+                        (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
+                         time_obs, response_version, obs_wavelength, detector_type,
+                         spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
@@ -389,8 +414,8 @@ Axis Types: {axis_types}
             raise ValueError("Input unit type not recognized.")
         return IRISSpectrogramCube(
             new_data, self.wcs, new_uncertainty, new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -443,11 +468,11 @@ Axis Types: {axis_types}
         # Return new instance of IRISSpectrogramCube with correction applied/undone.
         return IRISSpectrogramCube(
             new_data_arrays[0], self.wcs, new_data_arrays[1], new_unit, self.meta,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axis),
-            mask=self.mask, missing_axis=self.missing_axis)
+            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            mask=self.mask, missing_axes=self.missing_axes)
 
 
-def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
+def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):
     """
     Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph instance.
 
@@ -469,7 +494,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
     if type(filenames) is str:
         filenames = [filenames]
     for f, filename in enumerate(filenames):
-        hdulist = fits.open(filename)
+        hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
         hdulist.verify('fix')
         if f == 0:
             # Determine number of raster positions in a scan
@@ -485,6 +510,8 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             else:
                 if type(spectral_windows) is str:
                     spectral_windows_req = [spectral_windows]
+                else:
+                    spectral_windows_req = spectral_windows
                 spectral_windows_req = np.asarray(spectral_windows_req, dtype="U")
                 window_is_in_obs = np.asarray(
                     [window in windows_in_obs for window in spectral_windows_req])
@@ -501,8 +528,8 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                         "DATA_LEV": hdulist[0].header["DATA_LEV"],
                         "OBSID": hdulist[0].header["OBSID"],
                         "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                        "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
-                        "ENDOBS": parse_time(hdulist[0].header["ENDOBS"]),
+                        "STARTOBS": Time(hdulist[0].header["STARTOBS"]),
+                        "ENDOBS": Time(hdulist[0].header["ENDOBS"]),
                         "SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
                         "AECNOBS": int(hdulist[0].header["AECNOBS"]),
                         "FOVX": hdulist[0].header["FOVX"] * u.arcsec,
@@ -540,9 +567,8 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             data_dict = dict([(window_name, list())
                               for window_name in spectral_windows_req])
         # Determine extra coords for this raster.
-        times = np.array(
-            [parse_time(hdulist[0].header["STARTOBS"]) + datetime.timedelta(seconds=s)
-             for s in hdulist[-2].data[:,hdulist[-2].header["TIME"]]])
+        times = (Time(hdulist[0].header["STARTOBS"]) +
+                 TimeDelta(hdulist[-2].data[:, hdulist[-2].header["TIME"]], format='sec'))
         raster_positions = np.arange(int(hdulist[0].header["NRASTERP"]))
         pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
         pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
@@ -552,10 +578,18 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
         ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
         exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
         exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
-        general_extra_coords = [("time", 0, times), ("raster position", 0, raster_positions),
-                                ("pztx", 0, pztx), ("pzty", 0, pzty),
-                                ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
-                                ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
+        # If OBS is raster, include raster positions.  Otherwise don't.
+        if top_meta["NRASTERP"] > 1:
+            general_extra_coords = [("time", 0, times),
+                                    ("raster position", 0, np.arange(top_meta["NRASTERP"])),
+                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
+                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
+        else:
+            general_extra_coords = [("time", 0, times),
+                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
+                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
         for i, window_name in enumerate(spectral_windows_req):
             # Determine values of properties dependent on detector type.
             if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
@@ -569,18 +603,25 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
             else:
                 raise ValueError("Detector type in FITS header not recognized.")
             # Derive WCS, data and mask for NDCube from file.
+            # Sit-and-stare have a CDELT of 0 which causes issues in astropy WCS.
+            # In this case, set CDELT to a tiny non-zero number.
+            if hdulist[window_fits_indices[i]].header["CDELT3"] == 0:
+                hdulist[window_fits_indices[i]].header["CDELT3"] = 1e-10
             wcs_ = WCS(hdulist[window_fits_indices[i]].header)
-            data_mask = hdulist[window_fits_indices[i]].data == -200.
+            if not memmap:
+                data_mask = hdulist[window_fits_indices[i]].data == -200.
+            else:
+                data_mask = None
             # Derive extra coords for this spectral window.
             window_extra_coords = copy.deepcopy(general_extra_coords)
             window_extra_coords.append(("exposure time", 0, exposure_times))
             # Collect metadata relevant to single files.
             try:
-                date_obs = parse_time(hdulist[0].header["DATE_OBS"])
+                date_obs = Time(hdulist[0].header["DATE_OBS"])
             except ValueError:
                 date_obs = None
             try:
-                date_end = parse_time(hdulist[0].header["DATE_END"])
+                date_end = Time(hdulist[0].header["DATE_END"])
             except ValueError:
                 date_end = None
             single_file_meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
@@ -598,16 +639,19 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None):
                                 "spectral window": window_name,
                                 "OBSID": hdulist[0].header["OBSID"],
                                 "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                                "STARTOBS": parse_time(hdulist[0].header["STARTOBS"]),
-                                "ENDOBS": parse_time(hdulist[0].header["ENDOBS"])
+                                "STARTOBS": Time(hdulist[0].header["STARTOBS"]),
+                                "ENDOBS": Time(hdulist[0].header["ENDOBS"])
                                 }
             # Derive uncertainty of data
-            uncertainty = u.Quantity(np.sqrt(
-                (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
-                readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
+            if uncertainty:
+                out_uncertainty = u.Quantity(np.sqrt(
+                    (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
+                    readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
+            else:
+                out_uncertainty = None
             # Appending NDCube instance to the corresponding window key in dictionary's list.
             data_dict[window_name].append(
-                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, uncertainty,
+                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, out_uncertainty,
                                     DN_unit, single_file_meta, window_extra_coords,
                                     mask=data_mask))
         hdulist.close()
@@ -632,7 +676,7 @@ OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_
 def _try_parse_time_on_meta(meta):
     result = None
     try:
-        result = parse_time(meta)
+        result = Time(meta)
     except ValueError as err:
         if "not a valid time string!" not in err.args[0]:
             raise err

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 # """Tests for functions in sji.py"""
-import datetime
-
 import pytest
 import numpy as np
 from astropy import units as u
+from astropy.time import Time, TimeDelta
 from ndcube.utils.wcs import WCS
 
 from irispy import iris_tools
@@ -55,12 +54,11 @@ uncertainty_2D = np.sqrt(data_2D)
 uncertainty_1D = np.sqrt(data_1D)
 uncertainty_4D = np.sqrt(data_4D)
 
-times = np.array([datetime.datetime(2014, 12, 11, 19, 39, 0, 480000),
-                  datetime.datetime(2014, 12, 11, 19, 43, 7, 600000)])
+times = Time(['2014-12-11T19:39:00.48', '2014-12-11T19:43:07.6'])
 
 exposure_times = 2*np.ones((2), float)
-extra_coords = [('TIME', 0, times),
-                ('EXPOSURE TIME', 0, exposure_times)]
+extra_coords = [('time', 0, times),
+                ('exposure time', 0, exposure_times)]
 
 scaled_T = True
 scaled_F = False
@@ -68,9 +66,9 @@ scaled_F = False
 cube = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                    extra_coords=extra_coords, scaled=scaled_T)
 cube_2D = IRISMapCube(data_2D, wcs_2D, uncertainty=uncertainty_2D, mask=mask_cube, unit=unit,
-                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, False, True])
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axes=[False, False, True])
 cube_1D = IRISMapCube(data_1D, wcs_1D, uncertainty=uncertainty_1D, mask=mask_cube, unit=unit,
-                      extra_coords=extra_coords, scaled=scaled_T, missing_axis=[False, True, True])
+                      extra_coords=extra_coords, scaled=scaled_T, missing_axes=[False, True, True])
 cube_F = IRISMapCube(data, wcs, uncertainty=uncertainty, mask=mask_cube, unit=unit,
                      extra_coords=extra_coords, scaled=scaled_F)
 cube_4D = IRISMapCube(data_4D, wcs_4D, uncertainty=uncertainty_4D, mask=mask_4D, unit=unit,
@@ -97,12 +95,11 @@ dust_mask_expected = np.array(
 
 uncertainty = 1
 
-times = np.array([datetime.datetime(2014, 12, 11, 19, 39, 0, 480000),
-                  datetime.datetime(2014, 12, 11, 19, 43, 7, 600000)])
+times = Time(['2014-12-11T19:39:00.48', '2014-12-11T19:43:07.6'])
 
 exposure_times = 2*np.ones((2), float)
-extra_coords = [('TIME', 0, times),
-                ('EXPOSURE TIME', 0, exposure_times)]
+extra_coords = [('time', 0, times),
+                ('exposure time', 0, exposure_times)]
 
 scaled_T = True
 

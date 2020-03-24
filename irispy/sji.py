@@ -2,7 +2,6 @@
 This module provides movie tools for level 2 IRIS SJI fits file
 '''
 
-from datetime import timedelta
 import warnings
 
 import numpy as np
@@ -11,6 +10,7 @@ import astropy.units as u
 from astropy.wcs import WCS
 from sunpy.time import parse_time
 import sunpy.cm
+from astropy.time import Time, TimeDelta
 from sunpy.map import GenericMap
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
@@ -84,7 +84,7 @@ class IRISMapCube(NDCube):
     """
 
     def __init__(self, data, wcs, uncertainty=None, unit=None, meta=None,
-                 mask=None, extra_coords=None, copy=False, missing_axis=None,
+                 mask=None, extra_coords=None, copy=False, missing_axes=None,
                  scaled=None):
         """
         Initialization of Slit Jaw Imager
@@ -97,24 +97,23 @@ class IRISMapCube(NDCube):
         # Initialize IRISMapCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask,
                          meta=meta, unit=unit, extra_coords=extra_coords,
-                         copy=copy, missing_axis=missing_axis)
+                         copy=copy, missing_axes=missing_axes)
 
     def __repr__(self):
+        roll = self.meta.get("SAT_ROT", None)
         # Conversion of the start date of OBS
         startobs = self.meta.get("STARTOBS", None)
-        startobs = startobs.isoformat() if startobs else None
+        startobs = startobs.isot if startobs else None
         # Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
-        endobs = endobs.isoformat() if endobs else None
+        endobs = endobs.isot if endobs else None
         # Conversion of the instance start and end of OBS
-        if isinstance(self.extra_coords["TIME"]["value"], np.ndarray):
-            instance_start = self.extra_coords["TIME"]["value"][0]
-            instance_end = self.extra_coords["TIME"]["value"][-1]
+        if isinstance(self.extra_coords["time"]["value"], Time):
+            instance_start = self.extra_coords["time"]["value"].min().isot
+            instance_end = self.extra_coords["time"]["value"].max().isot
         else:
-            instance_start = self.extra_coords["TIME"]["value"]
-            instance_end = self.extra_coords["TIME"]["value"]
-        instance_start = instance_start.isoformat() if instance_start else None
-        instance_end = instance_end.isoformat() if instance_end else None
+            instance_start = None
+            instance_end = None
         # Representation of IRISMapCube object
         return (
             """
@@ -127,6 +126,7 @@ class IRISMapCube(NDCube):
     Obs. End:\t\t\t {endobs}
     Instance Start:\t\t {instance_start}
     Instance End:\t\t {instance_end}
+    Roll:\t\t\t {roll}
     Total Frames in Obs.:\t {frame_num}
     IRIS Obs. id:\t\t {obs_id}
     IRIS Obs. Description:\t {obs_desc}
@@ -139,6 +139,7 @@ class IRISMapCube(NDCube):
                endobs=endobs,
                instance_start=instance_start,
                instance_end=instance_end,
+               roll=roll,
                frame_num=self.meta.get("NBFRAMES", None),
                obs_id=self.meta.get('OBSID', None),
                obs_desc=self.meta.get('OBS_DESC', None),
@@ -194,8 +195,8 @@ class IRISMapCube(NDCube):
             raise ValueError("This method is not available as you are using memmap")
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
-        exposure_time_s = u.Quantity(self.extra_coords["EXPOSURE TIME"]["value"], unit='s').value
-        if not np.isscalar(self.extra_coords["EXPOSURE TIME"]["value"]):
+        exposure_time_s = u.Quantity(self.extra_coords["exposure time"]["value"], unit='s').value
+        if not np.isscalar(self.extra_coords["exposure time"]["value"]):
             if self.data.ndim == 1:
                 pass
             elif self.data.ndim == 2:
@@ -216,10 +217,10 @@ class IRISMapCube(NDCube):
         # Return new instance of IRISMapCube with correction applied/undone.
         return IRISMapCube(
             data=new_data_arrays[0], wcs=self.wcs, uncertainty=new_data_arrays[1],
-            unit=new_unit, meta=self.meta, mask=self.mask, missing_axis=self.missing_axis,
+            unit=new_unit, meta=self.meta, mask=self.mask, missing_axes=self.missing_axes,
             scaled=self.scaled,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
-                                                                   self.missing_axis))
+                                                                   self.missing_axes))
 
     def apply_dust_mask(self, undo=False):
         """
@@ -273,18 +274,19 @@ class IRISMapCubeSequence(NDCubeSequence):
         super().__init__(data_list, meta=meta, common_axis=common_axis)
 
     def __repr__(self):
+        roll = self.meta.get("SAT_ROT", None)
         # Conversion of the start date of OBS
         startobs = self.meta.get("STARTOBS", None)
-        startobs = startobs.isoformat() if startobs else None
+        startobs = startobs.isot if startobs else None
         # Conversion of the end date of OBS
         endobs = self.meta.get("ENDOBS", None)
-        endobs = endobs.isoformat() if endobs else None
+        endobs = endobs.isot if endobs else None
         # Conversion of the instance start of OBS
-        instance_start = self[0].extra_coords["TIME"]["value"]
-        instance_start = instance_start.isoformat() if instance_start else None
+        instance_start = self[0].extra_coords["time"]["value"]
+        instance_start = instance_start.isot if instance_start else None
         # Conversion of the instance end of OBS
-        instance_end = self[-1].extra_coords["TIME"]["value"]
-        instance_end = instance_end.isoformat() if instance_end else None
+        instance_end = self[-1].extra_coords["time"]["value"]
+        instance_end = instance_end.isot if instance_end else None
         # Representation of IRISMapCube object
         return """
 IRISMapCubeSequence
@@ -298,6 +300,7 @@ OBS period:\t\t {obs_start} -- {obs_end}
 
 Sequence period:\t {inst_start} -- {inst_end}
 Sequence Shape:\t\t {seq_shape}
+Roll:\t\t\t {roll}
 Axis Types:\t\t {axis_types}
 
 """.format(obs=self.meta.get('TELESCOP', None),
@@ -309,6 +312,7 @@ Axis Types:\t\t {axis_types}
            inst_start=instance_start,
            inst_end=instance_end,
            seq_shape=self.dimensions,
+           roll=roll,
            axis_types=self.world_axis_physical_types)
 
     def __getitem__(self, item):
@@ -513,9 +517,8 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
         # Derive exposure time from detector.
         exposure_times = hdulist[1].data[:, hdulist[1].header["EXPTIMES"]]
         # Derive extra coordinates for NDCube from fits file.
-        times = np.array([parse_time(hdulist[0].header["STARTOBS"])
-                          + timedelta(seconds=s)
-                          for s in hdulist[1].data[:, hdulist[1].header["TIME"]]])
+        times = (Time(hdulist[0].header["STARTOBS"]) +
+                 TimeDelta(hdulist[1].data[:, hdulist[1].header["TIME"]], format='sec'))
         pztx = hdulist[1].data[:, hdulist[1].header["PZTX"]] * u.arcsec
         pzty = hdulist[1].data[:, hdulist[1].header["PZTY"]] * u.arcsec
         xcenix = hdulist[1].data[:, hdulist[1].header["XCENIX"]] * u.arcsec
@@ -524,29 +527,31 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
         ophaseix = hdulist[1].data[:, hdulist[1].header["OPHASEIX"]]
         slit_pos_x = hdulist[1].data[:, hdulist[1].header["SLTPX1IX"]]
         slit_pos_y = hdulist[1].data[:, hdulist[1].header["SLTPX2IX"]]
-        extra_coords = [('TIME', 0, times), ("PZTX", 0, pztx), ("PZTY", 0, pzty),
-                        ("XCENIX", 0, xcenix), ("YCENIX", 0, ycenix),
-                        ("OBS_VRIX", 0, obs_vrix), ("OPHASEIX", 0, ophaseix),
-                        ("EXPOSURE TIME", 0, exposure_times),
-                        ("SLIT X POSITION", 0, slit_pos_x*u.pix),
-                        ("SLIT Y POSITION", 0, slit_pos_y*u.pix)]
+        extra_coords = [('time', 0, times), ("pztx", 0, pztx), ("pzty", 0, pzty),
+                        ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
+                        ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix),
+                        ("exposure time", 0, exposure_times),
+                        ("slit x position", 0, slit_pos_x * u.pix),
+                        ("slit y position", 0, slit_pos_y * u.pix)]
         # Extraction of meta for NDCube from fits file.
         startobs = hdulist[0].header.get('STARTOBS', None)
-        startobs = parse_time(startobs) if startobs else None
+        startobs = Time(startobs) if startobs else None
         endobs = hdulist[0].header.get('ENDOBS', None)
-        endobs = parse_time(endobs) if endobs else None
+        endobs = Time(endobs) if endobs else None
         meta = {'TELESCOP': hdulist[0].header.get('TELESCOP', None),
                 'INSTRUME': hdulist[0].header.get('INSTRUME', None),
+                'DATA_LEV': hdulist[0].header.get('DATA_LEV', None),
                 'TWAVE1': hdulist[0].header.get('TWAVE1', None),
+                'OBSID': hdulist[0].header.get('OBSID', None),
                 'STARTOBS': startobs,
                 'ENDOBS': endobs,
+                'SAT_ROT': hdulist[0].header['SAT_ROT'] * u.deg,
                 'NBFRAMES': hdulist[0].data.shape[0],
-                'OBSID': hdulist[0].header.get('OBSID', None),
                 'OBS_DESC': hdulist[0].header.get('OBS_DESC', None),
-                'FOVX': hdulist[0].header.get('FOVX', None),
-                'FOVY': hdulist[0].header.get('FOVY', None),
-                'XCEN': hdulist[0].header.get('XCEN', None),
-                'YCEN': hdulist[0].header.get('YCEN', None)}
+                'FOVX': hdulist[0].header['FOVX'] * u.arcsec,
+                'FOVY': hdulist[0].header['FOVY'] * u.arcsec,
+                'XCEN': hdulist[0].header['XCEN'] * u.arcsec,
+                'YCEN': hdulist[0].header['YCEN'] * u.arcsec}
         list_of_cubes.append(IRISMapCube(data_nan_masked, wcs, uncertainty=uncertainty,
                                          unit=unit, meta=meta, mask=mask,
                                          extra_coords=extra_coords, scaled=scaled))

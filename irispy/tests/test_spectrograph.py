@@ -4,12 +4,12 @@
 import os.path
 import pytest
 import copy
-import datetime
 
 import numpy as np
 import astropy.wcs as wcs
 from astropy.io import fits
 import astropy.units as u
+from astropy.time import Time, TimeDelta
 from ndcube.utils.wcs import WCS
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 
@@ -50,13 +50,12 @@ meta0 = {"detector type": "FUV", "OBSID": 1, "spectral window": "C II 1336"}
 
 # Define sample extra coords
 extra_coords0 = [("time", 0,
-                  np.array([datetime.datetime(2017, 1, 1)+datetime.timedelta(seconds=i)
-                             for i in range(time_dim_len)])),
-                ("exposure time", 0, EXPOSURE_TIME)]
+                  Time('2017-01-01') + TimeDelta(np.arange(time_dim_len), format='sec')),
+                 ("exposure time", 0, EXPOSURE_TIME)]
 extra_coords1 = [("time", 0,
-                  np.array([datetime.datetime(2017, 1, 1)+datetime.timedelta(seconds=i)
-                             for i in range(time_dim_len, time_dim_len*2)])),
-                ("exposure time", 0, EXPOSURE_TIME)]
+                  (Time('2017-01-01') +
+                   TimeDelta(np.arange(time_dim_len, time_dim_len*2), format='sec'))),
+                 ("exposure time", 0, EXPOSURE_TIME)]
 
 # Define IRISSpectrogramCubes in various units.
 spectrogram_DN0 = IRISSpectrogramCube(
@@ -136,10 +135,6 @@ def test_fits_data_comparison(iris_l2_test_raster):
     data1 = copy.deepcopy(hdulist[1].data)
     data2 = copy.deepcopy(hdulist[2].data)
     data3 = copy.deepcopy(hdulist[3].data)
-
-    data1[hdulist[1].data == -200.] = np.nan
-    data2[hdulist[2].data == -200.] = np.nan
-    data3[hdulist[3].data == -200.] = np.nan
 
     np.testing.assert_array_almost_equal(
         iris_l2_test_raster.data[spectral_window1].data[0].data, data1)
