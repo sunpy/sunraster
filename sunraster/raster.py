@@ -68,16 +68,14 @@ class RasterSequence(NDCubeSequence):
         super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
         self._slit_step_axis = self._common_axis
 
-        # Make aliases to some NDCubeSequence methods which are more descriptive
-        # in the context of raster data.
-        self.raster_dimensions = self.dimensions
-        self.SnS_dimensions = self.cube_like_dimensions
-        self.raster_world_axis_physical_types = self.world_axis_physical_types
-        self.SnS_world_axis_physical_types = self.cube_like_world_axis_physical_types
-        self.raster_axis_extra_coords = self.sequence_axis_extra_coords
-        self.SnS_axis_extra_coords = self.common_axis_extra_coords
-        self.plot_as_raster = self.plot
-        self.plot_as_SnS = self.plot_as_cube
+    raster_dimensions = NDCubeSequence.dimensions
+    SnS_dimensions = NDCubeSequence.cube_like_dimensions
+    raster_world_axis_physical_types = NDCubeSequence.world_axis_physical_types
+    SnS_world_axis_physical_types = NDCubeSequence.cube_like_world_axis_physical_types
+    raster_axis_extra_coords = NDCubeSequence.sequence_axis_extra_coords
+    SnS_axis_extra_coords = NDCubeSequence.common_axis_extra_coords
+    plot_as_raster = NDCubeSequence.plot
+    plot_as_SnS = NDCubeSequence.plot_as_cube
 
     def __str__(self):
         if self.data[0]._time_name:
