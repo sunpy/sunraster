@@ -568,19 +568,3 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
                    for cube in list_of_cubes]):
             raise ValueError("Inputed files must have the same passband")
         return IRISMapCubeSequence(list_of_cubes, meta=meta, common_axis=0)
-
-
-class SJIMap(GenericMap):
-    def __init__(self, data, header, **kwargs):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube.")
-
-
-class SJICube(object):
-    def __init__(self, input):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube."
-                          "To create an irispy.sji.IRISMapCube from a level 2 SJI FITS file,"
-                          "use irispy.sji.read_iris_sji_level2_fits.")
-
-
-def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
-    raise ImportError("This function has been replaced by irispy.sji.read_iris_sji_level2_fits.")
