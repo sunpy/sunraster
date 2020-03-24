@@ -579,10 +579,19 @@ However, the raster and sit-and-stare representations are still valid.
 
 .. code-block:: python
 
-  >>> slit_pixel_sequence = my_sequence.slice_as_raster[:, : 2]
+  >>> slit_pixel_sequence = my_sequence.slice_as_raster[:, :, 2]
   >>> print(slit_pixel_sequence.raster_dimensions)
-
+  (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 5. pix>)
   >>> print(slit_pixel_sequence.SnS_dimensions)
+  [9. 5.] pix
+
+This demonstrates the the difference between the raster and sit-and-stare
+representations is more subtle than simply a 4-D or 3-D dimensionality.
+The difference is whether the raster scan and slit step axes are convolved
+into a time axis or whether they are represented separately.
+And because of this definition, the raster and sit-and-stare representations
+are valid and accessible for any dimensionality in which the raster scan and
+slit step axes are maintained.
 
 Plotting
 ^^^^^^^^
@@ -599,13 +608,13 @@ To visualize in the raster representation, simply call the following:
 
 .. code-block:: python
 
-  >>> my_raster.plot_as_raster() # doctest: +SKIP
+  >>> my_sequence.plot_as_raster() # doctest: +SKIP
 
 To visualize in the sit-and-stare representation, do:
 
 .. code-block:: python
 
-  >>> my_raster.plot_as_SnS() # doctest: +SKIP
+  >>> my_sequence.plot_as_SnS() # doctest: +SKIP
 
 These methods produce different types of visualizations including line plots,
 2-D images and 1- and 2-D animations.
@@ -618,3 +627,68 @@ respectively.
 For learn more about how these routines work and the optional inputs that
 enable users to customize their output, see the
 `NDCubeSequence plotting documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#plotting>`_.
+
+Extracting Data Arrays
+^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible that you may have some procedures that are designed to operate on arrays instead of
+`~sunraster.RasterSequence` objects.
+Therefore it may be useful to extract the data (or other array-like information
+such as `uncertainty` or `mask`) in the `~sunraster.RasterSequence` into a single `~numpy.ndarray`.
+A succinct way of doing this operation is using python's list comprehension features.
+
+To make a 4-D array from the data arrays of the `~sunraster.Raster` within ``my_sequence``,
+use `numpy.stack`.
+
+.. code-block:: python
+
+    >>> print(my_sequence.raster_dimensions)  # Print sequence dimensions as a reminder.
+    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+    >>> data = np.stack([cube.data for cube in my_sequence.data])
+    >>> print(data.shape)
+    (3, 3, 4, 5)
+
+To define a 3D array where every `~sunraster.Raster` data array in the
+`~sunraster.RasterSequence` is appended together, we can use `numpy.vstack`.
+
+.. code-block:: python
+
+    >>> data = np.vstack([cube.data for cube in my_sequence.data])
+    >>> print(data.shape)
+    (9, 4, 5)
+
+To create 3D arrays by slicing `~sunraster.RasterSequence` objects:
+
+.. code-block:: python
+
+    >>> data = np.stack([cube[2].data for cube in my_sequence.data])
+    >>> print(data.shape)
+    (3, 4, 5)
+
+Raster Collections
+------------------
+
+During analysis of slit spectrograph data, it is often desirable to group
+different data sets together together.
+For example, you may have several `~sunraster.Raster` or
+`~sunraster.RasterSequence` objects representing observations in different
+spectral windows.
+Or we may have fit a spectral line in each pixel and extracted a property
+such as linewidth, thus collapsing the spectral axis.
+In both these cases, the `~sunraster.RasterSequence` objects share a common
+origin and coordinate transformations with the original observations
+(except in the spectral axis).
+However, they do not have a sequential relationship in their common coordinate spaces
+and in the latter case the data represents a different physical property to the
+original observations.
+Therefore, combining them in a `~sunraster.RasterSequence` is not appropriate.
+
+`sunraster`` does not provide a suitable object for this purpose.
+However, because `~sunraster.Raster` and `~sunraster.RasterSequence` are
+instances of `ndcube` classes underneath, users can employ the `ndcube.NDCollection`
+class for this purpose.
+`~ndcube.NDCollection` is a `dict`-like class that provides additional slicing
+capabilities of its constituent data cubes along aligned axes.
+To see whether `~ndcube.NDCollection` could be helpful for your research, see
+the
+`NDCollection documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcollection.html>`_.
