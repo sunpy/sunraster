@@ -346,7 +346,7 @@ timestamps and exposure times as extra coordinates.
   ...     'CTYPE2': 'HPLT-TAN', 'CUNIT2': 'deg', 'CDELT2': 0.5, 'CRPIX2': 2, 'CRVAL2': 0.5, 'NAXIS2': 4,
   ...     'CTYPE3': 'HPLN-TAN', 'CUNIT3': 'deg', 'CDELT3': 0.4, 'CRPIX3': 2, 'CRVAL3': 1, 'NAXIS3': 3}
   >>> input_wcs = astropy.wcs.WCS(wcs_input_dict)
-  >>> mask = np.zeros_like(data.shape[0], dtype=bool)
+  >>> mask = np.zeros(data.shape, dtype=bool)
   >>> meta = {"Description": "This is example Raster metadata."}
 
   >>> # Define exposure times.
@@ -401,24 +401,28 @@ Dimensions
 
 Because the x-axis of raster data corresponds to both space and time, a
 `~sunraster.RasterSequence` can be thought of as either 4-D and 3-D.
-In the 4-D case, the dimensions represent ``scan number``, ``slit step``,
-``position along slit`` and ``spectral axis``.
-In the 3-D case the dimensions are ``time``, ``position along slit`` and
-``spectral axis``.
-Both are perfectly valid representations and do not change the underlying data.
-Instead it affects the data's relationship with the real world coordinates and
+In the 4-D, or raster, case, the dimensions represent
+``scan number``, ``slit step``, ``position along slit`` and ``spectral axis``.
+In the 3-D, or sit-and-stare, case the dimensions represent
+``time``, ``position along slit`` and ``spectral axis``.
+In this guide we use sit-and-stare (SnS) to refer to this 3-D way of representing
+the data, regardless of whether the slit is scanning.
+Both the raster and sit-and-stare representations are perfectly valid and do
+not change the underlying data.
+Instead they affect the data's relationship with the real world coordinates and
 the way in which users may want to index the data.
 Moreover, users may want to switch back and forth between the different
 representations depending on the specific task within their workflow.
 To faciliate this,  `~sunraster.RasterSequence` has two ways in which to inspect
 the lengths and physical axis types of the data.
 
-The `sunraster.RasterSequence.dimensions`, analagous to `sunraster.Raster.dimensions`,
-shows the lengths of the dimensions in the 4-D case:
+The `sunraster.RasterSequence.raster_dimensions`, analagous to
+`sunraster.Raster.dimensions`, shows the lengths of the dimensions in the
+4-D case:
 
 .. code-block:: python
 
-  >>> my_sequence.dimensions
+  >>> my_sequence.raster_dimensions
   (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
 
 A tuple of `astropy.units.Quantity` instances with pixel units is returned
@@ -427,16 +431,15 @@ This is in constrast to the single `~astropy.units.Quantity` returned by
 `~sunraster.Raster`.
 This is because `~sunraster.RasterSequence` supports sub-cubes of different
 lengths along the ``slit_step_axis``.
-In that case, the length of the corresponding quantity in the dimensions tuple
-will be equal to the number of raster scans and give the length of each sub-cube
-along the ``slit_step_axis``.
+In that case, the length of the ``slit_step_axis`` quantity will be equal to
+the number of raster scans and give the number of slit steps in each raster.
 
-Users can view the dimensions in the 3-D case by using the
-`sunraster.RasterSequence.cube_like_dimensions`.
+Users can view the dimensions in the sit-and-stare representation by using
+the `sunraster.RasterSequence.SnS_dimensions` property.
 
 .. code-block:: python
 
-  >>> my_sequence.cube_like_dimensions
+  >>> my_sequence.SnS_dimensions
   <Quantity [9., 4., 5.] pix>
 
 A single `~astropy.units.Quantity` in pixel units is returned giving the
@@ -444,12 +447,12 @@ lengths of each dimension.
 Because in this representation, the slit step and scan number axes are combined,
 there is no need to return a separate `~astropy.units.Quantity` for each dimension.
 
-To view the physical axis types in the 4-D, use
-`sunraster.RasterSequence.world_axis_physical_types`.
+To view the physical axis types in the raster representation, use
+`sunraster.RasterSequence.raster_world_axis_physical_types`.
 
 .. code-block:: python
 
-  >>> my_sequence.world_axis_physical_types
+  >>> my_sequence.raster_world_axis_physical_types
   ('meta.obs.sequence', 'custom:pos.helioprojective.lon', 'custom:pos.helioprojective.lat', 'em.wl')
 
 This returns a tuple of the same `IVOA UCD1+ controlled words
@@ -457,12 +460,12 @@ This returns a tuple of the same `IVOA UCD1+ controlled words
 used by `sunraster.Raster.world_axis_physical_types`.
 The sequence axis is given the label ``'meta.obs.sequence'``.
 
-To view the physical axis types in the 3-D representation, users can employ the
-`sunraster.Raster.world_axis_physical_types` method.
+To view the physical axis types in the sit-and-stare representation, users
+can employ the `sunraster.Raster.world_axis_physical_types` method.
 
 .. code-block:: python
 
-  >>> my_sequence.cube_like_world_axis_physical_types  # doctest: +SKIP
+  >>> my_sequence.SnS_world_axis_physical_types  # doctest: +SKIP
 
 Coordinates
 ^^^^^^^^^^^
@@ -485,32 +488,133 @@ Meanwhile, since time is sequential across raster scans, both
 each of the same length as the 0th element of the output of
 `~sunraster.RasterSequence.cube_like_dimensions`.
 
-Time Axis Extra Coordinates
-***************************
+SnS Axis Extra Coordinates
+**************************
 
-Still to write.
+As well as `sunraster.Raster.time` and `sunraster.Raster.exposure_time`,
+`sunraster.Raster.extra_coords` may contain other coordinates that are aligned
+with the time/slit step axis.
+The `sunraster.RasterSequence.SnS_axis_extra_coords` property enables users
+to access these coordinates at the `~sunraster.RasterSequence` level in the
+form of an abbreviated ``extra_coords`` dictionary.
+Just like `sunraster.Raster.time` and `sunraster.Raster.exposure_time`,
+the coordinates are concatenated so they mimic the sit-and-stare-like dimensionality
+returned in the 0th element of `sunraster.RasterSequence.SnS_dimensions`.
+`sunraster.RasterSequence.SnS_axis_extra_coords` is equivalent to
+`ndcube.NDCubeSequence.common_axis_extra_coords`.
+To see examples of how to use this property, see the
+`NDCubeSequence Common Axis Extra Coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#common-axis-extra-coordinates>`_.
 
-Scan Number Extra Coordinates
+Raster Axis Extra Coordinates
 *****************************
 
-Still to write.
+Analgous to `~sunraster.RasterSequence.SnS_axis_extra_coords`, it is also
+possible to access the extra coordinates that are not assigned to any
+`~sunraster.Raster` data axis via the
+`~sunraster.RasterSequence.raster_axis_extra_coords` property.
+Whereas `~sunraster.RasterSequence.SnS_axis_extra_coords` returns all the
+extra coords with an ``'axis'`` value equal to the time/slit step axis,
+`~sunraster.RasterSequence.scan_axis_extra_coords` returns all extra coords
+with an ``'axis'`` value of None.
+Another way of thinking about this is that these coordinates correspond to
+the repeat raster scan number axis.
+Hence the property’s name.
 
 Slicing
 ^^^^^^^
 
-Still to write.
+`~sunraster.RasterSequence` not only enables users to inspect their data in
+the raster and sit-and-stare representations.
+It also enables users to slice the data in either representation as well.
+This is doen via the `~sunraster.RasterSequence.slice_as_raster` and
+`~sunraster.RasterSequence.slice_as_SnS` properties.
+As with `~sunraster.Raster`, these slicing properties ensure that not only
+the data is sliced, but all relevant supporting metadata as well including
+incertainties, mask, WCS object, extra_coords, etc.
 
-4-D Slicing
-***********
+To slice a `~sunraster.RasterSequence` using the raster representation, do
+the following:
 
+.. code-block:: python
 
+  >>> print(my_sequence.raster_dimensions)  # Check dimensionality before slicing.
+  (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+  
+  >>> my_sequence_roi = my_sequence.slice_as_raster[1:3, 0:2, 1:3, 1:4]
+  
+  >>> print(my_sequence_roi.raster_dimensions) # See how slicing has changed dimensionality.
+  (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
+  >>> my_sequence_roi.SnS_dimensions  # Dimensionality can still be represented in SnS form.
+  [4., 2., 3.] pix
 
-3-D Slicing
-***********
+To slice in the sit-and-stare representation, do the following:
 
+.. code-block:: python
 
+  >>> print(my_sequence.SnS_dimensions)  # Check dimensionality before slicing.
+  [9. 4. 5.] pix
+  
+  >>> my_sequence_roi = my_sequence.slice_as_SnS[1:7, 1:3, 1:4]
+  
+  >>> print(my_sequence_roi.SnS_dimensions)  # See how slicing has changed dimensionality.
+  [6., 2., 3.] pix
+  >>> print(my_sequence_roi.raster_dimensions)  # Dimensionality can still be represented in raster form.
+  (<Quantity 3. pix>, <Quantity [2., 3., 1.] pix>, <Quantity 2. pix>, <Quantity 3. pix>)
+
+Notice that after slicing the data can still be inspected and interpreted in
+the raster or sit-and-stare format, irrespective of which slicing
+representation was used.
+Also notice that the ``my_sequence.slice_as_SnS[1:7, 1:3, 1:4]`` command led
+different `~sunraster.Raster` objects to have different lengths along the
+slit step axis.
+And that this can be seen from the fact that the slit step axis entry in the
+output of ``my_sequence_roi.raster_dimensions`` has a length greater than 1.
+
+Slicing can reduce the dimensionality of `~sunraster.RasterSequence` instances.
+For example, let's slice out the 2nd pixel along the slit.
+This reduces the number of dimensions in the raster representation to 3
+(``raster scan``, ``slit step``, ``spectral``) and to 2 in the sit-and-stare
+representation (``time``, ``spectral``).
+However, the raster and sit-and-stare representations are still valid.
+
+.. code-block:: python
+
+  >>> slit_pixel_sequence = my_sequence.slice_as_raster[:, : 2]
+  >>> print(slit_pixel_sequence.raster_dimensions)
+
+  >>> print(slit_pixel_sequence.SnS_dimensions)
 
 Plotting
 ^^^^^^^^
 
-Still to write.
+To quickly and easily visualize slit spectrograph data,
+`~sunraster.RasterSequence` supplies simple-to-use, yet powerful plotting APIs.
+They are intended to be a useful quicklook tool and not a
+replacement for high quality plots or animations, e.g. for
+publications.
+As with slicing, there are two plot methods for plotting in each of the
+raster and sit-and-stare representations.
+
+To visualize in the raster representation, simply call the following:
+
+.. code-block:: python
+
+  >>> my_raster.plot_as_raster() # doctest: +SKIP
+
+To visualize in the sit-and-stare representation, do:
+
+.. code-block:: python
+
+  >>> my_raster.plot_as_SnS() # doctest: +SKIP
+
+These methods produce different types of visualizations including line plots,
+2-D images and 1- and 2-D animations.
+Which is displayed depends on the dimensionality of the `~sunraster.RasterSequence`
+and the inputs of the user.
+`~sunraster.RasterSequence.plot_as_raster` and
+`~sunraster.RasterSequence.plot_as_SnS` are in fact simply aliases for the
+`ndcube.NDCubeSequence.plot` and `ndcube.NDCubeSequence.plot_as_cube` methods,
+respectively.
+For learn more about how these routines work and the optional inputs that
+enable users to customize their output, see the
+`NDCubeSequence plotting documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#plotting>`_.
