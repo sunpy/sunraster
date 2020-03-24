@@ -63,10 +63,21 @@ class RasterSequence(NDCubeSequence):
     slit_step_axis: `int`
         The axis of the Raster instances corresponding to time.
     """
-    def __init__(self, data_list, meta=None, slit_step_axis=0):
+    def __init__(self, data_list, slit_step_axis=0, meta=None):
         # Initialize Sequence.
-        super().__init__(data_list, meta=meta, common_axis=slit_step_axis)
+        super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
         self._slit_step_axis = self._common_axis
+
+        # Make aliases to some NDCubeSequence methods which are more descriptive
+        # in the context of raster data.
+        self.raster_dimensions = self.dimensions
+        self.SnS_dimensions = self.cube_like_dimensions
+        self.raster_world_axis_physical_types = self.world_axis_physical_types
+        self.SnS_world_axis_physical_types = self.cube_like_world_axis_physical_types
+        self.raster_axis_extra_coords = self.sequence_axis_extra_coords
+        self.SnS_axis_extra_coords = self.common_axis_extra_coords
+        self.plot_as_raster = self.plot
+        self.plot_as_SnS = self.plot_as_cube
 
     def __str__(self):
         if self.data[0]._time_name:
@@ -82,7 +93,7 @@ class RasterSequence(NDCubeSequence):
         else:
             lat_range = None
         if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
+            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
@@ -112,8 +123,8 @@ class RasterSequence(NDCubeSequence):
         return _SequenceSlicer(self)
 
     @property
-    def spectral_axis(self):
-        return u.Quantity([raster.spectral_axis for raster in self.data])
+    def spectral(self):
+        return u.Quantity([raster.spectral for raster in self.data])
 
     @property
     def time(self):
@@ -249,7 +260,7 @@ class Raster(NDCube):
         else:
             lat_range = None
         if self._spectral_name:
-            spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
+            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
@@ -274,7 +285,7 @@ class Raster(NDCube):
                               missing_axes=result.missing_axes)
 
     @property
-    def spectral_axis(self):
+    def spectral(self):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_SPECTRAL_NAMES}")
