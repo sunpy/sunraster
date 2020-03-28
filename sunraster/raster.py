@@ -67,6 +67,8 @@ class RasterSequence(NDCubeSequence):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
         self._slit_step_axis = self._common_axis
+        self._sequence_axis = 0
+        self._sequence_axis_name = self.world_axis_physical_types[self._sequence_axis]
 
     raster_dimensions = NDCubeSequence.dimensions
     SnS_dimensions = NDCubeSequence.cube_like_dimensions
@@ -184,6 +186,132 @@ class RasterSequence(NDCubeSequence):
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
+
+    def _raster_axes_to_world_types(self, *axes, include_extra_coords=True):
+        """
+        Retrieve the world axis physical types for each pixel axis.
+
+        This differs from world_axis_physical_types in that it provides an explicit
+        mapping between pixel axes and physical types, including dependent physical
+        types.
+
+        Parameters
+        ----------
+        axes: `int` or multiple `int`
+            Axis number in numpy ordering of axes for which real world physical types
+            are desired.
+            axes=None implies axis names for all axes will be returned.
+
+        include_extra_coords: `bool`
+           If True, also search extra_coords for coordinate corresponding to axes.
+           Default=True.
+
+        Returns
+        -------
+        axes_names: `tuple` of `str`
+            The world axis physical types corresponding to each axis.
+            If more than one physical type found for an axis, that axis's entry will
+            be a tuple of `str`.
+        """
+        # Parse user input.
+        if axes == ():
+            axes = np.arange(len(self.dimensions))
+        elif isinstance(axes, int):
+            axes = np.array([axes])
+        else:
+            axes = np.array(axes)
+
+        n_axes = len(axes)
+        axes_names = [None] * n_axes
+
+        # If sequence axis in axes, get names for it separately.
+        if self._sequence_axis in axes:
+            sequence_names_indices = np.array([axis == self._sequence_axis for axis in axes])
+            # Get standard sequence axis name from world_axis_physical_types.
+            sequence_axes_names = [self._sequence_axis_name]
+            # If desired, get extra coord sequence axis names.
+            if include_extra_coords:
+                extra_sequence_names = utils.sequence._get_axis_extra_coord_names_and_units(
+                        self.data, None)[0]
+                if extra_sequence_names:
+                    sequence_axes_names += list(extra_sequence_names)
+            # Enter sequence axis names into output.
+            # Must use for loop as can't assign tuples to multiple array location
+            # with indexing and setitem.
+            for i in np.arange(n_axes)[sequence_names_indices]:
+                axes_names[i] = tuple(sequence_axes_names)
+
+            # Get indices of axes numbers associated with cube axes.
+            cube_indices = np.invert(sequence_names_indices)
+            cube_axes = axes[cube_indices] - 1
+        else:
+            cube_indices = np.ones(n_axes, dtype=bool)
+            cube_axes = axes
+
+        # Get world types from cube axes.
+        if len(cube_axes) > 0:
+            cube_axes_names = self.data[0]._pixel_axes_to_world_types(
+                    *cube_axes, include_extra_coords=include_extra_coords)
+            for i, name in zip(np.arange(n_axes)[cube_indices], cube_axes_names):
+                axes_names[i] = name
+
+        return tuple(axes_names)
+
+    def _world_types_to_raster_axes(self, *axes_names, include_extra_coords=True):
+        """
+        Retrieve the pixel axes (numpy ordering) corresponding to each world axis physical type.
+
+        Parameters
+        ----------
+        axes_names: `str` or multiple `str`
+            world axis physical types for which the pixel axis numbers are desired.
+            axes_names=None implies all axes will be returned.
+
+        include_extra_coords: `bool`
+           If True, also search extra_coords for axis name.
+           Default=True.
+
+        Returns
+        -------
+        axes: `tuple` of `int`
+            The pixel axis numbers (numpy ordering) that correspond to the supplied
+            axis names.
+            If more than one axis corresponds to the physical type, that physical type's
+            entry in the output will be a tuple of `int`.
+            If no axes names supplied, the ordering of the axis numbers returned will
+            correspond to the physical types returned by NDCube.world_axis_physical_types.
+        """
+        # Parse user input.
+        if axes_names == ():
+            axes_names = np.array(self.world_axis_physical_types)
+        elif isinstance(axes_names, str):
+            axes_names = np.array([axes_names])
+        else:
+            axes_names = np.array(axes_names)
+        n_names = len(axes_names)
+        axes = np.array([None] * n_names, dtype=object)
+
+        # Get world types associated with sequence axis.
+        sequence_axes_names = [self._sequence_axis_name]
+        # If desired, also get extra coord sequence axis names.
+        if include_extra_coords:
+            extra_sequence_names = utils.sequence._get_axis_extra_coord_names_and_units(self.data, None)[0]
+                    self.data, None)[0]
+            if extra_sequence_names:
+                sequence_axes_names += list(extra_sequence_names)
+        sequence_axes_names = np.asarray(sequence_axes_names)
+        # Find indices of axes_names that correspond to sequence axis and
+        # and enter axis number to output
+        sequence_names_indices = np.isin(axes_names, sequence_axes_names)
+        axes[sequence_names_indices] = self._sequence_axis
+
+        # Get indices of cube axis names and use Raster version of this method to get axis numbers.
+        cube_names_indices = np.invert(sequence_names_indices)
+        if cube_names_indices.any():
+            axes[cube_names_indices] = self.data[0].world_types_to_pixel_axes(
+                    *axes_names[cube_names_indices], include_extra_coords=include_extra_coords)
+
+        return tuple(axes)
 
 
 class Raster(NDCube):
@@ -375,6 +503,149 @@ class Raster(NDCube):
             new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
+
+    def _pixel_axes_to_world_types(self, *args, include_extra_coords=True):
+        """
+        Retrieve the world axis physical types for each pixel axis.
+
+        This differs from world_axis_physical_types in that it provides an explicit
+        mapping between pixel axes and physical types, including dependent physical
+        types.
+
+        Parameters
+        ----------
+        axes: `int` or multiple `int`
+            Axis number in numpy ordering of axes for which real world physical types
+            are desired.
+            axes=None implies axis names for all axes will be returned.
+
+        include_extra_coords: `bool`
+           If True, also search extra_coords for coordinate corresponding to axes.
+           Default=True.
+
+        Returns
+        -------
+        axes_names: `tuple` of `str`
+            The world axis physical types corresponding to each axis.
+            If more than one physical type found for an axis, that axis's entry will
+            be a tuple of `str`.
+        """
+        # Define the dimensions of the cube and the total number of axes.
+        n_dimensions = len(self.dimensions)
+        world_axis_types = np.array(self.world_axis_physical_types)
+        wcs_axis_correlation_matrix = self.wcs.axis_correlation_matrix
+
+        # Parse user input.
+        if axes == ():
+            axes = tuple(range(n_dimensions))
+        elif isinstance(axes, int):
+            axes = (axes,)
+
+        # If extra coords axis name desired, invert extra_coords so that
+        # keys are axis numbers and values are axis names.
+        if include_extra_coords:
+            extra_coords = self.extra_coords
+            extra_coords_axes = dict([('None', [])] + [(str(i), []) for i in range(n_dimensions)])
+            for key in extra_coords.keys():
+                coord_axes = extra_coords[key]["axis"]
+                if isinstance(coord_axes, numbers.Integral) or coord_axes is None:
+                    extra_coords_axes[str(coord_axes)].append(key)
+                else:
+                    for coord_axis in coord_axes:
+                        extra_coords_axes[str(coord_axis)].append(key)
+
+        # For each axis, get axis names from WCS and extra coords, if desired.
+        n_axes = len(axes)
+        axes_names = [None] * n_axes
+        for axis in axes:
+            # If axis number is negative, convert to corresponding positive version.
+            # This is not needed for WCS operation as this check it performed by
+            # data_axis_to_wcs_axis. But it is needed for extra_coords, and doing
+            # conversion here should not slow down WCS case and prevent it being done twice
+            # if extra coords axis type desired.
+            if axis < 0:
+                axis = n_dimensions + axis
+            # Get axis types from WCS.
+            axis_names = world_axis_types[wcs_axis_correlation_matrix[
+                data_axis_to_wcs_axis(axis, self.missing_axes)]]
+            # Get axis types from extra coords if desired.
+            if include_extra_coords:
+                str_axis = str(axis)
+                if str_axis in extra_coords_axes.keys():
+                    axis_names = list(set(list(axis_names) + extra_coords_axes[str_axis]))
+            # Enter axes into output.
+            if len(axis_names) == 1:
+                axes_names[i] = axis_names[0]
+            else:
+                axes_names[i] = tuple(axis_names)
+ 
+    def _world_types_to_pixel_axes(self, *axes_names, include_extra_coords=True):
+        """
+        Retrieve the pixel axes (numpy ordering) corresponding to each world axis physical type.
+
+        Parameters
+        ----------
+        axes_names: `str` or multiple `str`
+            world axis physical types for which the pixel axis numbers are desired.
+            axes_names=None implies all axes will be returned.
+
+        include_extra_coords: `bool`
+           If True, also search extra_coords for axis name.
+           Default=True.
+
+        Returns
+        -------
+        axes: `tuple` of `int`
+            The pixel axis numbers (numpy ordering) that correspond to the supplied
+            axis names.
+            If more than one axis corresponds to the physical type, that physical type's
+            entry in the output will be a tuple of `int`.
+            If no axes names supplied, the ordering of the axis numbers returned will
+            correspond to the physical types returned by NDCube.world_axis_physical_types.
+        """
+        wcs_names = self.world_axis_physical_types
+        extra_coords = self.extra_coords
+
+        # Parse user input.
+        if axes_names == ():
+            axes_names = wcs_names
+        elif isinstance(axes_names, str):
+            axes_names = (axes_names,)
+
+        n_names = len(axes_names)
+        axes = [None] * n_names
+        for i, name in enumerate(axes_names):
+            # Ensure axis number is an int or int equivalent.
+            if not isinstance(name, str):
+                raise TypeError("axis names must be strings. Offending axis name: "
+                                f"{name}; type = {type(name)}")
+
+            # Check WCS an extra coords for physical type.
+            try:
+                axis = utils.cube.get_axis_number_from_axis_name(name, wcs_names)
+                name_in_wcs = True
+                # Determine any dependent axes.
+                dependent_axes = utils.wcs.get_dependent_data_axes(self.wcs, axis,
+                                                                   self.missing_axes)
+            except ValueError:
+                name_in_wcs = False
+
+            # Check extra_coords for axis name if user wants to check extra coords.
+            if include_extra_coords:
+                w_axis_from_extra_coords = [name in key for key in extra_coords.keys()]
+                n_instances_in_extra_coords = sum(w_axis_from_extra_coords)
+                if (name_in_wcs and n_instances_in_extra_coords > 0) or n_instances_in_extra_coords > 1:
+                    raise ValueError("axis name provided not unique.")
+                elif n_instances_in_extra_coords == 1:
+                    dependent_axes = extra_coords[name]["axis"]
+
+            # Enter axes into list.
+            if isinstance(dependent_axes, numbers.Integral) or len(dependent_axes) != 1:
+                axes[i] = dependent_axes
+            else:
+                axes[i] = dependent_axes[0]
+
+        return tuple(axes)
 
     def _find_axis_name(self, supported_names):
         axis_name = None
