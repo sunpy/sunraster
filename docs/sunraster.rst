@@ -1,4 +1,0 @@
-SunRaster
-=========
-
-.. automodapi:: sunraster
