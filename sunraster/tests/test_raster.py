@@ -76,8 +76,7 @@ sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta
     (spectrogram_DN_per_s0, False, True, spectrogram_DN_per_s_per_s0),
     (spectrogram_DN0, True, True, spectrogram_DN_s0)
 ])
-def test_Raster_apply_exposure_time_correction(input_cube, undo,
-                                                            force, expected_cube):
+def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
     output_cube = input_cube.apply_exposure_time_correction(undo=undo, force=force)
     assert_cubes_equal(output_cube, expected_cube)
 
