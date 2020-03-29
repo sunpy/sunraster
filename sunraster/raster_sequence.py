@@ -23,13 +23,14 @@ class RasterSequence(NDCubeSequence):
         List of `Raster` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
-    meta: `dict` or header object
+    common_axis: `int` or `None`
+        The axis of the Raster instances corresponding to the slit step/time.
+
+    meta: `dict` or header object (optional)
         Metadata associated with the sequence.
 
-    common_axis: `int`
-        The axis of the Raster instances corresponding to the slit step/time.
     """
-    def __init__(self, data_list, common_axis=0, meta=None):
+    def __init__(self, data_list, common_axis, meta=None):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=common_axis, meta=meta)
         self.sequence_axis = 0
