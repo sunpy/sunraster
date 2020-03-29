@@ -155,30 +155,50 @@ class RasterSequence(NDCubeSequence):
 
     def __str__(self):
         if self.data[0]._time_name:
-            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
+            times = self.data[0].time
+            if times.isscalar:
+                time_period = times.value
+            else:
+                time_period = (times[0].value, times[-1].value)
         else:
             time_period = None
         if self.data[0]._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+            lon = self.lon
+            if lon.isscalar:
+                lon_range = lon
+            else:
+                lon_range = u.Quantity([lon.min(), lon.max()])
         else:
             lon_range = None
         if self.data[0]._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+            lat = self.lat
+            if lat.isscalar:
+                lat_range = self.lat
+            else:
+                lat_range = u.Quantity([lat.min(), lat.max()])
         else:
             lat_range = None
         if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+            spectral = self.spectral
+            if spectral.isscalar:
+                spectral_range = spectral
+            else:
+                spectral_range = u.Quantity([spectral.min(), spectral.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
                 RasterSequence
                 --------------
                 Time Range: {time_period}
-                Pixel Dimensions (raster scans, slit steps, slit height, spectral): {self.dimensions}
+                Axes Types: {self.raster_axes_types}
+                Axes Dimensions: {self.dimensions}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
                 Data unit: {self.data[0].unit}"""))
+
+    def __repr__(self):
+        return f"{object.__repr__(self)}\n{str(self)}"
 
     @property
     def _raster_axis_index(self):
