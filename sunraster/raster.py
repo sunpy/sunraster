@@ -1,10 +1,13 @@
 import textwrap
+import numbers
 
 import astropy.units as u
 import ndcube.utils.sequence
 import numpy as np
 from ndcube import NDCube, NDCubeSequence
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+import ndcube.utils.cube as cube_utils
+import ndcube.utils.sequence as sequence_utils
+import ndcube.utils.wcs as wcs_utils
 
 from sunraster import utils
 
@@ -66,9 +69,18 @@ class RasterSequence(NDCubeSequence):
     def __init__(self, data_list, slit_step_axis=0, meta=None):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
-        self._slit_step_axis = self._common_axis
-        self._sequence_axis = 0
-        self._sequence_axis_name = self.world_axis_physical_types[self._sequence_axis]
+        self.sequence_axis = 0
+        self._raster_axis_physical_type = self.world_axis_physical_types[self.sequence_axis]
+        self._raster_axis_name = "raster"
+        self._SnS_axis_physical_type = "time"
+        self._SnS_axis_name = "temporal"
+        self._slit_step_axis_name = "slit step"
+        self._slit_axis_name = "position along slit"
+        self._spectral_axis_name = "spectral"
+        self._raster_axes_names = np.array([self._raster_axis_name, self._slit_step_axis_name,
+                                            self._slit_axis_name, self._spectral_axis_name])
+        self._SnS_axes_names = np.array([self._SnS_axis_name, self._slit_axis_name,
+                                         self._spectral_axis_name])
 
     raster_dimensions = NDCubeSequence.dimensions
     SnS_dimensions = NDCubeSequence.cube_like_dimensions
@@ -78,6 +90,91 @@ class RasterSequence(NDCubeSequence):
     SnS_axis_extra_coords = NDCubeSequence.common_axis_extra_coords
     plot_as_raster = NDCubeSequence.plot
     plot_as_SnS = NDCubeSequence.plot_as_cube
+
+    @property
+    def _raster_axis_index(self):
+        return self.sequence_axis
+
+    @property
+    def _slit_step_axis_index(self):
+        return self._common_axis + 1
+
+    @property
+    def _SnS_axis_index(self):
+        return self._common_axis
+
+    @property
+    def _slit_raster_axis_index(self):
+        slit_axis_index = self._slit_axis_index_partial(
+                self.data[0]._longitude_name, self._world_types_to_raster_axes,
+                self._slit_step_axis_index)
+
+    @property
+    def _slit_SnS_axis_index(self):
+        return self._slit_axis_index_partial(
+                self.data[0]._longitude_name, self._world_types_to_SnS_axes, self._SnS_axis_index)
+
+    def _slit_axis_index_partial(self, _physical_type_name, world_types_to_axes_func, axis_to_remove):
+        non_unique_name_error_fragment = "not unique to a physical axis type"
+        try:
+            slit_axis_index = self._axis_index_partial(self.data[0]._latitude_name,
+                                                       self._world_types_to_SnS_axes)
+        except ValueError as err1:
+            try:
+                if non_unique_name_error_fragment in err.args[0]:
+                    slit_axis_index = self._axis_index_partial(self.data[0]._longitude_name,
+                                                               self._world_types_to_SnS_axes)
+            except ValueError as err2:
+                if non_unique_name_error_fragment in err.args[0]:
+                    slit_axis_index = None
+                else:
+                    raise err2
+        if isinstance(slit_axis_index, tuple):
+            slit_axis_index = list(slit_axis_index)
+            slit_axis_index.remove(axis_to_remove)
+            if slit_axis_index:
+                return slit_axis_index[0]
+        else:
+            return slit_axis_index
+
+    def _axis_index_partial(self, _physical_type_name, world_types_to_axes_func):
+        # If _physical_type_name is None, then axis must have been sliced away.
+        if _physical_type_name:
+            physical_type, location = _physical_type_name
+            if location == "extra_coords":
+                include_extra_coords = True
+            else:
+                include_extra_coords = False
+            axes = world_types_to_axes_func(physical_type, include_extra_coords=include_extra_coords)
+            if len(axes) != 1:
+                raise TypeError(f"Unrecognized output of world_types_to_axes_func: {axes}.\n"
+                                "Must be a length 1 tuple.")
+            return axes[0]
+
+    @property
+    def _spectral_raster_axis_index(self):
+        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
+                                                       self._world_types_to_raster_axes)
+        return spectral_axis_index
+
+    @property
+    def _spectral_SnS_axis_index(self):
+        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
+                                                       self._world_types_to_SnS_axes)
+        return spectral_axis_index
+
+    @property
+    def raster_axes_types(self):
+        # Get array of indices for each axis.
+        axes_indices = [self._raster_axis_index, self._slit_step_axis_index,
+                        self._slit_raster_axis_index, self._spectral_raster_axis_index]
+        # Remove any Nones.  These correspond to missing axes.
+        axes_indices = np.array(list(filter((None).__ne__, axes_indices)))
+        return tuple(self._raster_axes_names[axes_indices])
+
+    @property
+    def SnS_axes_types(self):
+        axes_types = np.empty(len(self.SnS_dimensions))
 
     def __str__(self):
         if self.data[0]._time_name:
@@ -189,7 +286,7 @@ class RasterSequence(NDCubeSequence):
 
     def _raster_axes_to_world_types(self, *axes, include_extra_coords=True):
         """
-        Retrieve the world axis physical types for each pixel axis.
+        Retrieve the world axis physical types for each pixel axis given in raster format.
 
         This differs from world_axis_physical_types in that it provides an explicit
         mapping between pixel axes and physical types, including dependent physical
@@ -225,24 +322,24 @@ class RasterSequence(NDCubeSequence):
         axes_names = [None] * n_axes
 
         # If sequence axis in axes, get names for it separately.
-        if self._sequence_axis in axes:
-            sequence_names_indices = np.array([axis == self._sequence_axis for axis in axes])
+        if self._raster_axis in axes:
+            raster_names_indices = np.array([axis == self._raster_axis for axis in axes])
             # Get standard sequence axis name from world_axis_physical_types.
-            sequence_axes_names = [self._sequence_axis_name]
+            raster_axis_names = [self._raster_axis_physical_type]
             # If desired, get extra coord sequence axis names.
             if include_extra_coords:
                 extra_sequence_names = utils.sequence._get_axis_extra_coord_names_and_units(
                         self.data, None)[0]
                 if extra_sequence_names:
-                    sequence_axes_names += list(extra_sequence_names)
+                    raster_axis_names += list(extra_sequence_names)
             # Enter sequence axis names into output.
             # Must use for loop as can't assign tuples to multiple array location
             # with indexing and setitem.
-            for i in np.arange(n_axes)[sequence_names_indices]:
-                axes_names[i] = tuple(sequence_axes_names)
+            for i in np.arange(n_axes)[raster_names_indices]:
+                axes_names[i] = tuple(raster_axis_names)
 
             # Get indices of axes numbers associated with cube axes.
-            cube_indices = np.invert(sequence_names_indices)
+            cube_indices = np.invert(raster_names_indices)
             cube_axes = axes[cube_indices] - 1
         else:
             cube_indices = np.ones(n_axes, dtype=bool)
@@ -256,6 +353,10 @@ class RasterSequence(NDCubeSequence):
                 axes_names[i] = name
 
         return tuple(axes_names)
+
+    def _SnS_axes_to_world_types(self, *axes, include_extra_coords=True):
+        return self.data[0]._pixel_axes_to_world_types(
+                *axes, include_extra_coords=include_extra_coords)
 
     def _world_types_to_raster_axes(self, *axes_names, include_extra_coords=True):
         """
@@ -292,26 +393,38 @@ class RasterSequence(NDCubeSequence):
         axes = np.array([None] * n_names, dtype=object)
 
         # Get world types associated with sequence axis.
-        sequence_axes_names = [self._sequence_axis_name]
+        raster_axis_names = [self._raster_axis_physical_type]
         # If desired, also get extra coord sequence axis names.
         if include_extra_coords:
-            extra_sequence_names = utils.sequence._get_axis_extra_coord_names_and_units(self.data, None)[0]
-                    self.data, None)[0]
-            if extra_sequence_names:
-                sequence_axes_names += list(extra_sequence_names)
-        sequence_axes_names = np.asarray(sequence_axes_names)
+            extra_sequence_names = sequence_utils._get_axis_extra_coord_names_and_units(self.data, None)[0]
+            if extra_sequence_names is not None:
+                raster_axis_names += list(extra_sequence_names)
+        raster_axis_names = np.asarray(raster_axis_names)
         # Find indices of axes_names that correspond to sequence axis and
         # and enter axis number to output
-        sequence_names_indices = np.isin(axes_names, sequence_axes_names)
-        axes[sequence_names_indices] = self._sequence_axis
+        raster_names_indices = np.isin(axes_names, raster_axis_names)
+        axes[raster_names_indices] = self._raster_axis_index
 
         # Get indices of cube axis names and use Raster version of this method to get axis numbers.
-        cube_names_indices = np.invert(sequence_names_indices)
+        cube_names_indices = np.invert(raster_names_indices)
         if cube_names_indices.any():
-            axes[cube_names_indices] = self.data[0].world_types_to_pixel_axes(
-                    *axes_names[cube_names_indices], include_extra_coords=include_extra_coords)
+            # Get axes from cube.
+            cube_axes = self.data[0]._world_types_to_pixel_axes(
+                    *axes_names, include_extra_coords=include_extra_coords)
+            # Must use loop as can't use array indexing to enter >1 tuples
+            # into single array elements.
+            for i in np.arange(len(cube_names_indices))[cube_names_indices]:
+                if isinstance(cube_axes[i], tuple):
+                   this_axis_indices = tuple(np.array(cube_axes[i]) + 1)
+                else:
+                    this_axis_indices = cube_axes[i] + 1
+                axes[i] = this_axis_indices
 
         return tuple(axes)
+
+    def _world_types_to_SnS_axes(self, *axes_names, include_extra_coords=True):
+        return self.data[0]._world_types_to_pixel_axes(
+                *axes_names, include_extra_coords=include_extra_coords)
 
 
 class Raster(NDCube):
@@ -404,8 +517,8 @@ class Raster(NDCube):
         if result.extra_coords is None:
             extra_coords = None
         else:
-            extra_coords = convert_extra_coords_dict_to_input_format(result.extra_coords,
-                                                                     result.missing_axes)
+            extra_coords = cube_utils.convert_extra_coords_dict_to_input_format(
+                    result.extra_coords, result.missing_axes)
         return self.__class__(result.data, result.wcs, extra_coords, result.unit,
                               result.uncertainty, result.meta, mask=result.mask,
                               missing_axes=result.missing_axes)
@@ -501,7 +614,8 @@ class Raster(NDCube):
         # Return new instance of Raster with correction applied/undone.
         return Raster(
             new_data_arrays[0], self.wcs,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
+            cube_utils.convert_extra_coords_dict_to_input_format(self.extra_coords,
+                                                                 self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
 
     def _pixel_axes_to_world_types(self, *args, include_extra_coords=True):
@@ -622,12 +736,13 @@ class Raster(NDCube):
 
             # Check WCS an extra coords for physical type.
             try:
-                axis = utils.cube.get_axis_number_from_axis_name(name, wcs_names)
+                axis = cube_utils.get_axis_number_from_axis_name(name, wcs_names)
                 name_in_wcs = True
                 # Determine any dependent axes.
-                dependent_axes = utils.wcs.get_dependent_data_axes(self.wcs, axis,
+                dependent_axes = wcs_utils.get_dependent_data_axes(self.wcs, axis,
                                                                    self.missing_axes)
-            except ValueError:
+            except ValueError as err:
+                raise err
                 name_in_wcs = False
 
             # Check extra_coords for axis name if user wants to check extra coords.
@@ -644,7 +759,6 @@ class Raster(NDCube):
                 axes[i] = dependent_axes
             else:
                 axes[i] = dependent_axes[0]
-
         return tuple(axes)
 
     def _find_axis_name(self, supported_names):
