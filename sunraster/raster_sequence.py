@@ -1,6 +1,7 @@
 import textwrap
 
 import numpy as np
+import astropy.units as u
 from ndcube import NDCubeSequence
 import ndcube.utils.sequence
 
@@ -25,12 +26,12 @@ class RasterSequence(NDCubeSequence):
     meta: `dict` or header object
         Metadata associated with the sequence.
 
-    slit_step_axis: `int`
-        The axis of the Raster instances corresponding to time.
+    common_axis: `int`
+        The axis of the Raster instances corresponding to the slit step/time.
     """
-    def __init__(self, data_list, slit_step_axis=0, meta=None):
+    def __init__(self, data_list, common_axis=0, meta=None):
         # Initialize Sequence.
-        super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
+        super().__init__(data_list, common_axis=common_axis, meta=meta)
         self.sequence_axis = 0
         self._raster_axis_physical_type = self.world_axis_physical_types[self.sequence_axis]
         self._raster_axis_name = "raster"
@@ -59,33 +60,56 @@ class RasterSequence(NDCubeSequence):
 
     @property
     def _slit_step_axis_index(self):
-        return self._common_axis + 1
+        if self._common_axis is not None:
+            return self._common_axis + 1
 
     @property
     def _SnS_axis_index(self):
         return self._common_axis
 
     @property
-    def _slit_raster_axis_index(self):
-        slit_axis_index = self._slit_axis_index_partial(
-                self.data[0]._longitude_name, self._world_types_to_raster_axes,
-                self._slit_step_axis_index)
+    def _slit_axis_raster_index(self):
+        return self._slit_axis_index_partial(self._world_types_to_raster_axes,
+                                             self._slit_step_axis_index)
 
     @property
-    def _slit_SnS_axis_index(self):
-        return self._slit_axis_index_partial(
-                self.data[0]._longitude_name, self._world_types_to_SnS_axes, self._SnS_axis_index)
+    def _slit_axis_SnS_index(self):
+        slit_axis_SnS_index = self._slit_axis_index_partial(self._world_types_to_SnS_axes,
+                                                            self._SnS_axis_index)
+        # If slit step axis is sliced away, slit index has been incorrectly
+        # decremented since the raster axis also counts as the 0th SnS axis.
+        # Reincrement if necessary.
+        if self._slit_step_axis_index is None:
+            slit_axis_SnS_index += 1
+        return slit_axis_SnS_index
 
-    def _slit_axis_index_partial(self, _physical_type_name, world_types_to_axes_func, axis_to_remove):
+    @property
+    def _spectral_axis_raster_index(self):
+        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
+                                                       self._world_types_to_raster_axes)
+        return spectral_axis_index
+
+    @property
+    def _spectral_axis_SnS_index(self):
+        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
+                                                       self._world_types_to_SnS_axes)
+        # If slit step axis is sliced away, slit index has been incorrectly
+        # decremented since the raster axis also counts as the 0th SnS axis.
+        # Reincrement if necessary.
+        if self._slit_step_axis_index is None:
+            spectral_axis_index += 1
+        return spectral_axis_index
+
+    def _slit_axis_index_partial(self, world_types_to_axes_func, index_to_remove):
         non_unique_name_error_fragment = "not unique to a physical axis type"
         try:
             slit_axis_index = self._axis_index_partial(self.data[0]._latitude_name,
-                                                       self._world_types_to_SnS_axes)
+                                                       world_types_to_axes_func)
         except ValueError as err1:
             try:
                 if non_unique_name_error_fragment in err.args[0]:
                     slit_axis_index = self._axis_index_partial(self.data[0]._longitude_name,
-                                                               self._world_types_to_SnS_axes)
+                                                               world_types_to_axes_func)
             except ValueError as err2:
                 if non_unique_name_error_fragment in err.args[0]:
                     slit_axis_index = None
@@ -93,7 +117,7 @@ class RasterSequence(NDCubeSequence):
                     raise err2
         if isinstance(slit_axis_index, tuple):
             slit_axis_index = list(slit_axis_index)
-            slit_axis_index.remove(axis_to_remove)
+            slit_axis_index.remove(index_to_remove)
             if slit_axis_index:
                 return slit_axis_index[0]
         else:
@@ -114,29 +138,22 @@ class RasterSequence(NDCubeSequence):
             return axes[0]
 
     @property
-    def _spectral_raster_axis_index(self):
-        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
-                                                       self._world_types_to_raster_axes)
-        return spectral_axis_index
-
-    @property
-    def _spectral_SnS_axis_index(self):
-        spectral_axis_index = self._axis_index_partial(self.data[0]._spectral_name,
-                                                       self._world_types_to_SnS_axes)
-        return spectral_axis_index
-
-    @property
     def raster_axes_types(self):
         # Get array of indices for each axis.
         axes_indices = [self._raster_axis_index, self._slit_step_axis_index,
-                        self._slit_raster_axis_index, self._spectral_raster_axis_index]
+                        self._slit_axis_raster_index, self._spectral_axis_raster_index]
         # Remove any Nones.  These correspond to missing axes.
         axes_indices = np.array(list(filter((None).__ne__, axes_indices)))
         return tuple(self._raster_axes_names[axes_indices])
 
     @property
     def SnS_axes_types(self):
-        axes_types = np.empty(len(self.SnS_dimensions))
+        # Get array of indices for each axis.
+        axes_indices = [self._SnS_axis_index, self._slit_axis_SnS_index,
+                        self._spectral_axis_SnS_index]
+        # Remove any Nones.  These correspond to missing axes.
+        axes_indices = np.array(list(filter((None).__ne__, axes_indices)))
+        return tuple(self._SnS_axes_names[axes_indices])
 
     def __str__(self):
         if self.data[0]._time_name:
@@ -164,6 +181,7 @@ class RasterSequence(NDCubeSequence):
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
                 Data unit: {self.data[0].unit}"""))
+
     @property
     def slice_as_SnS(self):
         """
@@ -241,11 +259,11 @@ class RasterSequence(NDCubeSequence):
                                                                            force=force))
         if copy is True:
             return RasterSequence(
-                converted_data_list, meta=self.meta, common_axis=self._common_axis)
+                converted_data_list, meta=self.meta, common_axis=self._SnS_axis_index)
         else:
             self.data = converted_data_list
 
-        def _raster_axes_to_world_types(self, *axes, include_extra_coords=True):
+    def _raster_axes_to_world_types(self, *axes, include_extra_coords=True):
         """
         Retrieve the world axis physical types for each pixel axis given in raster format.
 
