@@ -1,4 +1,5 @@
 import textwrap
+import numbers
 
 import numpy as np
 import astropy.units as u
@@ -33,6 +34,31 @@ class RasterSequence(NDCubeSequence):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
         self._slit_step_axis = self._common_axis
+
+        # Determine axis indices of instrument axis types.
+        self._raster_axis_name = "raster scan"
+        self._SnS_axis_name = "temporal"
+        self._slit_step_axis_name = "slit step"
+        self._slit_axis_name = "position along slit"
+        self._spectral_axis_name = "spectral"
+        self._single_scan_instrument_axes_types = np.empty(self.data[0].data.ndim, dtype=object)
+        # Slit step axis name
+        if self._common_axis is not None:
+            self._single_scan_instrument_axes_types[self._common_axis] = self._slit_step_axis_name
+        # Spectral axis name.
+        spectral_raster_index = np.where(np.array(self.data[0].world_axis_physical_types) ==
+                                         self.data[0]._spectral_name)
+        if len(spectral_raster_index) == 1:
+            self._spectral_raster_index = spectral_raster_index
+            self._single_scan_instrument_axes_types[self._spectral_raster_index] = \
+                    self._spectral_axis_name
+        else:
+            self._spectral_raster_index = None
+        # Slit axis name
+        w = self._single_scan_instrument_axes_types == None
+        self._single_scan_instrument_axes_types[w] = self._slit_axis_name
+        # Convert axes type array to str array.
+        self._single_scan_instrument_axes_types.astype(str)
 
     raster_dimensions = NDCubeSequence.dimensions
     SnS_dimensions = NDCubeSequence.cube_like_dimensions
@@ -85,6 +111,23 @@ class RasterSequence(NDCubeSequence):
         slit step position, position along slit, wavelength.
         """
         return _SequenceSlicer(self)
+
+    def __getitem__(self, item):
+        result = super().__getitem__(item)
+        if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
+            result._single_scan_axes_types = _slice_scan_axis_types(
+                    result._single_scan_axes_types, item[1:])
+        return result
+
+    @property
+    def raster_instrument_axes_types(self):
+        return tuple([self._raster_axis_name] + list(self._single_scan_instrument_axes_types))
+
+    @property
+    def SnS_instrument_axes_types(self):
+        return tuple([self._SnS_axis_name] + list(
+            self._single_scan_instrument_axes_types[self._single_scan_instrument_axes_types !=
+                                                    self._slit_step_axis_name]))
 
     @property
     def spectral(self):
@@ -166,7 +209,11 @@ class _SnSSlicer:
         self.seq = seq
 
     def __getitem__(self, item):
-        return utils.sequence._slice_sequence_as_SnS(self.seq, item)
+        result = utils.sequence._slice_sequence_as_SnS(self.seq, item)
+        if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
+            result._single_scan_axes_types = _slice_scan_axis_types(
+                    self.seq._single_scan_axes_types, item)
+        return result
 
 
 class _SequenceSlicer:
@@ -174,5 +221,35 @@ class _SequenceSlicer:
         self.seq = seq
 
     def __getitem__(self, item):
-        return ndcube.utils.sequence.slice_sequence(self.seq, item)
+        result = ndcube.utils.sequence.slice_sequence(self.seq, item)
+        if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
+            result._single_scan_axes_types = _slice_scan_axis_types(
+                    self.seq._single_scan_axes_types, item[1:])
+        return result
 
+
+def _slice_scan_axis_types(single_scan_axes_types, item):
+    """
+    Updates RasterSequence._single_scan_axes_types according to slicing.
+
+    Parameters
+    ----------
+    single_scan_axes_types: `numpy.ndarray`
+        Value of RasterSequence._single_scan_axes_types,
+        i.e. array of strings giving type of each axis.
+    
+    item: `int`, `slice` or `tuple` of `slice`s.
+        The slicing item that get applied to the Raster instances within the RasterSequences.
+
+    Returns
+    -------
+    new_single_scan_axes_types: `numpy.ndarray`
+        Update value of axis types with which to replace RasterSequence._single_scan_axes_types.
+
+    """
+    # Get boolean axes indices of axis items that aren't int,
+    # i.e. axes that are not sliced away.
+    not_int_axis_items = [not isinstance(axis_item, numbers.Integral) for axis_item in item]
+    # Add boolean indices for axes not included in item.
+    not_int_axis_items += [True] * (len(single_scan_axes_types) - len(not_int_axis_items))
+    return single_scan_axes_types[np.array(not_int_axis_items)]

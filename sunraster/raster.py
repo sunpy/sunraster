@@ -103,16 +103,16 @@ class Raster(NDCube):
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
         world_axis_physical_types = np.array(self.world_axis_physical_types)
-        self._longitude_name = _find_axis_name(SUPPORTED_LONGITUDE_NAMES,
-                                               world_axis_physical_types, self_extra_coords)
-        self._latitude_name = _find_axis_name(SUPPORTED_LATITUDE_NAMES,
-                                              world_axis_physical_types, self_extra_coords)
-        self._spectral_name = _find_axis_name(SUPPORTED_SPECTRAL_NAMES,
-                                              world_axis_physical_types, self_extra_coords)
-        self._time_name = _find_axis_name(SUPPORTED_TIME_NAMES,
-                                          world_axis_physical_types, self_extra_coords)
-        self._exposure_time_name = _find_axis_name(SUPPORTED_EXPOSURE_NAMES,
-                                                   world_axis_physical_types, self_extra_coords)
+        self._longitude_name, self._longitude_loc = _find_axis_name(
+                SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+        self._latitude_name, self._latitude_loc = _find_axis_name(
+                SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+        self._spectral_name, self._spectral_loc = _find_axis_name(
+                SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords)
+        self._time_name, self._time_loc = _find_axis_name(
+                SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
+        self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
+                SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
 
     def __str__(self):
         if self._time_name:
@@ -157,14 +157,14 @@ class Raster(NDCube):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_SPECTRAL_NAMES}")
-        return self._get_axis_coord(*self._spectral_name)
+        return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_TIMES_NAMES}")
-        return self._get_axis_coord(*self._time_name)
+        return self._get_axis_coord(self._time_name, self._time_loc)
 
     @property
     def exposure_time(self):
@@ -172,21 +172,21 @@ class Raster(NDCube):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord(*self._exposure_time_name)
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_loc)
 
     @property
     def lon(self):
         if not self._longitude_name:
             raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_LONGITUDE_NAMES}")
-        return self._get_axis_coord(*self._longitude_name)
+        return self._get_axis_coord(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_LATITUDE_NAME}")
-        return self._get_axis_coord(*self._latitude_name)
+        return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -417,6 +417,7 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
 
     """
     axis_name = None
+    loc = None
     # Check WCS for axis name.
     axis_name = _find_name_in_array(supported_names, world_axis_physical_types)
     if axis_name:
@@ -425,8 +426,7 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
         axis_name = _find_name_in_array(supported_names, np.array(list(extra_coords.keys())))
         if axis_name:
             loc = "extra_coords"
-    if axis_name:
-        return axis_name, loc
+    return axis_name, loc
 
 
 def _find_name_in_array(supported_names, names_array):
