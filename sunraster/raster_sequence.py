@@ -69,33 +69,6 @@ class RasterSequence(NDCubeSequence):
     plot_as_raster = NDCubeSequence.plot
     plot_as_SnS = NDCubeSequence.plot_as_cube
 
-    def __str__(self):
-        if self.data[0]._time_name:
-            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
-        else:
-            time_period = None
-        if self.data[0]._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
-        else:
-            lon_range = None
-        if self.data[0]._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
-        else:
-            lat_range = None
-        if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
-        else:
-            spectral_range = None
-        return (textwrap.dedent(f"""\
-                RasterSequence
-                --------------
-                Time Range: {time_period}
-                Pixel Dimensions (raster scans, slit steps, slit height, spectral): {self.dimensions}
-                Longitude range: {lon_range}
-                Latitude range: {lat_range}
-                Spectral range: {spectral_range}
-                Data unit: {self.data[0].unit}"""))
-
     @property
     def slice_as_SnS(self):
         """
@@ -193,6 +166,36 @@ class RasterSequence(NDCubeSequence):
                 converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
+
+    def __str__(self):
+        if self.data[0]._time_name:
+            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
+        else:
+            time_period = None
+        if self.data[0]._longitude_name:
+            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+        else:
+            lon_range = None
+        if self.data[0]._latitude_name:
+            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+        else:
+            lat_range = None
+        if self.data[0]._spectral_name:
+            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+        else:
+            spectral_range = None
+        return (textwrap.dedent(f"""\
+                RasterSequence
+                --------------
+                Time Range: {time_period}
+                Pixel Dimensions {self.raster_instrument_axes_types}: {self.dimensions}
+                Longitude range: {lon_range}
+                Latitude range: {lat_range}
+                Spectral range: {spectral_range}
+                Data unit: {self.data[0].unit}"""))
+
+    def __repr__(self):
+        return f"{object.__repr__(self)}\n{str(self)}"
 
 
 class _SnSSlicer:
