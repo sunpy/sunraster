@@ -42,7 +42,7 @@ class RasterSequence(NDCubeSequence):
         self._slit_axis_name = "position along slit"
         self._spectral_axis_name = "spectral"
         self._single_scan_instrument_axes_types = np.empty(self.data[0].data.ndim, dtype=object)
-        # Slit step axis name
+        # Slit step axis name.
         if self._common_axis is not None:
             self._single_scan_instrument_axes_types[self._common_axis] = self._slit_step_axis_name
         # Spectral axis name.
@@ -54,10 +54,12 @@ class RasterSequence(NDCubeSequence):
                     self._spectral_axis_name
         else:
             self._spectral_raster_index = None
-        # Slit axis name
+        # Slit axis name.
         w = self._single_scan_instrument_axes_types == None
         self._single_scan_instrument_axes_types[w] = self._slit_axis_name
-        # Convert axes type array to str array.
+        # Remove any instrument axes types whose axes are missing.
+        index = self._single_scan_instrument_axes_types != None
+        self._single_scan_instrument_axes_types = self._single_scan_instrument_axes_types[index]
         self._single_scan_instrument_axes_types.astype(str)
 
     raster_dimensions = NDCubeSequence.dimensions
