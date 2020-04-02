@@ -10,6 +10,12 @@ from sunraster import utils
 
 __all__ = ['RasterSequence']
 
+RASTER_AXIS_NAME = "raster scan"
+SNS_AXIS_NAME = "temporal"
+SLIT_STEP_AXIS_NAME = "slit step"
+SLIT_AXIS_NAME = "position along slit"
+SPECTRAL_AXIS_NAME = "spectral"
+
 
 class RasterSequence(NDCubeSequence):
     """
@@ -36,11 +42,11 @@ class RasterSequence(NDCubeSequence):
         self._slit_step_axis = self._common_axis
 
         # Determine axis indices of instrument axis types.
-        self._raster_axis_name = "raster scan"
-        self._SnS_axis_name = "temporal"
-        self._slit_step_axis_name = "slit step"
-        self._slit_axis_name = "position along slit"
-        self._spectral_axis_name = "spectral"
+        self._raster_axis_name = RASTER_AXIS_NAME
+        self._SnS_axis_name = SNS_AXIS_NAME
+        self._slit_step_axis_name = SLIT_STEP_AXIS_NAME
+        self._slit_axis_name = SLIT_AXIS_NAME
+        self._spectral_axis_name = SPECTRAL_AXIS_NAME
         self._single_scan_instrument_axes_types = np.empty(self.data[0].data.ndim, dtype=object)
         # Slit step axis name.
         if self._common_axis is not None:
@@ -90,8 +96,8 @@ class RasterSequence(NDCubeSequence):
     def __getitem__(self, item):
         result = super().__getitem__(item)
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_axes_types = _slice_scan_axis_types(
-                    result._single_scan_axes_types, item[1:])
+            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                    result._single_scan_instrument_axes_types, item[1:])
         return result
 
     @property
@@ -216,8 +222,8 @@ class _SnSSlicer:
     def __getitem__(self, item):
         result = utils.sequence._slice_sequence_as_SnS(self.seq, item)
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_axes_types = _slice_scan_axis_types(
-                    self.seq._single_scan_axes_types, item)
+            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                    self.seq._single_scan_instrument_axes_types, item)
         return result
 
 
@@ -228,8 +234,8 @@ class _SequenceSlicer:
     def __getitem__(self, item):
         result = ndcube.utils.sequence.slice_sequence(self.seq, item)
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_axes_types = _slice_scan_axis_types(
-                    self.seq._single_scan_axes_types, item[1:])
+            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                    self.seq._single_scan_instrument_axes_types, item[1:])
         return result
 
 

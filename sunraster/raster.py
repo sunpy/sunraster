@@ -168,7 +168,6 @@ class Raster(NDCube):
 
     @property
     def exposure_time(self):
-        print(self._exposure_time_name)
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_EXPOSURE_NAMES}")
