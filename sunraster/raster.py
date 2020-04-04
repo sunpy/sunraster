@@ -171,7 +171,7 @@ class Raster(NDCube):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord(self._exposure_time_name, self._exposure_loc)
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def lon(self):
