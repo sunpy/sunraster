@@ -3,7 +3,7 @@ import textwrap
 import numpy as np
 import astropy.units as u
 from ndcube import NDCube
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
 __all__ = ['Raster']
 
@@ -171,7 +171,7 @@ class Raster(NDCube):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
                              f"{SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord(self._exposure_time_name, self._exposure_loc)
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def lon(self):
@@ -241,7 +241,7 @@ class Raster(NDCube):
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
 
-    def _pixel_axes_to_world_types(self, *args, include_extra_coords=True):
+    def _pixel_axes_to_world_types(self, *axes, include_extra_coords=True):
         """
         Retrieve the world axis physical types for each pixel axis.
 
