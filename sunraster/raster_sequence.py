@@ -30,16 +30,15 @@ class RasterSequence(NDCubeSequence):
         List of `Raster` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
-    meta: `dict` or header object
-        Metadata associated with the sequence.
-
-    slit_step_axis: `int`
+    common_axis: `int`
         The axis of the Raster instances corresponding to time.
+
+    meta: `dict` or header object (optional)
+        Metadata associated with the sequence.
     """
-    def __init__(self, data_list, slit_step_axis=0, meta=None):
+    def __init__(self, data_list, common_axis, meta=None):
         # Initialize Sequence.
-        super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
-        self._slit_step_axis = self._common_axis
+        super().__init__(data_list, common_axis=common_axis, meta=meta)
 
         # Determine axis indices of instrument axis types.
         self._raster_axis_name = RASTER_AXIS_NAME
@@ -55,17 +54,16 @@ class RasterSequence(NDCubeSequence):
         spectral_raster_index = np.where(np.array(self.data[0].world_axis_physical_types) ==
                                          self.data[0]._spectral_name)
         if len(spectral_raster_index) == 1:
-            self._spectral_raster_index = spectral_raster_index
-            self._single_scan_instrument_axes_types[self._spectral_raster_index] = \
+            self._single_scan_instrument_axes_types[spectral_raster_index] = \
                     self._spectral_axis_name
-        else:
-            self._spectral_raster_index = None
         # Slit axis name.
+        print(self._single_scan_instrument_axes_types)
         w = self._single_scan_instrument_axes_types == None
+        if w.sum() > 1:
+            print(len(w), w, w.sum())
+            raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
         self._single_scan_instrument_axes_types[w] = self._slit_axis_name
         # Remove any instrument axes types whose axes are missing.
-        index = self._single_scan_instrument_axes_types != None
-        self._single_scan_instrument_axes_types = self._single_scan_instrument_axes_types[index]
         self._single_scan_instrument_axes_types.astype(str)
 
     raster_dimensions = NDCubeSequence.dimensions
@@ -171,7 +169,7 @@ class RasterSequence(NDCubeSequence):
                                                                            force=force))
         if copy is True:
             return RasterSequence(
-                converted_data_list, meta=self.meta, slit_step_axis=self._common_axis)
+                converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
             self.data = converted_data_list
 

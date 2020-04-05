@@ -1,15 +1,15 @@
 
 import numpy as np
 import pytest
-from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
+from ndcube.tests.helpers import assert_cubes_equal
 from ndcube.utils.wcs import WCS
 
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from sunraster import Raster, RasterSequence
+from sunraster import Raster
 
-# Define an sample wcs object
+# Define a sample wcs object
 h0 = {
     'CTYPE1': 'WAVE    ', 'CUNIT1': 'Angstrom', 'CDELT1': 0.2, 'CRPIX1': 0, 'CRVAL1': 10,
     'NAXIS1': 3,
@@ -62,13 +62,6 @@ spectrogram_DN_s1 = Raster(
     SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
     SOURCE_UNCERTAINTY_DN*single_exposure_time)
 
-# Define RasterSequences
-sequence_DN = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq)
-sequence_DN_per_s = RasterSequence(
-        [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq)
-sequence_DN_per_s_per_s = RasterSequence(
-    [spectrogram_DN_per_s_per_s0, spectrogram_DN_per_s_per_s1], meta=meta_seq)
-sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq)
 
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
     (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
@@ -79,16 +72,3 @@ sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta
 def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
     output_cube = input_cube.apply_exposure_time_correction(undo=undo, force=force)
     assert_cubes_equal(output_cube, expected_cube)
-
-
-@pytest.mark.parametrize("input_sequence, undo, force, expected_sequence", [
-    (sequence_DN, False, False, sequence_DN_per_s),
-    (sequence_DN_per_s, True, False, sequence_DN),
-    (sequence_DN_per_s, False, True, sequence_DN_per_s_per_s),
-    (sequence_DN, True, True, sequence_DN_s)
-])
-def test_RasterSequence_apply_exposure_time_correction(
-        input_sequence, undo, force, expected_sequence):
-    output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True,
-                                                                    force=force)
-    assert_cubesequences_equal(output_sequence, expected_sequence)
