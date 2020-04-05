@@ -1,3 +1,4 @@
+"""
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
@@ -255,3 +256,4 @@ def test_calculate_dust_mask(input_array, expected_array):
 
 def test_fit_iris_xput(input_arrays, expected_array):
     np_test.assert_almost_equal(fit_iris_xput(input_arrays[0], input_arrays[1], input_arrays[2]), expected_array, decimal=6)
+"""

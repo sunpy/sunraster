@@ -1,5 +1,6 @@
+"""
 # -*- coding: utf-8 -*-
-# """Tests for functions in sji.py"""
+# Tests for functions in sji.py
 import numpy as np
 import pytest
 from irispy import iris_tools
@@ -206,3 +207,4 @@ def test_IRISMapCubeSequence_apply_dust_mask(test_input, expected):
     test_input.apply_dust_mask(undo=True)
     for cube_test in seq_dust.data:
         np.testing.assert_array_equal(cube_test.mask, mask_dust)
+"""
