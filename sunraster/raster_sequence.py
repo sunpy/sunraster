@@ -171,7 +171,7 @@ class RasterSequence(NDCubeSequence):
                                                                            force=force))
         if copy is True:
             return RasterSequence(
-                converted_data_list, meta=self.meta, common_axis=self._common_axis)
+                converted_data_list, meta=self.meta, slit_step_axis=self._common_axis)
         else:
             self.data = converted_data_list
 
