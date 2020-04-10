@@ -255,6 +255,7 @@ for more.
 
 .. code-block:: python
 
+  >>> import astropy.units as u
   >>> exposure_times = np.ones(data.shape[0])/2 * u.s
   >>> extra_coords_input = [("exposure time", 0, exposure_times)]
   >>> my_raster = Raster(data, input_wcs, uncertainty=np.sqrt(data), mask=mask,

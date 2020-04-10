@@ -1,3 +1,4 @@
+"""
 import copy
 import os.path
 
@@ -128,9 +129,7 @@ def iris_l2_test_raster():
 
 
 def test_fits_data_comparison(iris_l2_test_raster):
-    """
-    Make sure the data is the same in pyfits and sunraster.
-    """
+    # Make sure the data is the same in pyfits and irispy.
     hdulist = fits.open(os.path.join(
         testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))
     spectral_window1 = hdulist[0].header["TDESC1"]
@@ -207,3 +206,4 @@ def test_IRISSpectrogramCubeSequence_apply_exposure_time_correction(
     output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True,
                                                                     force=force)
     assert_cubesequences_equal(output_sequence, expected_sequence)
+"""

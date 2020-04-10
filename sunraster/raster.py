@@ -1,15 +1,11 @@
 import textwrap
 
-import ndcube.utils.sequence
 import numpy as np
-from ndcube import NDCube, NDCubeSequence
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-
 import astropy.units as u
+from ndcube import NDCube
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
-from sunraster import utils
-
-__all__ = ['Raster', 'RasterSequence']
+__all__ = ['Raster']
 
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
@@ -23,166 +19,34 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
 AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
 
 # Define supported coordinate names for coordinate properties.
-SUPPORTED_LONGITUDE_NAMES = [".lon", "longitude", "lon"]
-SUPPORTED_LONGITUDE_NAMES += [name.upper() for name in SUPPORTED_LONGITUDE_NAMES]
-SUPPORTED_LONGITUDE_NAMES += [name.capitalize() for name in SUPPORTED_LONGITUDE_NAMES]
+SUPPORTED_LONGITUDE_NAMES = ["custom:pos.helioprojective.lon", "pos.helioprojective.lon",
+                             "longitude", "lon"]
+SUPPORTED_LONGITUDE_NAMES += [name.upper() for name in SUPPORTED_LONGITUDE_NAMES] + \
+                             [name.capitalize() for name in SUPPORTED_LONGITUDE_NAMES]
+SUPPORTED_LONGITUDE_NAMES = np.array(SUPPORTED_LONGITUDE_NAMES)
 
-SUPPORTED_LATITUDE_NAMES = [".lat", "latitude", "lat"]
-SUPPORTED_LATITUDE_NAMES += [name.upper() for name in SUPPORTED_LATITUDE_NAMES]
-SUPPORTED_LATITUDE_NAMES += [name.capitalize() for name in SUPPORTED_LATITUDE_NAMES]
+SUPPORTED_LATITUDE_NAMES = ["custom:pos.helioprojective.lat", "pos.helioprojective.lat",
+                            "latitude", "lat"]
+SUPPORTED_LATITUDE_NAMES += [name.upper() for name in SUPPORTED_LATITUDE_NAMES] + \
+                            [name.capitalize() for name in SUPPORTED_LATITUDE_NAMES]
+SUPPORTED_LATITUDE_NAMES = np.array(SUPPORTED_LATITUDE_NAMES)
 
 SUPPORTED_SPECTRAL_NAMES = ["em.wl", "em.energy", "em.freq", "wavelength", "energy",
-                            "frequency", "freq", "lambda"]
-SUPPORTED_SPECTRAL_NAMES += [name.upper() for name in SUPPORTED_SPECTRAL_NAMES]
-SUPPORTED_SPECTRAL_NAMES += [name.capitalize() for name in SUPPORTED_SPECTRAL_NAMES]
+                            "frequency", "freq", "lambda", "spectral"]
+SUPPORTED_SPECTRAL_NAMES += [name.upper() for name in SUPPORTED_SPECTRAL_NAMES] + \
+                            [name.capitalize() for name in SUPPORTED_SPECTRAL_NAMES]
+SUPPORTED_SPECTRAL_NAMES = np.array(SUPPORTED_SPECTRAL_NAMES)
 
 SUPPORTED_TIME_NAMES = ["time"]
-SUPPORTED_TIME_NAMES += [name.upper() for name in SUPPORTED_TIME_NAMES]
-SUPPORTED_TIME_NAMES += [name.capitalize() for name in SUPPORTED_TIME_NAMES]
+SUPPORTED_TIME_NAMES += [name.upper() for name in SUPPORTED_TIME_NAMES] + \
+                        [name.capitalize() for name in SUPPORTED_TIME_NAMES]
+SUPPORTED_TIME_NAMES = np.array(SUPPORTED_TIME_NAMES)
 
 SUPPORTED_EXPOSURE_NAMES = ["exposure time", "exposure_time", "exposure times",
                             "exposure_times", "exp time", "exp_time", "exp times", "exp_times"]
-SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES]
-SUPPORTED_EXPOSURE_NAMES += [name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES]
-
-
-class RasterSequence(NDCubeSequence):
-    """
-    Class for holding, slicing and plotting spectrogram data.
-
-    This class contains all the functionality of its super class with
-    some additional functionalities.
-
-    Parameters
-    ----------
-    data_list: `list`
-        List of `Raster` objects from the same spectral window and OBS ID.
-        Must also contain the 'detector type' in its meta attribute.
-    meta: `dict` or header object
-        Metadata associated with the sequence.
-    slit_step_axis: `int`
-        The axis of the Raster instances corresponding to time.
-    """
-
-    def __init__(self, data_list, slit_step_axis=0, meta=None):
-        # Initialize Sequence.
-        super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
-        self._slit_step_axis = self._common_axis
-
-    raster_dimensions = NDCubeSequence.dimensions
-    SnS_dimensions = NDCubeSequence.cube_like_dimensions
-    raster_world_axis_physical_types = NDCubeSequence.world_axis_physical_types
-    SnS_world_axis_physical_types = NDCubeSequence.cube_like_world_axis_physical_types
-    raster_axis_extra_coords = NDCubeSequence.sequence_axis_extra_coords
-    SnS_axis_extra_coords = NDCubeSequence.common_axis_extra_coords
-    plot_as_raster = NDCubeSequence.plot
-    plot_as_SnS = NDCubeSequence.plot_as_cube
-
-    def __str__(self):
-        if self.data[0]._time_name:
-            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
-        else:
-            time_period = None
-        if self.data[0]._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
-        else:
-            lon_range = None
-        if self.data[0]._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
-        else:
-            lat_range = None
-        if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
-        else:
-            spectral_range = None
-        return (textwrap.dedent(f"""\
-                RasterSequence
-                --------------
-                Time Range: {time_period}
-                Pixel Dimensions (raster scans, slit steps, slit height, spectral): {self.dimensions}
-                Longitude range: {lon_range}
-                Latitude range: {lat_range}
-                Spectral range: {spectral_range}
-                Data unit: {self.data[0].unit}"""))
-
-    @property
-    def slice_as_SnS(self):
-        """
-        Method to slice instance as though data were taken as a sit-and-stare,
-        i.e. slit position and raster number are combined into a single axis.
-        """
-        return _SnSSlicer(self)
-
-    @property
-    def slice_as_raster(self):
-        """
-        Method to slice instance as though data were 4D, i.e. raster number,
-        slit step position, position along slit, wavelength.
-        """
-        return _SequenceSlicer(self)
-
-    @property
-    def spectral(self):
-        return u.Quantity([raster.spectral for raster in self.data])
-
-    @property
-    def time(self):
-        return np.concatenate([raster.time for raster in self.data])
-
-    @property
-    def exposure_time(self):
-        return np.concatenate([raster.exposure_time for raster in self.data])
-
-    @property
-    def lon(self):
-        return u.Quantity([raster.lon for raster in self.data])
-
-    @property
-    def lat(self):
-        return u.Quantity([raster.lat for raster in self.data])
-
-    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
-        """
-        Applies or undoes exposure time correction to data and uncertainty and
-        adjusts unit.
-
-        Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
-        is applied (undone) regardless of unit by setting force=True.
-
-        Parameters
-        ----------
-        undo: `bool`
-            If False, exposure time correction is applied.
-            If True, exposure time correction is removed.
-            Default=False
-        copy: `bool`
-            If True a new instance with the converted data values is returned.
-            If False, the current instance is overwritten.
-            Default=False
-        force: `bool`
-            If not True, applies (undoes) exposure time correction only if unit
-            doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
-            adjusted accordingly.
-
-        Returns
-        -------
-        result: `None` or `RasterSequence`
-            If copy=False, the original RasterSequence is modified with the
-            exposure time correction applied (undone).
-            If copy=True, a new RasterSequence is returned with the correction
-            applied (undone).
-        """
-        converted_data_list = []
-        for cube in self.data:
-            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo,
-                                                                           force=force))
-        if copy is True:
-            return RasterSequence(
-                converted_data_list, meta=self.meta, common_axis=self._common_axis)
-        else:
-            self.data = converted_data_list
+SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] + \
+                            [name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES]
+SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 
 class Raster(NDCube):
@@ -231,11 +95,18 @@ class Raster(NDCube):
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
         # Determine labels and location of each key real world coordinate.
-        self._longitude_name = self._find_axis_name(SUPPORTED_LONGITUDE_NAMES)
-        self._latitude_name = self._find_axis_name(SUPPORTED_LATITUDE_NAMES)
-        self._spectral_name = self._find_axis_name(SUPPORTED_SPECTRAL_NAMES)
-        self._time_name = self._find_axis_name(SUPPORTED_TIME_NAMES)
-        self._exposure_time_name = self._find_axis_name(SUPPORTED_EXPOSURE_NAMES)
+        self_extra_coords = self.extra_coords
+        world_axis_physical_types = np.array(self.world_axis_physical_types)
+        self._longitude_name, self._longitude_loc = _find_axis_name(
+                SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+        self._latitude_name, self._latitude_loc = _find_axis_name(
+                SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+        self._spectral_name, self._spectral_loc = _find_axis_name(
+                SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords)
+        self._time_name, self._time_loc = _find_axis_name(
+                SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
+        self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
+                SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
 
     def __str__(self):
         if self._time_name:
@@ -280,40 +151,35 @@ class Raster(NDCube):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")
-        else:
-            return self._get_axis_coord(*self._spectral_name)
+        return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_TIMES_NAMES}")
-        else:
-            return self._get_axis_coord(*self._time_name)
+        return self._get_axis_coord(self._time_name, self._time_loc)
 
     @property
     def exposure_time(self):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_EXPOSURE_NAMES}")
-        else:
-            return self._get_axis_coord(*self._exposure_time_name)
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def lon(self):
         if not self._longitude_name:
             raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LONGITUDE_NAMES}")
-        else:
-            return self._get_axis_coord(*self._longitude_name)
+        return self._get_axis_coord(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LATITUDE_NAME}")
-        else:
-            return self._get_axis_coord(*self._latitude_name)
+        return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -369,43 +235,55 @@ class Raster(NDCube):
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
 
-    def _find_axis_name(self, supported_names):
-        axis_name = None
-        n_names = len(supported_names)
-        if self.extra_coords is not None:
-            extra_coord_keys = self.extra_coords.keys()
-        else:
-            extra_coord_keys = None
-        i = 0
-        while axis_name is None:
-            if i >= n_names:
-                break
-            # Check WCS.
-            wcs_name_index = ([supported_names[i] in world_axis_type
-                               for world_axis_type in self.world_axis_physical_types])
-            if sum(wcs_name_index) == 1:
-                wcs_name_index = \
-                    int(np.arange(len(self.world_axis_physical_types))[wcs_name_index])
-                axis_name = self.world_axis_physical_types[wcs_name_index]
-                loc = "wcs"
-
-            # If label not contained in WCS, check extra coords.
-            if axis_name is None and extra_coord_keys is not None:
-                if supported_names[i] in extra_coord_keys:
-                    axis_name = supported_names[i]
-                    loc = "extra_coords"
-            i += 1
-
-        if axis_name is None:
-            return axis_name
-        else:
-            return (axis_name, loc)
-
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
             return self.axis_world_coords(axis_name)
         elif coord_loc == "extra_coords":
             return self.extra_coords[axis_name]["value"]
+
+
+def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
+    """
+    Finds name of a Raster axis type from WCS and extra coords.
+
+    Parameters
+    ----------
+    supported_names: 1D `numpy.ndarray`
+        The names for the axis supported by `Raster`.
+
+    world_axis_physical_types: 1D `numpy.ndarray`
+        Output of Raster.world_axis_physical_types converted to an array.
+
+    extra_coords: `dict` or `None`
+        Output of Raster.extra_coords
+
+    Returns
+    -------
+    axis_name: `str`
+        The coordinate name of the axis.
+
+    loc: `str`
+        The location where the coordinate is stored: "wcs" or "extra_coords".
+
+    """
+    axis_name = None
+    loc = None
+    # Check WCS for axis name.
+    axis_name = _find_name_in_array(supported_names, world_axis_physical_types)
+    if axis_name:
+        loc = "wcs"
+    elif extra_coords:  # If axis name not in WCS, check extra_coords.
+        axis_name = _find_name_in_array(supported_names, np.array(list(extra_coords.keys())))
+        if axis_name:
+            loc = "extra_coords"
+    return axis_name, loc
+
+
+def _find_name_in_array(supported_names, names_array):
+    name_index = np.isin(names_array, supported_names)
+    if name_index.sum() > 0:
+        name_index = int(np.arange(len(names_array))[name_index])
+        return names_array[name_index]
 
 
 def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
@@ -474,28 +352,3 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
         new_unit = old_unit * u.s
     return new_data_arrays, new_unit
-
-
-class _SnSSlicer:
-    """
-    Helper class to make slicing in index_as_cube sliceable/indexable like a
-    numpy array.
-    Parameters
-    ----------
-    seq : `ndcube.NDCubeSequence`
-        Object of NDCubeSequence.
-    """
-
-    def __init__(self, seq):
-        self.seq = seq
-
-    def __getitem__(self, item):
-        return utils.sequence._slice_sequence_as_SnS(self.seq, item)
-
-
-class _SequenceSlicer:
-    def __init__(self, seq):
-        self.seq = seq
-
-    def __getitem__(self, item):
-        return ndcube.utils.sequence.slice_sequence(self.seq, item)

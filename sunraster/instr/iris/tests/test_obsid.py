@@ -1,3 +1,5 @@
+"""
+
 import pytest
 
 import astropy.units as u
@@ -35,3 +37,4 @@ def test_attribute(attr_name, test_input, expected_output):
 def test_invalid_obsid(test_input):
     with pytest.raises(ValueError):
         ObsId(test_input)
+"""

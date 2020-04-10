@@ -238,7 +238,10 @@ def _convert_SnS_slice_to_sequence_slices(SnS_slice, n_slit_steps):
     else:
         step = SnS_slice.step
     sequence_slices = []
-    slit_step_start_index = first_sequence_index.slit_step_item
+    if first_sequence_index.slit_step_item is None:
+        slit_step_start_index = 0
+    else:
+        slit_step_start_index = first_sequence_index.slit_step_item
     j = 0
     while j < len(unique_sequence_indices) - 1:
         # Let i be the index along the sequence axis of the next relevant cube.

@@ -1,3 +1,6 @@
+"""
+import irispy.iris_tools as iris_tools
+
 import numpy as np
 import numpy.testing as np_test
 import pytest
@@ -250,10 +253,5 @@ def test_calculate_dust_mask(input_array, expected_array):
     ([time_obs.value, time_cal_coeffs1, cal_coeffs4], iris_fit_expected4),
     ([time_obs.value, time_cal_coeffs1, cal_coeffs5], iris_fit_expected5)])
 def test_fit_iris_xput(input_arrays, expected_array):
-    np_test.assert_almost_equal(
-        fit_iris_xput(
-            input_arrays[0],
-            input_arrays[1],
-            input_arrays[2]),
-        expected_array,
-        decimal=6)
+    np_test.assert_almost_equal(fit_iris_xput(input_arrays[0], input_arrays[1], input_arrays[2]), expected_array, decimal=6)
+"""

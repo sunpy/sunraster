@@ -8,8 +8,6 @@ import os
 import sys
 import logging
 
-from .raster import Raster, RasterSequence
-
 try:
     from .version import __version__
 except ImportError:
@@ -29,3 +27,6 @@ if sys.version_info < tuple(int(val) for val in __minimum_python_version__.split
     # This has to be .format to keep backwards compatibly.
     raise UnsupportedPythonError(
         f"sunraster does not support Python < {__minimum_python_version__}")
+
+from .raster import Raster
+from .raster_sequence import RasterSequence
