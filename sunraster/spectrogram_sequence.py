@@ -110,27 +110,41 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             self.data = converted_data_list
 
     def __str__(self):
-        if self.data[0]._time_name:
-            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
+        data0 = self.data[0]
+        if data0._time_name:
+            start_time = data0.time.value if data0.time.isscalar else data0.time[0].value
+            data_1 = self.data[-1]
+            stop_time = data_1.time.value if data_1.time.isscalar  else data_1.time[-1].value
+            time_period = start_time if start_time == stop_time else (start_time, stop_time)
         else:
             time_period = None
-        if self.data[0]._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+        if data0._longitude_name:
+            lons = self.lon
+            lon_min = lons.min()
+            lon_max = lons.max()
+            lon_range = lon_min if lon_min == lon_max else u.Quantity([lon_min, lon_max])
         else:
             lon_range = None
-        if self.data[0]._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+        if data0._latitude_name:
+            lats = self.lat
+            lat_min = lats.min()
+            lat_max = lats.max()
+            lat_range = lat_min if lat_min == lat_max else u.Quantity([lat_min, lat_max])
         else:
             lat_range = None
-        if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+        if data0._spectral_name:
+            spectrals = self.spectral
+            spectral_min = spectrals.min()
+            spectral_max = spectrals.max()
+            spectral_range = spectral_min if spectral_min == spectral_max else \
+                u.Quantity([spectral_min, spectral_max])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
                 {self.__class__.__name__}
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Range: {time_period}
-                Pixel Dimensions {self.raster_instrument_axes_types}: {self.dimensions}
+                Pixel Dimensions: {self.dimensions}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
@@ -253,9 +267,17 @@ class _SequenceSlicer:
         # Slice RasterSequence using parent's getitem method,
         # as RasterSequence's has be overidden with a NotImplementedError.
         result = self.seq.__class__.__bases__[0].__getitem__(self.seq, item)
-        if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                    self.seq._single_scan_instrument_axes_types, item[1:])
+        if isinstance(item, tuple):
+            if isinstance(result, self.seq.__class__):
+                # If slit step axis sliced out, return SpectrogramSequence
+                # as the spectrogram cubes no longer represent a raster.
+                if len(item) > self.seq._common_axis and \
+                        isinstance(item[1:][self.seq._common_axis], numbers.Integral):
+                    result = SpectrogramSequence(result.data, common_axis=None, meta=result.meta)
+                else:
+                    # Else, slice the instrument axis types accordingly.
+                    result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                        self.seq._single_scan_instrument_axes_types, item[1:])
         return result
 
 
