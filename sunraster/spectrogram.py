@@ -52,6 +52,8 @@ SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 class SpectrogramABC(abc.ABC):
 
+    # Abstract Base Class to define the basic API of Spectrogram classes.
+
     @abc.abstractproperty
     def spectral(self):
         """Return the spectral coordinates for each pixel."""
