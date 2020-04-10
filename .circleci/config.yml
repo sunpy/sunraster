@@ -1,3 +1,4 @@
+version: 2.1
 skip-check: &skip-check
   name: Check for [ci skip]
   command: bash .circleci/early_exit.sh
@@ -17,7 +18,6 @@ apt-run: &apt-install
     apt update
     apt install -y graphviz build-essential libopenjp2-7
 
-version: 2
 jobs:
   twine-check:
     docker:
@@ -43,34 +43,10 @@ jobs:
       - run: pip install --progress-bar off .[all,dev]
       - run: pip install -e .[all,dev]
 
-  32bit:
-    docker:
-      - image: quay.io/pypa/manylinux2014_i686
-    environment:
-          MPLBACKEND: agg
-          COLUMNS: 180
-    steps:
-      - restore_cache:
-          keys: sample-data-v1
-      - checkout
-      - run: *skip-check
-      - run:
-          name: install dependencies
-          command: |
-            yum install -y gcc gcc-c++ freetype-devel openssl-devel
-      - run:
-          name: Install dependencies for Python 3.7
-          command: /opt/python/cp37-cp37m/bin/pip install tox | cat
-      - run:
-          name: Run tests for Python 3.7
-          command: PYTHONHASHSEED=42 /opt/python/cp37-cp37m/bin/python -m tox -e py37 -- -n=4
-
   html-docs:
     docker:
       - image: continuumio/miniconda3
     steps:
-      - restore_cache:
-          keys: sample-data-v1
       - checkout
       - run: *skip-check
       - run: *merge-check
@@ -93,10 +69,6 @@ jobs:
       - run:
           name: "Built documentation is available at:"
           command: DOCS_URL="${CIRCLE_BUILD_URL}/artifacts/${CIRCLE_NODE_INDEX}/${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}/docs/_build/html/index.html"; echo $DOCS_URL
-      - save_cache:
-          key: sample-data-v1
-          paths:
-            - ~/sunpy/data/sample_data
 
 workflows:
   version: 2
@@ -108,10 +80,6 @@ workflows:
   pip-install:
     jobs:
       - pip-install
-
-  build-32:
-    jobs:
-      - 32bit
 
   test-documentation:
     jobs:
