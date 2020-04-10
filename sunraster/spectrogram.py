@@ -171,19 +171,31 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     def __str__(self):
         if self._time_name:
-            time_period = (self.time[0], self.time[-1])
+            if self.time.isscalar:
+                time_period = self.time
+            else:
+                time_period = (self.time[0], self.time[-1])
         else:
             time_period = None
         if self._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+            if self.lon.isscalar:
+                lon_range = self.lon
+            else:
+                lon_range = u.Quantity([self.lon.min(), self.lon.max()])
         else:
             lon_range = None
         if self._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+            if self.lat.isscalar:
+                lat_range = self.lat
+            else:
+                lat_range = u.Quantity([self.lat.min(), self.lat.max()])
         else:
             lat_range = None
         if self._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+            if self.spectral.isscalar:
+                spectral_range = self.spectral
+            else:
+                spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
