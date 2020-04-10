@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-# Author: Daniel Ryan <ryand5@tcd.ie>
-
 """
 Some IRIS instrument tools.
 """
-
-from __future__ import division
-
 import os.path
 import datetime
 import warnings
@@ -36,11 +30,11 @@ SJI_DEFAULT_BSCALE = 0.25
 SJI_DEFAULT_BZERO = 7992.0
 DN_UNIT = {
     "NUV": u.def_unit("DN_IRIS_NUV",
-                      DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"]*u.photon),
+                      DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"] * u.photon),
     "FUV": u.def_unit("DN_IRIS_FUV",
-                      DETECTOR_GAIN["FUV"]/DETECTOR_YIELD["FUV"]*u.photon),
+                      DETECTOR_GAIN["FUV"] / DETECTOR_YIELD["FUV"] * u.photon),
     "SJI": u.def_unit("DN_IRIS_SJI",
-                      DETECTOR_GAIN["SJI"]/DETECTOR_YIELD["SJI"]*u.photon),
+                      DETECTOR_GAIN["SJI"] / DETECTOR_YIELD["SJI"] * u.photon),
     "SJI_UNSCALED": u.def_unit("DN_IRIS_SJI_UNSCALED", u.ct)}
 # Define an equivalency between SJI and SJI_UNSCALED units
 SJI_SCALING = [(DN_UNIT["SJI"],
@@ -48,11 +42,11 @@ SJI_SCALING = [(DN_UNIT["SJI"],
                 lambda x: (x - SJI_DEFAULT_BZERO) / SJI_DEFAULT_BSCALE,
                 lambda x: x * SJI_DEFAULT_BSCALE + SJI_DEFAULT_BZERO)]
 
-READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"],
-                 "FUV": 3.1*DN_UNIT["FUV"],
-                 "SJI": 1.2*DN_UNIT["SJI"]}
+READOUT_NOISE = {"NUV": 1.2 * DN_UNIT["NUV"],
+                 "FUV": 3.1 * DN_UNIT["FUV"],
+                 "SJI": 1.2 * DN_UNIT["SJI"]}
 RADIANCE_UNIT = u.erg / u.cm ** 2 / u.s / u.steradian / u.Angstrom
-SLIT_WIDTH = 0.33*u.arcsec
+SLIT_WIDTH = 0.33 * u.arcsec
 
 IRIS_RESPONSE_REMOTE_PATH = "https://sohowww.nascom.nasa.gov/solarsoft/iris/response/"
 RESPONSE_VERSION_FILENAMES = {"1": "iris_sra_20130211.geny",
@@ -154,12 +148,17 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         config = sunpy.util.config.load_config()
         download_dir = config.get('downloads', 'download_dir')
         # Check response file exists in download_dir.  If not, download it.
-        check_download_file(response_filename, IRIS_RESPONSE_REMOTE_PATH, download_dir, replace=force_download)
+        check_download_file(
+            response_filename,
+            IRIS_RESPONSE_REMOTE_PATH,
+            download_dir,
+            replace=force_download)
         # Define response file as path + filename.
         response_file = os.path.join(download_dir, response_filename)
     # Read response file and store in a dictionary.
     raw_response_data = scipy.io.readsav(response_file)
-    iris_response = dict([(name, raw_response_data["p0"][name][0]) for name in raw_response_data["p0"].dtype.names])
+    iris_response = dict([(name, raw_response_data["p0"][name][0])
+                          for name in raw_response_data["p0"].dtype.names])
     # Convert some properties to more convenient types.
     iris_response["LAMBDA"] = Quantity(iris_response["LAMBDA"], unit=u.nm)
     iris_response["AREA_SG"] = Quantity(iris_response["AREA_SG"], unit=u.cm**2)
@@ -171,45 +170,45 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
     if int(iris_response["VERSION"]) > 2:
         # If DATE_OBS has a value, convert to `astropy.time.Time`, else set to None.
         try:
-            iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"], format = 'utime')
-        except:
+            iris_response["DATE_OBS"] = parse_time(iris_response["DATE_OBS"], format='utime')
+        except BaseException:
             iris_response["DATE_OBS"] = None
-        
+
         time_obs = np.array([time_obs.value])
 
         # Convert C_F_TIME to array of time objects while conserving shape.
         c_f_time = np.empty(iris_response["C_F_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_F_TIME"]):
             for j, t in enumerate(row):
-                c_f_time[i][j] = parse_time(t, format = 'utime')
+                c_f_time[i][j] = parse_time(t, format='utime')
         iris_response["C_F_TIME"] = c_f_time
 
         # Convert C_F_LAMBDA to Quantity.
         iris_response["C_F_LAMBDA"] = Quantity(iris_response["C_F_LAMBDA"], unit="nm")
-        
+
         # Convert C_N_TIME to array of time objects while
         # conserving shape.
         c_n_time = np.empty(iris_response["C_N_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_N_TIME"]):
             for j, t in enumerate(row):
-                c_n_time[i][j] = parse_time(t, format = 'utime')
+                c_n_time[i][j] = parse_time(t, format='utime')
         iris_response["C_N_TIME"] = c_n_time
 
         # Convert C_N_LAMBDA to Quantity.
         iris_response["C_N_LAMBDA"] = Quantity(iris_response["C_N_LAMBDA"], unit="nm")
-        
+
         # Convert C_S_TIME to array of time objects while
         # conserving shape.
         c_s_time = np.empty(iris_response["C_S_TIME"].shape, dtype=object)
         for i, row in enumerate(iris_response["C_S_TIME"]):
             for j, column in enumerate(row):
                 for k, t in enumerate(column):
-                    c_s_time[i][j][k] = parse_time(t, format = 'utime')
+                    c_s_time[i][j][k] = parse_time(t, format='utime')
         iris_response["C_S_TIME"] = c_s_time
 
         # Convert DATE in ELEMENTS array to array of time objects.
         for i, t in enumerate(iris_response["ELEMENTS"]["DATE"]):
-            iris_response["ELEMENTS"]["DATE"][i] = parse_time(t, format = 'iso')
+            iris_response["ELEMENTS"]["DATE"][i] = parse_time(t, format='iso')
             # Convert VERSION_DATE to time object.
             iris_response["VERSION_DATE"] = parse_time(iris_response["VERSION_DATE"])
 
@@ -217,33 +216,36 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         # Change DATE tag in data with version < 2 to VERSION_DATE to
         # be consistent with more recent versions.
         iris_response["VERSION_DATE"] = Time(datetime.datetime(int(iris_response["DATE"][0:4]),
-                int(iris_response["DATE"][4:6]),
-                int(iris_response["DATE"][6:8])))
+                                                               int(iris_response["DATE"][4:6]),
+                                                               int(iris_response["DATE"][6:8])))
         del(iris_response["DATE"])
 
     if int(iris_response["VERSION"]) > 2 and time_obs is not None:
         try:
             n_time_obs = len(time_obs)
-        except:
+        except BaseException:
             n_time_obs = 1
         iris_response["AREA_SG"] = np.zeros(iris_response["AREA_SG"].shape)
         iris_response["AREA_SJI"] = np.zeros(iris_response["AREA_SJI"].shape)
 
         # 1. FUV SG effective areas
-        lambran_fuv = np.array([[133.1, 135.9],[138.8, 140.8]])
+        lambran_fuv = np.array([[133.1, 135.9], [138.8, 140.8]])
         # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
         shp_fuv = iris_response["COEFFS_FUV"].shape
         # Time-dependent response for shp_0[0] = 3 wavelengths
         iris_fit_fuv = np.zeros((n_time_obs, shp_fuv[0]))
         for j in range(shp_fuv[0]):
-            iris_fit_fuv[:, j] = fit_iris_xput(time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
+            iris_fit_fuv[:, j] = fit_iris_xput(
+                time_obs, iris_response["C_F_TIME"], iris_response["COEFFS_FUV"][j, :, :])
         # Interpolate onto lambda grid, separately for each of the two FUV CCD's.
         for j in range(2):
-            w_fuv = np.logical_and(iris_response["LAMBDA"].value >= lambran_fuv[j, 0], iris_response["LAMBDA"].value  <= lambran_fuv[j, 1])
+            w_fuv = np.logical_and(
+                iris_response["LAMBDA"].value >= lambran_fuv[j, 0], iris_response["LAMBDA"].value <= lambran_fuv[j, 1])
             for k in range(n_time_obs):
-                interpol_fuv = scipy.interpolate.interp1d(iris_response["C_F_LAMBDA"][j:j+2], np.squeeze(iris_fit_fuv[k, j:j+2]), fill_value='extrapolate')
+                interpol_fuv = scipy.interpolate.interp1d(
+                    iris_response["C_F_LAMBDA"][j:j + 2], np.squeeze(iris_fit_fuv[k, j:j + 2]), fill_value='extrapolate')
                 iris_response["AREA_SG"][0, w_fuv] = interpol_fuv(iris_response["LAMBDA"][w_fuv])
-    
+
         # 2. NUV SG effective areas
         lambran_nuv = np.array([278.2, 283.5])
         # Rough SG spectral ranges.  Setting effective area to 0 outside of these.
@@ -251,16 +253,22 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
         # Time-dependent response for shp_1[0] wavelengths
         iris_fit_nuv = np.zeros((n_time_obs, shp_nuv[0]))
         for j in range(shp_nuv[0]):
-            iris_fit_nuv[:, j] = fit_iris_xput(time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
+            iris_fit_nuv[:, j] = fit_iris_xput(
+                time_obs, iris_response["C_N_TIME"], iris_response["COEFFS_NUV"][j, :, :])
         # Interpolate onto lambda grid
-        w_nuv = np.where(np.logical_and(iris_response["LAMBDA"].value >= lambran_nuv[0], iris_response["LAMBDA"].value <= lambran_nuv[1]))
+        w_nuv = np.where(
+            np.logical_and(
+                iris_response["LAMBDA"].value >= lambran_nuv[0],
+                iris_response["LAMBDA"].value <= lambran_nuv[1]))
         if int(iris_response["VERSION"]) <= 3:
             for k in range(n_time_obs):
-                interpol_nuv =  scipy.interpolate.interp1d(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
+                interpol_nuv = scipy.interpolate.interp1d(
+                    iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]), fill_value='extrapolate')
                 iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
         else:
             for k in range(n_time_obs):
-                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(iris_fit_nuv[k, :]),  extrapolate=True, bc_type="natural", axis=0)
+                interpol_nuv = scipy.interpolate.CubicSpline(iris_response["C_N_LAMBDA"][:], np.squeeze(
+                    iris_fit_nuv[k, :]), extrapolate=True, bc_type="natural", axis=0)
                 iris_response["AREA_SG"][1, w_nuv] = interpol_nuv(iris_response["LAMBDA"][w_nuv])
 
         # 3. SJI effective areas
@@ -273,7 +281,8 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
                     index_values0 = iris_response["INDEX_EL_SJI"][j, k]
                     prelaunch_area = prelaunch_area * iris_response["ELEMENTS"][index_values0].trans
                 # Time dependent response
-                iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
+                iris_fit_sji = fit_iris_xput(
+                    time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 # Time dependetn profiles
                 for k in range(n_time_obs):
                     iris_response["AREA_SJI"][j, :] = prelaunch_area * iris_fit_sji[k]
@@ -281,49 +290,61 @@ def get_iris_response(time_obs=None, pre_launch=False, response_file=None, respo
             for nuv in range(2):
                 # Calculate baseline SJI area curves
                 area_sji = iris_response["GEOM_AREA"]
-                for m in range(len(iris_response["INDEX_EL_SJI"][nuv*2, :])):
-                    index_values1 = iris_response["INDEX_EL_SJI"][nuv*2: nuv*2+2, m]
+                for m in range(len(iris_response["INDEX_EL_SJI"][nuv * 2, :])):
+                    index_values1 = iris_response["INDEX_EL_SJI"][nuv * 2: nuv * 2 + 2, m]
                     area_sji = area_sji * iris_response["ELEMENTS"][index_values1].trans
                 # Apply time dependent profile shape adjustment to FUV SJI
                 if nuv == 0:
-                    # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum at C II and Si IV gives constant response
+                    # FUV: apply FUV SG "slant", then normalize so that a weighted (2.4:1) sum
+                    # at C II and Si IV gives constant response
                     weight = np.array([2.4, 1.0])  # Typical solar ratio CII : SiIV
                     wavelength = iris_response["C_F_LAMBDA"]
                     n_wavelength = len(wavelength)
-                    wavelength = np.array([wavelength[0].value, (wavelength[n_wavelength-2].value*2.0 + wavelength[n_wavelength-1].value)/3.0])  # 2 wvlngts in nm
+                    wavelength = np.array([wavelength[0].value, (wavelength[n_wavelength - 2].value *
+                                                                 2.0 + wavelength[n_wavelength - 1].value) / 3.0]) # 2 wvlngts in nm
                     # Calculate baseline SG area for scaling purposes
                     area_sg = iris_response["GEOM_AREA"]
                     for n in range(len(iris_response["INDEX_EL_SG"][nuv, :])):
                         index_values2 = iris_response["INDEX_EL_SG"][nuv, n]
                         area_sg = area_sg * iris_response["ELEMENTS"][index_values2].trans
                     # SG and SJI areas at wavelength
-                    interpol_sg = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sg), fill_value='extrapolate')
+                    interpol_sg = scipy.interpolate.interp1d(
+                        iris_response["LAMBDA"], np.squeeze(area_sg), fill_value='extrapolate')
                     area_sg2 = interpol_sg(wavelength)
                     area_sj2 = np.zeros((2, 2))
                     for n in range(2):
-                        interpol_sji = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(area_sji[n]), fill_value='extrapolate')
+                        interpol_sji = scipy.interpolate.interp1d(
+                            iris_response["LAMBDA"], np.squeeze(
+                                area_sji[n]), fill_value='extrapolate')
                         area_sj2[n, :] = interpol_sji(wavelength)
                     # Calculate the normalized slant function scal, apply to asji
                     for n in range(n_time_obs):
-                        # Best-estimate slant, i.e., eff.area @ wavelength / baseline SG @ wavelength
-                        interpol_sg2 = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(iris_response["AREA_SG"][0, :]), fill_value='extrapolate')
+                        # Best-estimate slant, i.e., eff.area @ wavelength / baseline SG @
+                        # wavelength
+                        interpol_sg2 = scipy.interpolate.interp1d(iris_response["LAMBDA"], np.squeeze(
+                            iris_response["AREA_SG"][0, :]), fill_value='extrapolate')
                         sca2 = interpol_sg2(wavelength) / area_sg2
                         # Normalize slant so that total(wei*asj2*sca2)/total(wei*asj2)=1
                         for m in range(2):
-                            sca2n = sca2 * np.sum(weight*area_sj2[m, :]) / np.sum(weight * area_sj2[m, :] * sca2)
-                            interpol_sca = scipy.interpolate.interp1d(wavelength, np.squeeze(sca2n), fill_value='extrapolate')
+                            sca2n = sca2 * \
+                                np.sum(weight * area_sj2[m, :]) / \
+                                np.sum(weight * area_sj2[m, :] * sca2)
+                            interpol_sca = scipy.interpolate.interp1d(
+                                wavelength, np.squeeze(sca2n), fill_value='extrapolate')
                             sca1n = interpol_sca(iris_response["LAMBDA"])
                             sca1n = np.clip(sca1n, a_min=0, a_max=None)
                             iris_response["AREA_SJI"][m] = area_sji[m] * sca1n
                 else:
                     # NUV: essentially same calculation as r.version=3
-                     for n in range(n_time_obs):
-                         iris_response["AREA_SJI"] = [Quantity(x, unit=u.cm**2) for x in iris_response["AREA_SJI"]]
-                         area_sji = [x for x in area_sji]
-                         iris_response["AREA_SJI"][2:4] = area_sji[:]
+                    for n in range(n_time_obs):
+                        iris_response["AREA_SJI"] = [
+                            Quantity(x, unit=u.cm**2) for x in iris_response["AREA_SJI"]]
+                        area_sji = [x for x in area_sji]
+                        iris_response["AREA_SJI"][2:4] = area_sji[:]
             for j in range(4):
                 # SJI specific time dependency
-                iris_fit_sji = fit_iris_xput(time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
+                iris_fit_sji = fit_iris_xput(
+                    time_obs, iris_response["C_S_TIME"][j, :, :], iris_response["COEFFS_SJI"][j, :, :])
                 for k in range(n_time_obs):
                     iris_response["AREA_SJI"][j] = iris_response["AREA_SJI"][j] * iris_fit_sji[k]
 
@@ -379,17 +400,17 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
     # Convert the time_cal_coeffs given in the .geny file into a ``astropy.time.Time``
     # object called t_cal_coeffs, so that the time differences will be in days...
     t_cal_coeffs_flat = time_cal_coeffs.flatten()
-    t_cal_coeffs = [parse_time(x, format = 'utime') for x in t_cal_coeffs_flat]
+    t_cal_coeffs = [parse_time(x, format='utime') for x in t_cal_coeffs_flat]
     t_cal_coeffs = np.array(t_cal_coeffs).reshape(size_time_cal_coeffs)
 
     # Exponent for transition between exp.decay intervals.
     transition_exp = 1.5
-    
+
     # For loop for carrying out the least-squares fit and computation of fit output.
     fit_out = np.zeros(len(time_obs))
-    
+
     for i, t in enumerate(time_obs):
-        aux_cal_coeffs = np.zeros(2*size_time_cal_coeffs[0])
+        aux_cal_coeffs = np.zeros(2 * size_time_cal_coeffs[0])
 
         fit_out = np.zeros(len(list(time_obs)), dtype=np.float64)
 
@@ -398,7 +419,7 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
         t_diff = t - t_cal_coeffs
 
         t_diff = t_diff.flatten()
-        
+
         # To Convert to an array, quantities need to be dimensionless, hence dividing out the unit.
         t_diff = np.array([x.to(u.year).value for x in t_diff])
         w = np.where(t_diff < 0)[0][0]
@@ -415,14 +436,14 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
         # cal_file_t+1
         if w % 2 != 0:  # I.e., if w is not even...
             dtt_0 = 1.
-            exp_0 = np.exp(cal_coeffs[w//2, 2]*(t_diff[w-1]))
-            aux_cal_coeffs[w-1:w+1] = np.array([dtt_0, dtt_0*exp_0])
+            exp_0 = np.exp(cal_coeffs[w // 2, 2] * (t_diff[w - 1]))
+            aux_cal_coeffs[w - 1:w + 1] = np.array([dtt_0, dtt_0 * exp_0])
         else:
-            dtt_1 = (t_diff[w-1] / (t_diff[w-1] - t_diff[w]))**transition_exp
+            dtt_1 = (t_diff[w - 1] / (t_diff[w - 1] - t_diff[w]))**transition_exp
             dtt_0 = 1. - dtt_1
-            exp_0 = np.exp(cal_coeffs[(w//2)-1, 2]*(t_diff[w-2]))
-            exp_1 = np.exp(cal_coeffs[w//2, 2]*(t_diff[w]))
-            aux_cal_coeffs[w-2:w+2] = np.array([dtt_0, dtt_0*exp_0, dtt_1, dtt_1*exp_1])
+            exp_0 = np.exp(cal_coeffs[(w // 2) - 1, 2] * (t_diff[w - 2]))
+            exp_1 = np.exp(cal_coeffs[w // 2, 2] * (t_diff[w]))
+            aux_cal_coeffs[w - 2:w + 2] = np.array([dtt_0, dtt_0 * exp_0, dtt_1, dtt_1 * exp_1])
         # print(aux_cal_coeffs)
         # print(cal_coeffs[:,:2].reshape((aux_cal_coeffs.shape[0])))
         fit_out[i] = np.matmul(aux_cal_coeffs, cal_coeffs[:, :2].reshape((aux_cal_coeffs.shape[0])))
@@ -433,12 +454,19 @@ def fit_iris_xput(time_obs, time_cal_coeffs, cal_coeffs):
 @custom_model
 def _gaussian1d_on_linear_bg(x, amplitude=None, mean=None, standard_deviation=None,
                              constant_term=None, linear_term=None):
-    return amplitude * np.exp(-((x - mean) / standard_deviation) ** 2) + constant_term + linear_term * x
+    return amplitude * np.exp(-((x - mean) / standard_deviation) ** 2) + \
+        constant_term + linear_term * x
 
 
-def _calculate_orbital_wavelength_variation(data_array, date_data_created,
-        slit_pixel_range=None, spline_smoothing=False, fit_individual_profiles=False,
-        spacecraft_velocity=None, orbital_phase=None, roll_angle=None):
+def _calculate_orbital_wavelength_variation(
+        data_array,
+        date_data_created,
+        slit_pixel_range=None,
+        spline_smoothing=False,
+        fit_individual_profiles=False,
+        spacecraft_velocity=None,
+        orbital_phase=None,
+        roll_angle=None):
     """
     Calculates orbital corrections of spectral line positions using level 2
     files.
@@ -492,12 +520,18 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
     if date_data_created < date_new_pipeline:
         # Check that there are measurement times with good values of
         # spacecraft velocity and orbital phase.
-        bad_aux = np.asarray(np.isfinite(spacecraft_velocity) * np.isfinite(orbital_phase) * (-1), dtype=bool)
+        bad_aux = np.asarray(np.isfinite(spacecraft_velocity) *
+                             np.isfinite(orbital_phase) * (-1), dtype=bool)
     # Generate wavelength vector containing only Ni I line.
     wavelength_window = Quantity(data_array.coords["wavelength"].values,
                                  unit=data_array.attrs["units"]["wavelength"])
-    wavelength_roi_index = np.arange(len(wavelength_window))[
-        np.logical_and(wavelength_window >= 2799.3 * u.Angstrom, wavelength_window <= 2799.8 * u.Angstrom)]
+    wavelength_roi_index = np.arange(
+        len(wavelength_window))[
+        np.logical_and(
+            wavelength_window >= 2799.3 *
+            u.Angstrom,
+            wavelength_window <= 2799.8 *
+            u.Angstrom)]
     # Check that there are at least 5 points in wavelength region.
     # Must have at least this many for a gaussian fit.
     if len(wavelength_roi_index) < 5:
@@ -506,7 +540,8 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
     # of Angstroms.
     wavelength_roi = wavelength_window.to(u.Angstrom).value[wavelength_roi_index]
     # Keep only data within wavelength region of interest.
-    data_array = data_array.isel(spectral_axis=slice(wavelength_roi_index[0], wavelength_roi_index[-1] + 1))
+    data_array = data_array.isel(spectral_axis=slice(
+        wavelength_roi_index[0], wavelength_roi_index[-1] + 1))
     # If user selected a sub-region of the slit, reduce data to just
     # that region.
     if slit_pixel_range:
@@ -532,13 +567,14 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
     if fit_individual_profiles:
         pixels_in_slit = len(raster.slit_axis)
         for k in range(len(raster.time)):
-            pixel_line_wavelengths = np.empty(pixels_in_slit)*np.nan
+            pixel_line_wavelengths = np.empty(pixels_in_slit) * np.nan
             data_single_time = raster.isel(raster_axis=k)
             # Iterate through each pixel along slit and perform fit to
             # Ni I line.
-            for j in range(2, pixels_in_slit-2):
+            for j in range(2, pixels_in_slit - 2):
                 # Average over 5 pixels to improve signal-to-noise.
-                intensity_mean_5pix = data_single_time.isel(slit_axis=slice(j-2, j+3)).mean(axis=0)
+                intensity_mean_5pix = data_single_time.isel(
+                    slit_axis=slice(j - 2, j + 3)).mean(axis=0)
                 # Fit gaussian to Ni I line.
                 g = fit_g(g_init, wavelength_roi, intensity_mean_5pix)
                 # Check that fit is within physically reasonable
@@ -546,7 +582,7 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
                 # mean_line_wavelengths array. Else leave element as
                 # defined, i.e. NaN.
                 if np.isfinite(g.amplitude) and g.amplitude < 0. and \
-                            wavelength_roi[0] < g.mean < wavelength_roi[-1]:
+                        wavelength_roi[0] < g.mean < wavelength_roi[-1]:
                     pixel_line_wavelengths[j] = g.mean
             # Take average of Ni I line position from fits in each
             # pixel.
@@ -567,46 +603,57 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
             # mean_line_wavelengths array. Else leave element as
             # defined, i.e. NaN.
             if np.isfinite(g.amplitude) and g.amplitude < 0. and \
-                        wavelength_roi[0] < g.mean < wavelength_roi[-1]:
+                    wavelength_roi[0] < g.mean < wavelength_roi[-1]:
                 mean_line_wavelengths[k] = g.mean
             # If data produced by old pipeline, subtract spacecraft velocity
             # from the line position.
             if date_created < date_new_pipeline:
-                mean_line_wavelengths[k] = \
-                    mean_line_wavelengths[k]-spacecraft_velocity[k]/3e8*wavelength_nii.to(u.Angstrom).value
+                mean_line_wavelengths[k] = mean_line_wavelengths[k] - \
+                    spacecraft_velocity[k] / 3e8 * wavelength_nii.to(u.Angstrom).value
 
     # Mark abnormal values.  Thermal drift is of the order of 2
     # unsummed wavelength pixels peak-to-peak.
-    w_abnormal = np.where(np.abs(mean_line_wavelengths-np.nanmedian(mean_line_wavelengths)) >= specsize*2)[0]
+    w_abnormal = np.where(
+        np.abs(
+            mean_line_wavelengths -
+            np.nanmedian(mean_line_wavelengths)) >= specsize *
+        2)[0]
     if len(w_abnormal) > 0:
         mean_line_wavelengths[w_abnormal] = np.nan
     # Further data reduction required for files from old pipeline.
     if date_created < date_new_pipeline:
         dw_th_A = mean_line_wavelengths - np.nanmean(mean_line_wavelengths)
         # Change the unit from Angstrom into unsummed wavelength pixel.
-        dw_th_p = dw_th_A/specsize
+        dw_th_p = dw_th_A / specsize
         # Adjust reference wavelength using orbital phase information.
         if not(np.isfinite(orbital_phase)).all():
-            warnings.warn("Orbital phase values are invalid.  Thermal drift may be offset by at most one pixel.")
+            warnings.warn(
+                "Orbital phase values are invalid.  Thermal drift may be offset by at most one pixel.")
             dw_th = dw_th
             # For absolute wavelength calibration of NUV, the
             # following amount (unit Angstrom) has to be
             # subtracted from the wavelengths.
-            np.nanmean(mean_line_wavelengths)-wavelength_nii.to(u.Angstrom).value
+            np.nanmean(mean_line_wavelengths) - wavelength_nii.to(u.Angstrom).value
         else:
             # Define empirical sine fitting at 0 roll angle shifted by
             # different phase.
-            sine_params = [-0.66615146, -1.0, 53.106583-roll_angle/360.*2*np.pi]
-            phase_adj = np.nanmean(sine_params[0]*np.sin(sine_params[1]*orbital_phase+sine_params[2]))
+            sine_params = [-0.66615146, -1.0, 53.106583 - roll_angle / 360. * 2 * np.pi]
+            phase_adj = np.nanmean(
+                sine_params[0] *
+                np.sin(
+                    sine_params[1] *
+                    orbital_phase +
+                    sine_params[2]))
             # thermal component of the orbital variation, in the unit of unsummed wavelength pixel
-            dw_th = dw_th_p+phase_adj
+            dw_th = dw_th_p + phase_adj
             # For absolute wavelength calibration of NUV the following
             # amount (unit Angstrom) has to be subtracted from the
             # wavelengths.
-            np.nanmean(mean_line_wavelengths)-wavelength_nii.to(u.Angstrom).value-phase_adj*specsize
+            np.nanmean(mean_line_wavelengths) - \
+                wavelength_nii.to(u.Angstrom).value - phase_adj * specsize
     else:
         # Calculate relative variation of the line position.
-        dw_th = mean_line_wavelengths-np.nanmean(mean_line_wavelengths)
+        dw_th = mean_line_wavelengths - np.nanmean(mean_line_wavelengths)
 
     # If spline_smoothing=True, perform spline fit a smoothing to
     # eliminate the 5 minute photospheric oscillation.
@@ -615,8 +662,8 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
         spline_knot_spacing = 300.
         # Create array of time in seconds from first time and
         # calculate duration of fitting period.
-        time_s = np.asarray(x.coords["time"]-x.coords["time"][0], dtype=float)/1e9
-        duration = time_s[-1]-time_s[0]
+        time_s = np.asarray(x.coords["time"] - x.coords["time"][0], dtype=float) / 1e9
+        duration = time_s[-1] - time_s[0]
         # Check whether there is enough good data for a spline fit.
         if duration < spline_knot_spacing:
             raise ValueError("Not enough data for spline fit.")
@@ -625,16 +672,17 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
         ngood = float(sum(wgood))
         wbad = not(np.isfinite(mean_line_wavelengths))
         nbad = float(sum(wbad))
-        if nbad/ngood > 0.25:
+        if nbad / ngood > 0.25:
             raise ValueError("Not enough good data for spline fit.")
         # Smooth residual thermal variation curve to eliminate the
         # 5-min photospheric oscillation.
         # Determine number of smoothing point using 3 point
         # lagrangian derivative.
-        deriv_time = np.array([(time_s[i+1]-time_s[i-1])/2. for i in range(1, len(time_s)-1)])
-        deriv_time = np.insert(deriv_time, 0, (-3*time_s[0]+4*time_s[1]-time_s[2])/2)
-        deriv_time = np.insert(deriv_time, -1, (3*time_s[-1]-4*time_s[-2]+time_s[-3])/2)
-        n_smooth = int(spline_knot_spacing/deriv_time.mean())
+        deriv_time = np.array([(time_s[i + 1] - time_s[i - 1]) /
+                               2. for i in range(1, len(time_s) - 1)])
+        deriv_time = np.insert(deriv_time, 0, (-3 * time_s[0] + 4 * time_s[1] - time_s[2]) / 2)
+        deriv_time = np.insert(deriv_time, -1, (3 * time_s[-1] - 4 * time_s[-2] + time_s[-3]) / 2)
+        n_smooth = int(spline_knot_spacing / deriv_time.mean())
         if n_smooth < len(wgood):
             dw_good = convolve(dw_th[good], Box1DKernel(n_smooth))
         else:
@@ -646,17 +694,20 @@ def _calculate_orbital_wavelength_variation(data_array, date_data_created,
 
     # Derive residual orbital curves in FUV and NUV and store
     # in a table.
-    times = [datetime.datetime.utcfromtimestamp(t/1e9) for t in raster.coords["time"].values.tolist()]
+    times = [datetime.datetime.utcfromtimestamp(t / 1e9)
+             for t in raster.coords["time"].values.tolist()]
     # Depeding on which pipeline produced the files...
     if date_created < date_new_pipeline:
-        dw_orb_fuv = dw_th * (-0.013) + spacecraft_velocity.to(u.km/u.s).value / (3.e5) * 1370. * u.Angstrom
-        dw_orb_nuv = dw_th * 0.0255 + spacecraft_velocity.to(u.km/u.s).value / (3.e5) * 2800. * u.Angstrom
+        dw_orb_fuv = dw_th * (-0.013) + spacecraft_velocity.to(u.km /
+                                                               u.s).value / (3.e5) * 1370. * u.Angstrom
+        dw_orb_nuv = dw_th * 0.0255 + \
+            spacecraft_velocity.to(u.km / u.s).value / (3.e5) * 2800. * u.Angstrom
     else:
-        dw_orb_fuv = dw_th*(-1)*u.Angstrom
-        dw_orb_nuv = dw_th*u.Angstrom
+        dw_orb_fuv = dw_th * (-1) * u.Angstrom
+        dw_orb_nuv = dw_th * u.Angstrom
 
-    orbital_wavelength_variation = Table([times, dw_orb_fuv, dw_orb_nuv],
-                                         names=("time", "wavelength variation FUV", "wavelength variation NUV"))
+    orbital_wavelength_variation = Table([times, dw_orb_fuv, dw_orb_nuv], names=(
+        "time", "wavelength variation FUV", "wavelength variation NUV"))
     return orbital_wavelength_variation
 
 
@@ -763,13 +814,13 @@ def calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
         # exposure does need to be applied, or
         # user has set force=True and wants the correction applied
         # regardless of the unit.
-        new_data_arrays = [old_data/exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit/u.s
+        new_data_arrays = [old_data / exposure_time for old_data in old_data_arrays]
+        new_unit = old_unit / u.s
     return new_data_arrays, new_unit
 
 
 def uncalculate_exposure_time_correction(old_data_arrays, old_unit,
-        exposure_time, force=False):
+                                         exposure_time, force=False):
     """
     Removes exposure time correction from data arrays.
 
@@ -795,7 +846,7 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit,
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
-    if force is not True and u.s in (old_unit*u.s).decompose().bases:
+    if force is not True and u.s in (old_unit * u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does include inverse time and so
@@ -803,13 +854,19 @@ def uncalculate_exposure_time_correction(old_data_arrays, old_unit,
         # user has set force=True and wants the correction removed
         # regardless of the unit.
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit*u.s
+        new_unit = old_unit * u.s
     return new_data_arrays, new_unit
 
 
-def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
-        time_obs, response_version, obs_wavelength, detector_type,
-        spectral_dispersion_per_pixel, solid_angle, undo=False):
+def convert_or_undo_photons_per_sec_to_radiance(
+        data_quantities,
+        time_obs,
+        response_version,
+        obs_wavelength,
+        detector_type,
+        spectral_dispersion_per_pixel,
+        solid_angle,
+        undo=False):
     """
     Converts data quantities from counts/s to radiance (or vice versa).
 
@@ -863,29 +920,34 @@ def convert_or_undo_photons_per_sec_to_radiance(data_quantities,
                     "of data_quantities. Unit: {2}".format(RADIANCE_UNIT, i, data.unit))
     else:
         for data in data_quantities:
-            if data.unit != u.photon/u.s:
+            if data.unit != u.photon / u.s:
                 raise ValueError(
                     "Invalid unit provided.  As kwarg undo=False, "
                     "unit must be equivalent to {0}.  Error found for {1}th element "
-                    "of data_quantities. Unit: {2}".format(u.photon/u.s, i, data.unit))
-    photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(time_obs,
-        response_version, obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
+                    "of data_quantities. Unit: {2}".format(u.photon / u.s, i, data.unit))
+    photons_per_sec_to_radiance_factor = calculate_photons_per_sec_to_radiance_factor(
+        time_obs, response_version, obs_wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle)
     # Change shape of arrays so they are compatible for broadcasting
     # with data and uncertainty arrays.
-    photons_per_sec_to_radiance_factor = \
-    _reshape_1D_wavelength_dimensions_for_broadcast(photons_per_sec_to_radiance_factor, data_quantities[0].ndim)
+    photons_per_sec_to_radiance_factor = _reshape_1D_wavelength_dimensions_for_broadcast(
+        photons_per_sec_to_radiance_factor, data_quantities[0].ndim)
     # Perform (or undo) radiometric conversion.
     if undo is True:
-        new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.photon/u.s)
+        new_data_quantities = [(data / photons_per_sec_to_radiance_factor).to(u.photon / u.s)
                                for data in data_quantities]
     else:
-        new_data_quantities = [(data*photons_per_sec_to_radiance_factor).to(RADIANCE_UNIT)
+        new_data_quantities = [(data * photons_per_sec_to_radiance_factor).to(RADIANCE_UNIT)
                                for data in data_quantities]
     return new_data_quantities
 
 
-def calculate_photons_per_sec_to_radiance_factor(time_obs, response_version,
-        wavelength, detector_type, spectral_dispersion_per_pixel, solid_angle):
+def calculate_photons_per_sec_to_radiance_factor(
+        time_obs,
+        response_version,
+        wavelength,
+        detector_type,
+        spectral_dispersion_per_pixel,
+        solid_angle):
     """
     Calculates multiplicative factor that converts counts/s to radiance for
     given wavelengths.
@@ -922,13 +984,20 @@ def calculate_photons_per_sec_to_radiance_factor(time_obs, response_version,
         for input wavelengths.
     """
     # Get effective area and interpolate to observed wavelength grid.
-    eff_area_interp = _get_interpolated_effective_area(time_obs,
-        response_version, detector_type, obs_wavelength=wavelength)
+    eff_area_interp = _get_interpolated_effective_area(
+        time_obs, response_version, detector_type, obs_wavelength=wavelength)
     # Return radiometric conversed data assuming input data is in units of photons/s.
-    return constants.h * constants.c / wavelength / u.photon / spectral_dispersion_per_pixel / eff_area_interp / solid_angle
+    return constants.h * constants.c / wavelength / u.photon / \
+        spectral_dispersion_per_pixel / eff_area_interp / solid_angle
 
 
-def _get_interpolated_effective_area(time_obs, response_version, detector_type, obs_wavelength, *args, **kwargs):
+def _get_interpolated_effective_area(
+        time_obs,
+        response_version,
+        detector_type,
+        obs_wavelength,
+        *args,
+        **kwargs):
     """
     To compute the interpolated time-dependent effective area.
 
@@ -959,7 +1028,7 @@ def _get_interpolated_effective_area(time_obs, response_version, detector_type, 
     # Generalizing to the time of obs.
     time_obs = time_obs
     response_version = response_version
-    iris_response = get_iris_response(time_obs, response_version,  *args, **kwargs)
+    iris_response = get_iris_response(time_obs, response_version, *args, **kwargs)
     if detector_type == "FUV":
         detector_type_index = 0
     elif detector_type == "NUV":

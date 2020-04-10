@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-# Author: Daniel Ryan <ryand5@tcd.ie>
-
 import copy
 
 import numpy as np
-from irispy import iris_tools
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 from ndcube.utils.wcs import WCS
 
@@ -13,9 +9,11 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time, TimeDelta
 
+from sunraster.instr.iris import iris_tools
 from sunraster.raster import Raster, RasterSequence
 
 __all__ = ['IRISSpectrograph', 'IRISSpectrogramCube', 'IRISSpectrogramCubeSequence']
+
 
 class IRISSpectrograph(object):
     """
@@ -32,10 +30,9 @@ class IRISSpectrograph(object):
 
     Parameters
     ----------
-    data: `dict` of `irispy.spectrograph.IRISSpectrogramCubeSequence`.
+    data: `dict` of `sunraster.instr.iris.spectrograph.IRISSpectrogramCubeSequence`.
         Spectral data from same OBS in IRISSpectrogramCubeSequence objects, one for each
         spectral window. Dict keys give names of spectral windows.
-
     meta: `dict` (Optional)
         Metadata associated with overall OBS rather than specific spectral window.
 
@@ -55,7 +52,7 @@ class IRISSpectrograph(object):
         spectral_window = self.spectral_windows["spectral window"][0]
         spectral_windows_info = "".join(
             ["\n{0:>15} : {1:20} pix".format(name,
-                str([int(dim.value) for dim in self.data[name].dimensions]))
+                                             str([int(dim.value) for dim in self.data[name].dimensions]))
                 for name in self.spectral_windows["spectral window"]])
         roll = self.meta.get("SAT_ROT", None)
         obs_start = self.meta["STARTOBS"]
@@ -72,16 +69,22 @@ class IRISSpectrograph(object):
             else:
                 result.append("{0} -- {1}".format(start, end))
         obs_period, instance_period = result
-        return ("<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
-           "OBS Description: {obsdesc}\n"
-           "OBS Period: {obs_period}\n"
-           "Instance period: {inst_period}\n"
-           "Roll: {roll}\n"
-           "OBS Number unique raster positions: {nraster}\n"
-           "Spectral windows: dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
-           "{spec}>").format(obsid=self.meta["OBSID"], obsdesc=self.meta["OBS_DESC"],
-                             obs_period=obs_period, roll=roll, inst_period=instance_period,
-                             nraster=self.meta["NRASTERP"], spec=spectral_windows_info)
+        return (
+            "<iris.IRISSpectrograph instance\nOBS ID: {obsid}\n"
+            "OBS Description: {obsdesc}\n"
+            "OBS Period: {obs_period}\n"
+            "Instance period: {inst_period}\n"
+            "Roll: {roll}\n"
+            "OBS Number unique raster positions: {nraster}\n"
+            "Spectral windows: dimensions [repeats axis, raster axis, slit axis, spectral axis]:"
+            "{spec}>").format(
+            obsid=self.meta["OBSID"],
+            obsdesc=self.meta["OBS_DESC"],
+            obs_period=obs_period,
+            roll=roll,
+            inst_period=instance_period,
+            nraster=self.meta["NRASTERP"],
+            spec=spectral_windows_info)
 
     @property
     def spectral_windows(self):
@@ -92,7 +95,7 @@ class IRISSpectrograph(object):
                     "max wavelength")
         spectral_window_list = []
         for key in list(self.data.keys()):
-            if type(self.data[key]) == IRISSpectrogramCubeSequence:
+            if isinstance(self.data[key], IRISSpectrogramCubeSequence):
                 spectral_window_list.append([self.data[key].meta[colname] for colname in colnames])
         return Table(rows=spectral_window_list, names=colnames)
 
@@ -116,6 +119,7 @@ class IRISSpectrogramCubeSequence(RasterSequence):
     slit_step_axis: `int`
         The axis of the NDCubes corresponding to time.
     """
+
     def __init__(self, data_list, meta=None, slit_step_axis=0):
         detector_type_key = "detector type"
         # Check that meta contains required keys.
@@ -230,13 +234,16 @@ class IRISSpectrogramCube(Raster):
         # Check required meta data is provided.
         required_meta_keys = ["detector type"]
         if not all([key in list(meta) for key in required_meta_keys]):
-                raise ValueError("Meta must contain following keys: {0}".format(required_meta_keys))
+            raise ValueError("Meta must contain following keys: {0}".format(required_meta_keys))
         # Check extra_coords contains required coords.
         required_extra_coords_keys = ["time", "exposure time"]
         extra_coords_keys = [coord[0] for coord in extra_coords]
         if not all([key in extra_coords_keys for key in required_extra_coords_keys]):
-            raise ValueError("The following extra coords must be supplied: {0} vs. {1} from {2}".format(
-                required_extra_coords_keys, extra_coords_keys, extra_coords))
+            raise ValueError(
+                "The following extra coords must be supplied: {0} vs. {1} from {2}".format(
+                    required_extra_coords_keys,
+                    extra_coords_keys,
+                    extra_coords))
         # Initialize IRISSpectrogramCube.
         super().__init__(
             data, wcs, uncertainty=uncertainty, mask=mask, meta=meta,
@@ -308,7 +315,7 @@ Roll: {roll}
         """
         detector_type = iris_tools.get_detector_type(self.meta)
         time_obs = time_obs
-        response_version = response_version # Should default to latest
+        response_version = response_version  # Should default to latest
         if new_unit_type == "radiance" or self.unit.is_equivalent(iris_tools.RADIANCE_UNIT):
             # Get spectral dispersion per pixel.
             spectral_wcs_index = np.where(np.array(self.wcs.wcs.ctype) == "WAVE")[0][0]
@@ -319,7 +326,7 @@ Roll: {roll}
             lat_wcs_index = np.arange(len(self.wcs.wcs.ctype))[lat_wcs_index]
             lat_wcs_index = lat_wcs_index[0]
             solid_angle = self.wcs.wcs.cdelt[lat_wcs_index] * \
-                          self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
+                self.wcs.wcs.cunit[lat_wcs_index] * iris_tools.SLIT_WIDTH
             # Get wavelength for each pixel.
             (-1) * (np.arange(len(self.dimensions)) + 1)[spectral_wcs_index]
             obs_wavelength = self.axis_world_coords(2)
@@ -329,8 +336,8 @@ Roll: {roll}
                 # Convert from radiance to counts/s
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
                     (self.data * self.unit, self.uncertainty.array * self.unit),
-                     time_obs, response_version, obs_wavelength, detector_type,
-                     spectral_dispersion_per_pixel, solid_angle,
+                    time_obs, response_version, obs_wavelength, detector_type,
+                    spectral_dispersion_per_pixel, solid_angle,
                     undo=True)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
@@ -361,9 +368,9 @@ Roll: {roll}
                     pass
                 # Convert to radiance units.
                 new_data_quantities = iris_tools.convert_or_undo_photons_per_sec_to_radiance(
-                        (cube.data*cube.unit, cube.uncertainty.array*cube.unit),
-                         time_obs, response_version, obs_wavelength, detector_type,
-                         spectral_dispersion_per_pixel, solid_angle)
+                    (cube.data * cube.unit, cube.uncertainty.array * cube.unit),
+                    time_obs, response_version, obs_wavelength, detector_type,
+                    spectral_dispersion_per_pixel, solid_angle)
                 new_data = new_data_quantities[0].value
                 new_uncertainty = new_data_quantities[1].value
                 new_unit = new_data_quantities[0].unit
@@ -375,7 +382,11 @@ Roll: {roll}
             mask=self.mask, missing_axes=self.missing_axes)
 
 
-def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):
+def read_iris_spectrograph_level2_fits(
+        filenames,
+        spectral_windows=None,
+        uncertainty=True,
+        memmap=False):
     """
     Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph
     instance.
@@ -385,16 +396,15 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
     filenames: `list` of `str` or `str`
         Filename of filenames to be read.  They must all be associated with the same
         OBS number.
-
     spectral_windows: iterable of `str` or `str`
         Spectral windows to extract from files.  Default=None, implies, extract all
         spectral windows.
 
     Returns
     -------
-    result: `irispy.spectrograph.IRISSpectrograph`
+    result: `sunraster.instr.iris.spectrograph.IRISSpectrograph`
     """
-    if type(filenames) is str:
+    if isinstance(filenames, str):
         filenames = [filenames]
     for f, filename in enumerate(filenames):
         hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
@@ -404,14 +414,14 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
             int(hdulist[0].header["NRASTERP"])
             # Collecting the window observations.
             windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
-                                       for i in range(1, hdulist[0].header["NWIN"]+1)])
+                                       for i in range(1, hdulist[0].header["NWIN"] + 1)])
             # If spectral_window is not set then get every window.
             # Else take the appropriate windows
             if not spectral_windows:
                 spectral_windows_req = windows_in_obs
-                window_fits_indices = range(1, len(hdulist)-2)
+                window_fits_indices = range(1, len(hdulist) - 2)
             else:
-                if type(spectral_windows) is str:
+                if isinstance(spectral_windows, str):
                     spectral_windows_req = [spectral_windows]
                 else:
                     spectral_windows_req = spectral_windows
@@ -423,7 +433,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
                     raise ValueError("Spectral windows {0} not in file {1}".format(
                         spectral_windows[missing_windows], filenames[0]))
                 window_fits_indices = np.nonzero(np.in1d(windows_in_obs,
-                                                         spectral_windows))[0]+1
+                                                         spectral_windows))[0] + 1
             # Generate top level meta dictionary from first file
             # main header.
             top_meta = {"TELESCOP": hdulist[0].header["TELESCOP"],
@@ -477,7 +487,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
         pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
         xcenix = hdulist[-2].data[:, hdulist[-2].header["XCENIX"]] * u.arcsec
         ycenix = hdulist[-2].data[:, hdulist[-2].header["YCENIX"]] * u.arcsec
-        obs_vrix = hdulist[-2].data[:, hdulist[-2].header["OBS_VRIX"]] * u.m/u.s
+        obs_vrix = hdulist[-2].data[:, hdulist[-2].header["OBS_VRIX"]] * u.m / u.s
         ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
         exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
         exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
@@ -538,7 +548,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
                                 "IAECFLFL": hdulist[0].header["IAECFLFL"],
                                 "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
                                 "detector type":
-                                     hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
+                                hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
                                 "spectral window": window_name,
                                 "OBSID": hdulist[0].header["OBSID"],
                                 "OBS_DESC": hdulist[0].header["OBS_DESC"],
@@ -548,7 +558,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
             # Derive uncertainty of data
             if uncertainty:
                 out_uncertainty = u.Quantity(np.sqrt(
-                    (hdulist[window_fits_indices[i]].data*DN_unit).to(u.photon).value +
+                    (hdulist[window_fits_indices[i]].data * DN_unit).to(u.photon).value +
                     readout_noise.to(u.photon).value**2), unit=u.photon).to(DN_unit).value
             else:
                 out_uncertainty = None
@@ -565,7 +575,6 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
                  for window_name in spectral_windows_req])
     # Initialize an IRISSpectrograph object.
     return IRISSpectrograph(data, meta=top_meta)
-
 
 
 def _produce_obs_repr_string(meta):

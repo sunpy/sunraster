@@ -1,16 +1,14 @@
-# -*- coding: utf-8 -*-
 """
-IRISPy sample data files.
+sunraster instr iris sample data files.
 """
-from __future__ import absolute_import
 
 import sys
 
 from sunpy.data._sample import get_sample_file
 
 _base_urls = (
-    'http://data.sunpy.org/irispy/',
-    'https://github.com/sunpy/sample-data/raw/master/irispy/'
+    'http://data.sunpy.org/sunraster/',
+    'https://github.com/sunpy/sample-data/raw/master/sunraster/'
 )
 
 _sample_files = {"SJI_CUBE_2832": "iris_l2_20170502_052551_3893010094_SJI_2832_t000.fits",
@@ -18,7 +16,7 @@ _sample_files = {"SJI_CUBE_2832": "iris_l2_20170502_052551_3893010094_SJI_2832_t
                  "SJI_CUBE_2796": "iris_l2_20170502_052551_3893010094_SJI_2796_t000.fits",
                  "SJI_CUBE_1400": "iris_l2_20170502_052551_3893010094_SJI_1400_t000.fits",
                  "RASTER": "iris_l2_20170502_052551_3893010094_raster.fits.tar.zip"
-}
+                 }
 
 file_list = []
 file_dict = {}

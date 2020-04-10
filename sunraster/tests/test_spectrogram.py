@@ -18,13 +18,13 @@ h0 = {
 }
 wcs0 = WCS(header=h0, naxis=3)
 
-SOURCE_DATA_DN = np.array([[[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]],
-                           [[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]]])
+SOURCE_DATA_DN = np.array([[[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]],
+                           [[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]]])
 SOURCE_UNCERTAINTY_DN = np.sqrt(SOURCE_DATA_DN)
 
 time_dim_len = SOURCE_DATA_DN.shape[0]
 single_exposure_time = 2.
-EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len)+single_exposure_time, unit=u.s)
+EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len) + single_exposure_time, unit=u.s)
 
 # Define sample extra coords
 extra_coords0 = [("time", 0,
@@ -32,7 +32,7 @@ extra_coords0 = [("time", 0,
                  ("exposure time", 0, EXPOSURE_TIME)]
 extra_coords1 = [("time", 0,
                   (Time('2017-01-01') +
-                   TimeDelta(np.arange(time_dim_len, time_dim_len*2), format='sec'))),
+                   TimeDelta(np.arange(time_dim_len, time_dim_len * 2), format='sec'))),
                  ("exposure time", 0, EXPOSURE_TIME)]
 
 # Define meta data
