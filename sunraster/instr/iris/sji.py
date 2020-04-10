@@ -5,7 +5,6 @@ This module provides movie tools for level 2 IRIS SJI fits file.
 import warnings
 
 import numpy as np
-from irispy import iris_tools
 from ndcube import NDCube
 from ndcube.ndcube_sequence import NDCubeSequence
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
@@ -16,6 +15,8 @@ from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
 
 from sunpy.map import GenericMap
+
+from sunraster.instr.iris import iris_tools
 
 __all__ = ['IRISMapCube', 'IRISMapCubeSequence', 'read_iris_sji_level2_fits']
 
@@ -35,17 +36,13 @@ class IRISMapCube(NDCube):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-
     unit : `astropy.unit.Unit` or `str`
         Unit for the dataset.
         Strings that can be converted to a Unit are allowed.
-
     meta : dict-like object
         Additional meta information about the dataset.
-
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
@@ -54,31 +51,27 @@ class IRISMapCube(NDCube):
         uncertainty has no such attribute the uncertainty is stored as
         UnknownUncertainty.
         Defaults to None.
-
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-
     extra_coords : iterable of `tuple`s, each with three entries
         (`str`, `int`, `astropy.units.quantity` or array-like)
         Gives the name, axis of data, and values of coordinates of a data axis
         not included in the WCS object.
-
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every
         attribute before saving it while False tries to save every parameter
         as reference. Note however that it is not always possible to save the
         input as reference.
         Default is False.
-
     scaled : `bool`, optional
         Indicates if datas has been scaled.
 
     Examples
     --------
-    >>> from irispy import sji
-    >>> from irispy.data import sample
+    >>> from sunraster.instr.iris import sji
+    >>> from sunraster.instr.iris.data import sample
     >>> sji = read_iris_sji_level2_fits(sample.SJI_CUBE_1400)
     """
 
@@ -259,6 +252,7 @@ class IRISMapCubeSequence(NDCubeSequence):
     common_axis: `int`
         The axis of the NDCubes corresponding to time.
     """
+
     def __init__(self, data_list, meta=None, common_axis=0):
         # Initialize IRISMapCubeSequence.
         super().__init__(data_list, meta=meta, common_axis=common_axis)
@@ -472,10 +466,10 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
 
     Returns
     -------
-    result: `irispy.sji.IRISMapCube` or `irispy.sji.IRISMapCubeSequence`
+    result: `sunraster.instr.iris.sji.IRISMapCube` or `sunraster.instr.iris.sji.IRISMapCubeSequence`
     """
     list_of_cubes = []
-    if type(filenames) is str:
+    if isinstance(filenames, str):
         filenames = [filenames]
     for filename in filenames:
         # Open a fits file
@@ -499,7 +493,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
             unit = iris_tools.DN_UNIT["SJI"]
             readout_noise = iris_tools.READOUT_NOISE["SJI"]
             # Derive uncertainty of data for NDCube from fits file.
-            uncertainty = u.Quantity(np.sqrt((data_nan_masked*unit).to(u.photon).value
+            uncertainty = u.Quantity(np.sqrt((data_nan_masked * unit).to(u.photon).value
                                              + readout_noise.to(u.photon).value**2),
                                      unit=u.photon).to(unit).value
         # Derive exposure time from detector.
@@ -511,7 +505,7 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
         pzty = hdulist[1].data[:, hdulist[1].header["PZTY"]] * u.arcsec
         xcenix = hdulist[1].data[:, hdulist[1].header["XCENIX"]] * u.arcsec
         ycenix = hdulist[1].data[:, hdulist[1].header["YCENIX"]] * u.arcsec
-        obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m/u.s
+        obs_vrix = hdulist[1].data[:, hdulist[1].header["OBS_VRIX"]] * u.m / u.s
         ophaseix = hdulist[1].data[:, hdulist[1].header["OPHASEIX"]]
         slit_pos_x = hdulist[1].data[:, hdulist[1].header["SLTPX1IX"]]
         slit_pos_y = hdulist[1].data[:, hdulist[1].header["SLTPX2IX"]]
@@ -560,15 +554,17 @@ def read_iris_sji_level2_fits(filenames, memmap=False):
 
 class SJIMap(GenericMap):
     def __init__(self, data, header, **kwargs):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube.")
+        raise ImportError("This class has been replaced by sunraster.instr.iris.sji.IRISMapCube.")
 
 
 class SJICube(object):
     def __init__(self, input):
-        raise ImportError("This class has been replaced by irispy.sji.IRISMapCube."
-                          "To create an irispy.sji.IRISMapCube from a level 2 SJI FITS file,"
-                          "use irispy.sji.read_iris_sji_level2_fits.")
+        raise ImportError(
+            "This class has been replaced by sunraster.instr.iris.sji.IRISMapCube."
+            "To create an sunraster.instr.iris.sji.IRISMapCube from a level 2 SJI FITS file,"
+            "use sunraster.instr.iris.sji.read_iris_sji_level2_fits.")
 
 
 def SJI_fits_to_cube(filelist, start=0, stop=None, skip=None):
-    raise ImportError("This function has been replaced by irispy.sji.read_iris_sji_level2_fits.")
+    raise ImportError(
+        "This function has been replaced by sunraster.instr.iris.sji.read_iris_sji_level2_fits.")

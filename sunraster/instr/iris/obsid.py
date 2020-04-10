@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import pandas as pd
 from pkg_resources import resource_filename
@@ -107,9 +105,9 @@ class ObsId(dict):
             raise ValueError("Invalid OBS ID: two first digits must one of"
                              " {0}".format(versions))
         obsid = int(str(obsid)[2:])  # version digits are no longer needed
-        table1 = pd.read_csv(resource_filename('irispy',
+        table1 = pd.read_csv(resource_filename('sunraster/instr/iris',
                                                'data/v%i-table10.csv' % version))
-        table2 = pd.read_csv(resource_filename('irispy',
+        table2 = pd.read_csv(resource_filename('sunraster/instr/iris',
                                                'data/v%i-table2000.csv' % version))
         id_raster = int(str(obsid)[-2:])
         try:
