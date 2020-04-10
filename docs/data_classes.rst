@@ -9,18 +9,18 @@ Data Classes
 Raster
 ------
 
-The fundamental data class of the ``sunraster`` package is `~sunraster.Raster`. 
+The fundamental data class of the ``sunraster`` package is `~sunraster.Raster`.
 It is designed to handle data from a single raster scan or sit-and-stare.
 `~sunraster.Raster` stores its data as a single 3-D array whose
-transformations between pixel and real world coordinates are described by 
-a single astropy WCS (World Coordinate System) object. 
+transformations between pixel and real world coordinates are described by
+a single astropy WCS (World Coordinate System) object.
 (For data that is described by multiple WCS objects, see the
 :ref:`rastersequence` section below.)
-`~sunraster.Raster`'s expected axis types are time/slit step, position along slit, 
+`~sunraster.Raster`'s expected axis types are time/slit step, position along slit,
 and spectral.
 No specific ordering is required.
 
-`~sunraster.Raster` is subclassed from `ndcube.NDCube` and so inherits the 
+`~sunraster.Raster` is subclassed from `ndcube.NDCube` and so inherits the
 same attributes for data, wcs, extra_coords, uncertainty, mask, meta, and unit.
 It also inherits much of the same slicing, coordinate transformation and
 visualization API.
@@ -81,10 +81,10 @@ whole as all relevant data and metadata is sliced simultaneously.
 (See section on :ref:`raster_slicing`.)
 
 Thanks to the fact that `~sunraster.Raster` is subclassed from
-`~ndcube.NDCube`, you can also supply additional data to the instance. 
+`~ndcube.NDCube`, you can also supply additional data to the instance.
 These include: metadata (`dict` or dict-like) located at `Raster.meta`;
 a data mask (boolean `numpy.ndarray`) located at `Raster.mask` marking, for
-example, reliable and unreliable pixels; 
+example, reliable and unreliable pixels;
 an uncertainty array (`numpy.ndarray`) located at `Raster.uncertainty`
 describing the uncertainty of each data array value;
 and a unit (`astropy.units.Unit` or unit `str`).
@@ -210,8 +210,8 @@ to learn more.
 Plotting
 ^^^^^^^^
 
-To quickly and easily visualize slit spectrograph data, 
-`~sunraster.Raster` inherits a simple-to-use, yet powerful plotting method from 
+To quickly and easily visualize slit spectrograph data,
+`~sunraster.Raster` inherits a simple-to-use, yet powerful plotting method from
 `ndcube.NDCube`.
 It is intended to be a useful quicklook tool and not a
 replacement for high quality plots or animations, e.g. for
@@ -539,9 +539,9 @@ the following:
 
   >>> print(my_sequence.raster_dimensions)  # Check dimensionality before slicing.
   (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
-  
+
   >>> my_sequence_roi = my_sequence.slice_as_raster[1:3, 0:2, 1:3, 1:4]
-  
+
   >>> print(my_sequence_roi.raster_dimensions) # See how slicing has changed dimensionality.
   (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
   >>> my_sequence_roi.SnS_dimensions  # Dimensionality can still be represented in SnS form.
@@ -553,9 +553,9 @@ To slice in the sit-and-stare representation, do the following:
 
   >>> print(my_sequence.SnS_dimensions)  # Check dimensionality before slicing.
   [9. 4. 5.] pix
-  
+
   >>> my_sequence_roi = my_sequence.slice_as_SnS[1:7, 1:3, 1:4]
-  
+
   >>> print(my_sequence_roi.SnS_dimensions)  # See how slicing has changed dimensionality.
   [6., 2., 3.] pix
   >>> print(my_sequence_roi.raster_dimensions)  # Dimensionality can still be represented in raster form.

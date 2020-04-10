@@ -1,10 +1,11 @@
 import textwrap
 
-import astropy.units as u
 import ndcube.utils.sequence
 import numpy as np
 from ndcube import NDCube, NDCubeSequence
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+
+import astropy.units as u
 
 from sunraster import utils
 
@@ -44,6 +45,7 @@ SUPPORTED_EXPOSURE_NAMES = ["exposure time", "exposure_time", "exposure times",
 SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES]
 SUPPORTED_EXPOSURE_NAMES += [name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES]
 
+
 class RasterSequence(NDCubeSequence):
     """
     Class for holding, slicing and plotting spectrogram data.
@@ -63,6 +65,7 @@ class RasterSequence(NDCubeSequence):
     slit_step_axis: `int`
         The axis of the Raster instances corresponding to time.
     """
+
     def __init__(self, data_list, slit_step_axis=0, meta=None):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=slit_step_axis, meta=meta)
@@ -231,6 +234,7 @@ class Raster(NDCube):
         Note however that it is not always possible to save the input as reference.
         Default is False.
     """
+
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
         # Initialize Raster.
@@ -285,7 +289,7 @@ class Raster(NDCube):
     @property
     def spectral(self):
         if not self._spectral_name:
-            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")
         else:
             return self._get_axis_coord(*self._spectral_name)
@@ -293,7 +297,7 @@ class Raster(NDCube):
     @property
     def time(self):
         if not self._time_name:
-            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_TIMES_NAMES}")
         else:
             return self._get_axis_coord(*self._time_name)
@@ -301,7 +305,7 @@ class Raster(NDCube):
     @property
     def exposure_time(self):
         if not self._exposure_time_name:
-            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_EXPOSURE_NAMES}")
         else:
             return self._get_axis_coord(*self._exposure_time_name)
@@ -309,7 +313,7 @@ class Raster(NDCube):
     @property
     def lon(self):
         if not self._longitude_name:
-            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LONGITUDE_NAMES}")
         else:
             return self._get_axis_coord(*self._longitude_name)
@@ -317,7 +321,7 @@ class Raster(NDCube):
     @property
     def lat(self):
         if not self._latitude_name:
-            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LATITUDE_NAME}")
         else:
             return self._get_axis_coord(*self._latitude_name)
@@ -392,7 +396,7 @@ class Raster(NDCube):
                                for world_axis_type in self.world_axis_physical_types])
             if sum(wcs_name_index) == 1:
                 wcs_name_index = \
-                        int(np.arange(len(self.world_axis_physical_types))[wcs_name_index])
+                    int(np.arange(len(self.world_axis_physical_types))[wcs_name_index])
                 axis_name = self.world_axis_physical_types[wcs_name_index]
                 loc = "wcs"
 
@@ -444,8 +448,8 @@ def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time
         # exposure does need to be applied, or
         # user has set force=True and wants the correction applied
         # regardless of the unit.
-        new_data_arrays = [old_data/exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit/u.s
+        new_data_arrays = [old_data / exposure_time for old_data in old_data_arrays]
+        new_unit = old_unit / u.s
     return new_data_arrays, new_unit
 
 
@@ -471,7 +475,7 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
-    if force is not True and u.s in (old_unit*u.s).decompose().bases:
+    if force is not True and u.s in (old_unit * u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does include inverse time and so
@@ -479,7 +483,7 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
         # user has set force=True and wants the correction removed
         # regardless of the unit.
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit*u.s
+        new_unit = old_unit * u.s
     return new_data_arrays, new_unit
 
 

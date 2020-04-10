@@ -1,19 +1,8 @@
-# -*- coding: utf-8 -*-
-# Author: Daniel Ryan <ryand5@tcd.ie>
-
 import copy
 import os.path
 
-import irispy.data.test
 import numpy as np
 import pytest
-from irispy import iris_tools
-from irispy.spectrograph import (
-    IRISSpectrogramCube,
-    IRISSpectrogramCubeSequence,
-    IRISSpectrograph,
-    read_iris_spectrograph_level2_fits,
-)
 from ndcube.tests.helpers import assert_cubes_equal, assert_cubesequences_equal
 from ndcube.utils.wcs import WCS
 
@@ -21,24 +10,33 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
 
-testpath = irispy.data.test.rootdir
+import sunraster.instr.iris.data.test
+from sunraster.instr.iris import iris_tools
+from sunraster.instr.iris.spectrograph import (
+    IRISSpectrogramCube,
+    IRISSpectrogramCubeSequence,
+    IRISSpectrograph,
+    read_iris_spectrograph_level2_fits,
+)
+
+testpath = sunraster.instr.iris.data.test.rootdir
 
 # Arrays of DN
-SOURCE_DATA_DN = np.array([[[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]],
-                           [[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]]])
+SOURCE_DATA_DN = np.array([[[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]],
+                           [[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]]])
 SOURCE_UNCERTAINTY_DN = np.sqrt(SOURCE_DATA_DN)
 
 # Arrays relating SOURCE_DATA_DN to photons in NUV and FUV
-SOURCE_DATA_PHOTONS_NUV = np.array([[[ 10.134, 20.376, -24.174], [-12.942, 25.938, 28.188]],
+SOURCE_DATA_PHOTONS_NUV = np.array([[[10.134, 20.376, -24.174], [-12.942, 25.938, 28.188]],
                                     [[10.134, 20.376, -24.174], [-12.942, 25.938, 28.188]]])
-SOURCE_DATA_PHOTONS_FUV = np.array([[[ 2.252, 4.528, -5.372], [-2.876, 5.764, 6.264]],
+SOURCE_DATA_PHOTONS_FUV = np.array([[[2.252, 4.528, -5.372], [-2.876, 5.764, 6.264]],
                                     [[2.252, 4.528, -5.372], [-2.876, 5.764, 6.264]]])
 SOURCE_UNCERTAINTY_PHOTONS_NUV = np.sqrt(SOURCE_DATA_PHOTONS_NUV)
 SOURCE_UNCERTAINTY_PHOTONS_FUV = np.sqrt(SOURCE_DATA_PHOTONS_FUV)
 
 time_dim_len = SOURCE_DATA_DN.shape[0]
 single_exposure_time = 2.
-EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len)+single_exposure_time, unit=u.s)
+EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len) + single_exposure_time, unit=u.s)
 
 # Define an sample wcs object
 h0 = {
@@ -58,7 +56,7 @@ extra_coords0 = [("time", 0,
                  ("exposure time", 0, EXPOSURE_TIME)]
 extra_coords1 = [("time", 0,
                   (Time('2017-01-01') +
-                   TimeDelta(np.arange(time_dim_len, time_dim_len*2), format='sec'))),
+                   TimeDelta(np.arange(time_dim_len, time_dim_len * 2), format='sec'))),
                  ("exposure time", 0, EXPOSURE_TIME)]
 
 # Define IRISSpectrogramCubes in various units.
@@ -69,12 +67,12 @@ spectrogram_photon0 = IRISSpectrogramCube(
     SOURCE_DATA_PHOTONS_FUV, wcs0, SOURCE_UNCERTAINTY_PHOTONS_FUV, u.photon,
     meta0, extra_coords0)
 spectrogram_DN_per_s0 = IRISSpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, SOURCE_UNCERTAINTY_DN/single_exposure_time,
-    iris_tools.DN_UNIT["FUV"]/u.s, meta0, extra_coords0)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, SOURCE_UNCERTAINTY_DN / single_exposure_time,
+    iris_tools.DN_UNIT["FUV"] / u.s, meta0, extra_coords0)
 spectrogram_photon_per_s0 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
-    SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time,
-    u.photon/u.s, meta0, extra_coords0)
+    SOURCE_DATA_PHOTONS_FUV / single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time,
+    u.photon / u.s, meta0, extra_coords0)
 spectrogram_DN1 = IRISSpectrogramCube(
     SOURCE_DATA_DN, wcs0, SOURCE_UNCERTAINTY_DN, iris_tools.DN_UNIT["FUV"],
     meta0, extra_coords1)
@@ -82,28 +80,28 @@ spectrogram_photon1 = IRISSpectrogramCube(
     SOURCE_DATA_PHOTONS_FUV, wcs0, SOURCE_UNCERTAINTY_PHOTONS_FUV, u.photon,
     meta0, extra_coords1)
 spectrogram_DN_per_s1 = IRISSpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, SOURCE_UNCERTAINTY_DN/single_exposure_time,
-    iris_tools.DN_UNIT["FUV"]/u.s, meta0, extra_coords1)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, SOURCE_UNCERTAINTY_DN / single_exposure_time,
+    iris_tools.DN_UNIT["FUV"] / u.s, meta0, extra_coords1)
 spectrogram_photon_per_s1 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV/single_exposure_time, wcs0,
+    SOURCE_DATA_PHOTONS_FUV / single_exposure_time, wcs0,
     SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time,
-    u.photon/u.s, meta0, extra_coords1)
+    u.photon / u.s, meta0, extra_coords1)
 spectrogram_photon_per_s_per_s0 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
-    SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
-    u.photon/u.s/u.s, meta0, extra_coords0)
+    SOURCE_DATA_PHOTONS_FUV / single_exposure_time / single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time / single_exposure_time,
+    u.photon / u.s / u.s, meta0, extra_coords0)
 spectrogram_photon_s0 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
-    SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
-    u.photon*u.s, meta0, extra_coords0)
+    SOURCE_DATA_PHOTONS_FUV * single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV * single_exposure_time,
+    u.photon * u.s, meta0, extra_coords0)
 spectrogram_photon_per_s_per_s1 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV/single_exposure_time/single_exposure_time, wcs0,
-    SOURCE_UNCERTAINTY_PHOTONS_FUV/single_exposure_time/single_exposure_time,
-    u.photon/u.s/u.s, meta0, extra_coords1)
+    SOURCE_DATA_PHOTONS_FUV / single_exposure_time / single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV / single_exposure_time / single_exposure_time,
+    u.photon / u.s / u.s, meta0, extra_coords1)
 spectrogram_photon_s1 = IRISSpectrogramCube(
-    SOURCE_DATA_PHOTONS_FUV*single_exposure_time, wcs0,
-    SOURCE_UNCERTAINTY_PHOTONS_FUV*single_exposure_time,
-    u.photon*u.s, meta0, extra_coords1)
+    SOURCE_DATA_PHOTONS_FUV * single_exposure_time, wcs0,
+    SOURCE_UNCERTAINTY_PHOTONS_FUV * single_exposure_time,
+    u.photon * u.s, meta0, extra_coords1)
 
 # Define meta dict for an IRISSpectrogramCubeSequence
 meta_seq = {"detector type": "FUV", "spectral window": "C II 1336",
@@ -122,6 +120,7 @@ sequence_photon_per_s_per_s = IRISSpectrogramCubeSequence(
 sequence_photon_s = IRISSpectrogramCubeSequence(
     [spectrogram_photon_s0, spectrogram_photon_s1], meta_seq)
 
+
 @pytest.fixture
 def iris_l2_test_raster():
     return read_iris_spectrograph_level2_fits(
@@ -130,7 +129,7 @@ def iris_l2_test_raster():
 
 def test_fits_data_comparison(iris_l2_test_raster):
     """
-    Make sure the data is the same in pyfits and irispy.
+    Make sure the data is the same in pyfits and sunraster.
     """
     hdulist = fits.open(os.path.join(
         testpath, 'iris_l2_20170222_153635_3690215148_raster_t000_r00000.fits'))

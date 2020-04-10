@@ -40,7 +40,7 @@ Contributing Code
 
 If you would like to contribute code, it is strongly
 recommended that you first discuss your aims with the ``sunraster``
-community.  We strive to be an open and welcoming community for 
+community.  We strive to be an open and welcoming community for
 developers of all experience levels. Discussing your ideas
 before you start can give you new insights that will make your
 development easier, lead to a better end product, and reduce the

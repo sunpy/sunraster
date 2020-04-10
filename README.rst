@@ -2,6 +2,10 @@
 sunraster
 *********
 
+.. image:: http://img.shields.io/badge/powered%20by-SunPy-orange.svg?style=flat
+    :target: http://www.sunpy.org
+    :alt: Powered by SunPy Badge
+
 sunraster is an open-source Python library for something.
 
 Installation
@@ -13,18 +17,17 @@ Developing
 ==========
 
 If you want to develop sunraster you will need to install from GitHub.
-The best way to do this is to create a new conda environment and install the git version of sunraster in it:
+We suggest you fork sunraster so you can work on it.
+The best way to do this is to create a new python virtual environment (conda/pipenv or others) and then install the git version of sunraster:
 
 .. code:: bash
 
-    $ conda config --append channels conda-forge
-    $ conda create -n sunraster-dev sunpy
-    $ conda activate sunraster-dev
-    $ git clone https://github.com/sunpy/sunraster.git sunraster-git
-    $ cd sunraster-git
-    $ pip install -e .[all,dev]
+    $ git clone https://github.com/<your username>/sunraster.git
+    $ cd sunraster
+    $ pip install -e .[dev]
 
-For detailed installation instructions, see the `Newcomers' guide`_ in the SunPy docs.
+
+For detailed installation instructions (aimed at installing sunpy), see the `Newcomers' guide`_ in the SunPy docs.
 
 Getting Help
 ============
