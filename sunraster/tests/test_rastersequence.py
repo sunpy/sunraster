@@ -134,8 +134,10 @@ def test_apply_exposure_time_correction(input_sequence, undo, force, expected_se
 @pytest.mark.parametrize("input_sequence, expected_raster_axes_types", [
     (sequence_DN0, (sequence_DN0._raster_axis_name, sequence_DN0._slit_step_axis_name,
                     sequence_DN0._slit_axis_name, sequence_DN0._spectral_axis_name)),
-    (sequence_DN0[:, :, 0, 0], (sequence_DN0._raster_axis_name, sequence_DN0._slit_step_axis_name)),
-    (sequence_DN0[:, 0], (sequence_DN0._raster_axis_name, sequence_DN0._slit_axis_name,
+    (sequence_DN0.slice_as_raster[:, :, 0, 0], (sequence_DN0._raster_axis_name,
+                                                sequence_DN0._slit_step_axis_name)),
+    (sequence_DN0.slice_as_raster[:, 0], (sequence_DN0._raster_axis_name,
+                                          sequence_DN0._slit_axis_name,
                           sequence_DN0._spectral_axis_name)),
     (sequence_DN_no_wave, (sequence_DN_no_wave._raster_axis_name,
                            sequence_DN_no_wave._slit_step_axis_name,
@@ -155,9 +157,7 @@ def test_raster_instrument_axes_types(input_sequence, expected_raster_axes_types
 @pytest.mark.parametrize("input_sequence, expected_SnS_axes_types", [
     (sequence_DN0, (sequence_DN0._SnS_axis_name, sequence_DN0._slit_axis_name,
                     sequence_DN0._spectral_axis_name)),
-    (sequence_DN0[:, :, 0, 0], (sequence_DN0._SnS_axis_name,)),
-    #(sequence_DN0[:, 0], (sequence_DN0._SnS_axis_name, sequence_DN0._slit_axis_name,
-    #                      sequence_DN0._spectral_axis_name))  # Won't work until NDCubeSequence._common_axis slicing bug fixed.
+    (sequence_DN0.slice_as_raster[:, :, 0, 0], (sequence_DN0._SnS_axis_name,)),
 ])
 def test_SnS_instrument_axes_types(input_sequence, expected_SnS_axes_types):
     assert input_sequence.SnS_instrument_axes_types == expected_SnS_axes_types

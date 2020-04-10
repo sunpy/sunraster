@@ -30,7 +30,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         List of `SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
-    common_axis: `int` or `None`
+    common_axis: `int` or `None` (optional)
         If the sequence axis is aligned with an axis of the component SpectrogramCube
         instances, e.g. Spectrogram cubes have a time dimension and are arranged within
         the sequence in chronological order, set this input to the axis number of the
@@ -110,14 +110,6 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             self.data = converted_data_list
 
     def __str__(self):
-        return (textwrap.dedent(f"""\
-                SpectrogramSequence
-                -------------------
-                {self._str}"""))
-
-    @property
-    def _str(self):
-        """Derives summary for self.__str__."""
         if self.data[0]._time_name:
             time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
         else:
@@ -135,6 +127,8 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
+                {self.__class__.__name__}
+                {"".join(["-"] * len(self.__class__.__name__))}
                 Time Range: {time_period}
                 Pixel Dimensions {self.raster_instrument_axes_types}: {self.dimensions}
                 Longitude range: {lon_range}
@@ -146,21 +140,18 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         return f"{object.__repr__(self)}\n{str(self)}"
 
 
-class RasterSequence(NDCubeSequence):
+class RasterSequence(SpectrogramSequence):
     """
-    Class for holding, slicing and plotting spectrogram data.
-
-    This class contains all the functionality of its super class with
-    some additional functionalities.
+    Class for holding, slicing and plotting series of spectrograph raster scans.
 
     Parameters
     ----------
     data_list: `list`
-        List of `Raster` objects from the same spectral window and OBS ID.
+        List of `SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
 
     common_axis: `int`
-        The axis of the Raster instances corresponding to time.
+        The axis of the SpectrogramCube instances corresponding to the slit step axis.
 
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
@@ -186,23 +177,21 @@ class RasterSequence(NDCubeSequence):
             self._single_scan_instrument_axes_types[spectral_raster_index] = \
                     self._spectral_axis_name
         # Slit axis name.
-        print(self._single_scan_instrument_axes_types)
         w = self._single_scan_instrument_axes_types == None
         if w.sum() > 1:
-            print(len(w), w, w.sum())
             raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
         self._single_scan_instrument_axes_types[w] = self._slit_axis_name
         # Remove any instrument axes types whose axes are missing.
         self._single_scan_instrument_axes_types.astype(str)
 
-    raster_dimensions = NDCubeSequence.dimensions
-    SnS_dimensions = NDCubeSequence.cube_like_dimensions
-    raster_world_axis_physical_types = NDCubeSequence.world_axis_physical_types
-    SnS_world_axis_physical_types = NDCubeSequence.cube_like_world_axis_physical_types
-    raster_axis_extra_coords = NDCubeSequence.sequence_axis_extra_coords
-    SnS_axis_extra_coords = NDCubeSequence.common_axis_extra_coords
-    plot_as_raster = NDCubeSequence.plot
-    plot_as_SnS = NDCubeSequence.plot_as_cube
+    raster_dimensions = SpectrogramSequence.dimensions
+    SnS_dimensions = SpectrogramSequence.cube_like_dimensions
+    raster_world_axis_physical_types = SpectrogramSequence.world_axis_physical_types
+    SnS_world_axis_physical_types = SpectrogramSequence.cube_like_world_axis_physical_types
+    raster_axis_extra_coords = SpectrogramSequence.sequence_axis_extra_coords
+    SnS_axis_extra_coords = SpectrogramSequence.common_axis_extra_coords
+    plot_as_raster = SpectrogramSequence.plot
+    plot_as_SnS = SpectrogramSequence.plot_as_cube
 
     @property
     def slice_as_SnS(self):
@@ -221,11 +210,8 @@ class RasterSequence(NDCubeSequence):
         return _SequenceSlicer(self)
 
     def __getitem__(self, item):
-        result = super().__getitem__(item)
-        if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                    result._single_scan_instrument_axes_types, item[1:])
-        return result
+        raise NotImplementedError(f"Use {self.__class__.__name__}.slice_as_raster or "
+                                  f"{self.__class__.__name__}.slice_as_SnS.")
 
     @property
     def raster_instrument_axes_types(self):
@@ -236,101 +222,6 @@ class RasterSequence(NDCubeSequence):
         return tuple([self._SnS_axis_name] + list(
             self._single_scan_instrument_axes_types[self._single_scan_instrument_axes_types !=
                                                     self._slit_step_axis_name]))
-
-    @property
-    def spectral(self):
-        return u.Quantity([raster.spectral for raster in self.data])
-
-    @property
-    def time(self):
-        return np.concatenate([raster.time for raster in self.data])
-
-    @property
-    def exposure_time(self):
-        return np.concatenate([raster.exposure_time for raster in self.data])
-
-    @property
-    def lon(self):
-        return u.Quantity([raster.lon for raster in self.data])
-
-    @property
-    def lat(self):
-        return u.Quantity([raster.lat for raster in self.data])
-
-    def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
-        """
-        Applies or undoes exposure time correction to data and uncertainty and
-        adjusts unit.
-
-        Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
-        is applied (undone) regardless of unit by setting force=True.
-
-        Parameters
-        ----------
-        undo: `bool`
-            If False, exposure time correction is applied.
-            If True, exposure time correction is removed.
-            Default=False
-
-        copy: `bool`
-            If True a new instance with the converted data values is returned.
-            If False, the current instance is overwritten.
-            Default=False
-
-        force: `bool`
-            If not True, applies (undoes) exposure time correction only if unit
-            doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
-            adjusted accordingly.
-
-        Returns
-        -------
-        result: `None` or `RasterSequence`
-            If copy=False, the original RasterSequence is modified with the
-            exposure time correction applied (undone).
-            If copy=True, a new RasterSequence is returned with the correction
-            applied (undone).
-        """
-        converted_data_list = []
-        for cube in self.data:
-            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo,
-                                                                           force=force))
-        if copy is True:
-            return RasterSequence(
-                converted_data_list, meta=self.meta, common_axis=self._common_axis)
-        else:
-            self.data = converted_data_list
-
-    def __str__(self):
-        if self.data[0]._time_name:
-            time_period = (self.data[0].time[0].value, self.data[-1].time[-1].value)
-        else:
-            time_period = None
-        if self.data[0]._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
-        else:
-            lon_range = None
-        if self.data[0]._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
-        else:
-            lat_range = None
-        if self.data[0]._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
-        else:
-            spectral_range = None
-        return (textwrap.dedent(f"""\
-                RasterSequence
-                --------------
-                Time Range: {time_period}
-                Pixel Dimensions {self.raster_instrument_axes_types}: {self.dimensions}
-                Longitude range: {lon_range}
-                Latitude range: {lat_range}
-                Spectral range: {spectral_range}
-                Data unit: {self.data[0].unit}"""))
-
-    def __repr__(self):
-        return f"{object.__repr__(self)}\n{str(self)}"
 
 
 class _SnSSlicer:
@@ -359,7 +250,9 @@ class _SequenceSlicer:
         self.seq = seq
 
     def __getitem__(self, item):
-        result = ndcube.utils.sequence.slice_sequence(self.seq, item)
+        # Slice RasterSequence using parent's getitem method,
+        # as RasterSequence's has be overidden with a NotImplementedError.
+        result = self.seq.__class__.__bases__[0].__getitem__(self.seq, item)
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
             result._single_scan_instrument_axes_types = _slice_scan_axis_types(
                     self.seq._single_scan_instrument_axes_types, item[1:])
