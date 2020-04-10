@@ -58,10 +58,8 @@ class RasterSequence(NDCubeSequence):
     data_list: `list`
         List of `Raster` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
-
     meta: `dict` or header object
         Metadata associated with the sequence.
-
     slit_step_axis: `int`
         The axis of the Raster instances corresponding to time.
     """
@@ -158,12 +156,10 @@ class RasterSequence(NDCubeSequence):
             If False, exposure time correction is applied.
             If True, exposure time correction is removed.
             Default=False
-
         copy: `bool`
             If True a new instance with the converted data values is returned.
             If False, the current instance is overwritten.
             Default=False
-
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
@@ -200,16 +196,12 @@ class Raster(NDCube):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-
     unit : `astropy.unit.Unit` or `str`
         Unit for the dataset. Strings that can be converted to a Unit are allowed.
-
     meta : dict-like object
         Additional meta information about the dataset.
-
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
@@ -217,17 +209,14 @@ class Raster(NDCube):
         such an interface is NDUncertainty - but isn’t mandatory. If the uncertainty
         has no such attribute the uncertainty is stored as UnknownUncertainty.
         Defaults to None.
-
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-
-    extra_coords : iterable of `tuple`s, each with three entries
+    extra_coords : iterable of `tuple`, each with three entries
         (`str`, `int`, `astropy.units.quantity` or array-like)
         Gives the name, axis of data, and values of coordinates of a data axis not
         included in the WCS object.
-
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every attribute
         before saving it while False tries to save every parameter as reference.

@@ -38,7 +38,7 @@ For more information or to ask questions about sunraster, check out:
 -  `SunPy Matrix Channel`_
 -  `SunPy Mailing List`_
 
-.. _SunPy Documentation: https://docs.sunpy.org/en/stable/
+.. _sunraster Documentation: https://docs.sunpy.org/projects/sunraster/en/latest/
 .. _SunPy Matrix Channel: https://chat.openastronomy.org/#/room/#sunpy:openastronomy.org
 .. _SunPy Mailing List: https://groups.google.com/forum/#!forum/sunpy
 
