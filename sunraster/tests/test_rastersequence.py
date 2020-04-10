@@ -8,7 +8,7 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 
 from sunraster import raster_sequence
-from sunraster import Raster, RasterSequence
+from sunraster import SpectrogramCube, RasterSequence
 
 # Define an sample wcs objects.
 h0 = {
@@ -60,62 +60,62 @@ extra_coords21 = [("time", 2,
 meta_seq = {"a": 0}
 
 # Define RasterSequences in various units.
-spectrogram_DN0 = Raster(
+spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords0, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN1 = Raster(
+spectrogram_DN1 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords1, u.ct, SOURCE_UNCERTAINTY_DN)
 sequence_DN = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0)
 sequence_DN0 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0)
 sequence_DN1 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=1)
 
-spectrogram_DN20 = Raster(
+spectrogram_DN20 = SpectrogramCube(
     SOURCE_DATA_DN, wcs2, extra_coords20, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN21 = Raster(
+spectrogram_DN21 = SpectrogramCube(
     SOURCE_DATA_DN, wcs2, extra_coords21, u.ct, SOURCE_UNCERTAINTY_DN)
 sequence_DN2 = RasterSequence([spectrogram_DN20, spectrogram_DN21], meta=meta_seq, common_axis=2)
 
-spectrogram_DN_per_s0 = Raster(
+spectrogram_DN_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords0, u.ct/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time)
-spectrogram_DN_per_s1 = Raster(
+spectrogram_DN_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords1, u.ct/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time)
 sequence_DN_per_s = RasterSequence(
         [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0)
 
-spectrogram_DN_per_s_per_s0 = Raster(
+spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords0, u.ct/u.s/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
-spectrogram_DN_per_s_per_s1 = Raster(
+spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords1, u.ct/u.s/u.s,
     SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
 sequence_DN_per_s_per_s = RasterSequence(
     [spectrogram_DN_per_s_per_s0, spectrogram_DN_per_s_per_s1], meta=meta_seq, common_axis=0)
 
-spectrogram_DN_s0 = Raster( 
+spectrogram_DN_s0 = SpectrogramCube( 
     SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords0, u.ct*u.s,
     SOURCE_UNCERTAINTY_DN*single_exposure_time)
-spectrogram_DN_s1 = Raster(
+spectrogram_DN_s1 = SpectrogramCube(
     SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
     SOURCE_UNCERTAINTY_DN*single_exposure_time)
 sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq, common_axis=0)
 
 # Define raster sequence with no spectral axes.
-raster_no_wave0 = Raster(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_coords0, u.ct)
-raster_no_wave1 = Raster(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_coords0, u.ct)
+raster_no_wave0 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_coords0, u.ct)
+raster_no_wave1 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_coords0, u.ct)
 sequence_DN_no_wave = RasterSequence([raster_no_wave0, raster_no_wave1], 0)
 
 # Define raster sequence with missing slit axes.
-raster_no_slit0 = Raster(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+raster_no_slit0 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
                          missing_axes=[False, True, False])
-raster_no_slit1 = Raster(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+raster_no_slit1 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
                          missing_axes=[False, True, False])
 sequence_DN_no_slit = RasterSequence([raster_no_slit0, raster_no_slit1], 0)
 
 # Define raster sequence with missing slit step axes.
-raster_no_step0 = Raster(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+raster_no_step0 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
                          missing_axes=[False, False, True])
-raster_no_step1 = Raster(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+raster_no_step1 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
                          missing_axes=[False, False, True])
 sequence_DN_no_step = RasterSequence([raster_no_step0, raster_no_step1], None)
 

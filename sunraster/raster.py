@@ -5,7 +5,7 @@ import astropy.units as u
 from ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
-__all__ = ['Raster']
+__all__ = ['SpectrogramCube']
 
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
@@ -49,7 +49,7 @@ SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] 
 SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 
-class Raster(NDCube):
+class SpectrogramCube(NDCube):
     """
     Class representing a sit-and-stare or single raster of slit spectrogram
     data.
@@ -96,7 +96,7 @@ class Raster(NDCube):
     """
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
-        # Initialize Raster.
+        # Initialize SpectrogramCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
@@ -132,8 +132,8 @@ class Raster(NDCube):
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
-                Raster
-                ------
+                {self.__class__.__name__}
+                {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
                 Pixel dimensions (Slit steps, Slit height, Spectral): {self.dimensions}
                 Longitude range: {lon_range}
@@ -211,8 +211,8 @@ class Raster(NDCube):
 
         Returns
         -------
-        result: `Raster`
-            New Raster in new units.
+        result: `SpectrogramCube`
+            New SpectrogramCube in new units.
         """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
@@ -226,7 +226,7 @@ class Raster(NDCube):
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "Raster dimensions must be 2 or 3. Dimensions={}".format(
+                    "SpectrogramCube dimensions must be 2 or 3. Dimensions={}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -235,8 +235,8 @@ class Raster(NDCube):
         else:
             new_data_arrays, new_unit = _calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of Raster with correction applied/undone.
-        return Raster(
+        # Return new instance of SpectrogramCube with correction applied/undone.
+        return self.__class__(
             new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
@@ -250,18 +250,18 @@ class Raster(NDCube):
 
 def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     """
-    Finds name of a Raster axis type from WCS and extra coords.
+    Finds name of a SpectrogramCube axis type from WCS and extra coords.
 
     Parameters
     ----------
     supported_names: 1D `numpy.ndarray`
-        The names for the axis supported by `Raster`.
+        The names for the axis supported by `SpectrogramCube`.
 
     world_axis_physical_types: 1D `numpy.ndarray`
-        Output of Raster.world_axis_physical_types converted to an array.
+        Output of SpectrogramCube.world_axis_physical_types converted to an array.
 
     extra_coords: `dict` or `None`
-        Output of Raster.extra_coords
+        Output of SpectrogramCube.extra_coords
 
     Returns
     -------
