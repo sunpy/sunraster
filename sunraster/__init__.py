@@ -24,5 +24,5 @@ if sys.version_info < tuple(int(val) for val in __minimum_python_version__.split
     raise UnsupportedPythonError(
         f"sunraster does not support Python < {__minimum_python_version__}")
 
-from .raster import SpectrogramCube
-from .raster_sequence import SpectrogramSequence, RasterSequence
+from .spectrogram import SpectrogramCube
+from .spectrogram_sequence import SpectrogramSequence, RasterSequence

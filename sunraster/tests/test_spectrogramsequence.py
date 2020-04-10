@@ -7,7 +7,6 @@ from ndcube.utils.wcs import WCS
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from sunraster import raster_sequence
 from sunraster import SpectrogramCube, RasterSequence
 
 # Define an sample wcs objects.

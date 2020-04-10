@@ -6,7 +6,7 @@ import astropy.units as u
 import ndcube.utils.sequence
 from ndcube import NDCubeSequence
 
-from sunraster.raster import SpectrogramABC
+from sunraster.spectrogram import SpectrogramABC
 from sunraster import utils
 
 __all__ = ['SpectrogramSequence', 'RasterSequence']
