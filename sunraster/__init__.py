@@ -8,8 +8,6 @@ import os
 import sys
 import logging
 
-from .raster import Raster, RasterSequence
-
 try:
     from .version import __version__
 except ImportError:
