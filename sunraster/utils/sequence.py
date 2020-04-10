@@ -19,6 +19,7 @@ cube_item: item (int, slice, tuple) to be applied to cube identified
 by sequence_index attribute.
 """
 
+
 def _slice_sequence_as_SnS(sequence, item):
     """
     Enables RasterSequence instance to be indexed as if it were a single sit-

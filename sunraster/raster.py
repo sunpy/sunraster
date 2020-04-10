@@ -60,16 +60,12 @@ class Raster(NDCube):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-
     unit : `astropy.unit.Unit` or `str`
         Unit for the dataset. Strings that can be converted to a Unit are allowed.
-
     meta : dict-like object
         Additional meta information about the dataset.
-
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
@@ -77,23 +73,21 @@ class Raster(NDCube):
         such an interface is NDUncertainty - but isn’t mandatory. If the uncertainty
         has no such attribute the uncertainty is stored as UnknownUncertainty.
         Defaults to None.
-
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-
-    extra_coords : iterable of `tuple`s, each with three entries
+    extra_coords : iterable of `tuple`, each with three entries
         (`str`, `int`, `astropy.units.quantity` or array-like)
         Gives the name, axis of data, and values of coordinates of a data axis not
         included in the WCS object.
-
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every attribute
         before saving it while False tries to save every parameter as reference.
         Note however that it is not always possible to save the input as reference.
         Default is False.
     """
+
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
         # Initialize Raster.
@@ -155,35 +149,35 @@ class Raster(NDCube):
     @property
     def spectral(self):
         if not self._spectral_name:
-            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")
         return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
     def time(self):
         if not self._time_name:
-            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_TIMES_NAMES}")
         return self._get_axis_coord(self._time_name, self._time_loc)
 
     @property
     def exposure_time(self):
         if not self._exposure_time_name:
-            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_EXPOSURE_NAMES}")
         return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def lon(self):
         if not self._longitude_name:
-            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LONGITUDE_NAMES}")
         return self._get_axis_coord(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
         if not self._latitude_name:
-            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + \
+            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LATITUDE_NAME}")
         return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
@@ -321,8 +315,8 @@ def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time
         # exposure does need to be applied, or
         # user has set force=True and wants the correction applied
         # regardless of the unit.
-        new_data_arrays = [old_data/exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit/u.s
+        new_data_arrays = [old_data / exposure_time for old_data in old_data_arrays]
+        new_unit = old_unit / u.s
     return new_data_arrays, new_unit
 
 
@@ -348,7 +342,7 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
-    if force is not True and u.s in (old_unit*u.s).decompose().bases:
+    if force is not True and u.s in (old_unit * u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does include inverse time and so
@@ -356,5 +350,5 @@ def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
         # user has set force=True and wants the correction removed
         # regardless of the unit.
         new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit*u.s
+        new_unit = old_unit * u.s
     return new_data_arrays, new_unit

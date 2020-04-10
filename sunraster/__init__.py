@@ -8,12 +8,18 @@ import os
 import sys
 import logging
 
-from .version import __version__
+from .raster import Raster, RasterSequence
+
+try:
+    from .version import __version__
+except ImportError:
+    __version__ = "unknown"
 
 # Enforce Python version check during package import.
-__minimum_python_version__ = "3.6"
+__minimum_python_version__ = "3.7"
 
 __all__ = ['Raster', 'RasterSequence']
+
 
 class UnsupportedPythonError(Exception):
     pass

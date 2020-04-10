@@ -1,10 +1,10 @@
 """
-# -*- coding: utf-8 -*-
 
 import pytest
-from irispy.obsid import ObsId
 
 import astropy.units as u
+
+from sunraster.instr.iris.obsid import ObsId
 
 OBSID = [3677508065, 3880903651, 4050607445]
 INVALID_OBSID = [4643502010, 4050607495, 3880903650, 3680903685, 335987081297, 40]
@@ -27,10 +27,11 @@ TEST_DATA['linelist'] = ['Flare linelist 1', 'Full readout', 'Small linelist']
 
 
 @pytest.mark.parametrize("attr_name, test_input, expected_output",
-       [(name, obs, output[i]) for name, output in TEST_DATA.items()
-        for i, obs in enumerate(OBSID)])
+                         [(name, obs, output[i]) for name, output in TEST_DATA.items()
+                          for i, obs in enumerate(OBSID)])
 def test_attribute(attr_name, test_input, expected_output):
     assert ObsId(test_input)[attr_name] == expected_output
+
 
 @pytest.mark.parametrize("test_input", [INVALID_OBSID])
 def test_invalid_obsid(test_input):
