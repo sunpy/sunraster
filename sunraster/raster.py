@@ -1,8 +1,9 @@
+import abc
 import textwrap
 
 import numpy as np
 import astropy.units as u
-from ndcube import NDCube
+from ndcube.ndcube import NDCube, NDCubeABC
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
 __all__ = ['SpectrogramCube']
@@ -49,7 +50,59 @@ SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] 
 SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 
-class SpectrogramCube(NDCube):
+class SpectrogramABC(abc.ABC):
+
+    @abc.abstractproperty
+    def spectral(self):
+        """Return the spectral coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def time(self):
+        """Return the time coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def exposure_time(self):
+        """Return the exposure time for each exposure."""
+
+    @abc.abstractproperty
+    def lon(self):
+        """Return the longitude coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def lat(self):
+        """Return the latitude coordinates for each pixel."""
+
+    @abc.abstractmethod
+    def apply_exposure_time_correction(self, undo=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is undone.
+            Default=False
+
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `SpectrogramCube`
+            New SpectrogramCube in new units.
+        """
+
+
+class SpectrogramCube(NDCube, SpectrogramABC):
     """
     Class representing a sit-and-stare or single raster of slit spectrogram
     data.
@@ -188,32 +241,6 @@ class SpectrogramCube(NDCube):
         return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
-        """
-        Applies or undoes exposure time correction to data and uncertainty and
-        adjusts unit.
-
-        Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
-        is applied (undone) regardless of unit by setting force=True.
-
-        Parameters
-        ----------
-        undo: `bool`
-            If False, exposure time correction is applied.
-            If True, exposure time correction is undone.
-            Default=False
-
-        force: `bool`
-            If not True, applies (undoes) exposure time correction only if unit
-            doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
-            adjusted accordingly.
-
-        Returns
-        -------
-        result: `SpectrogramCube`
-            New SpectrogramCube in new units.
-        """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         exposure_time_s = self.exposure_time.to(u.s).value
