@@ -260,6 +260,7 @@ for more.
   >>> extra_coords_input = [("exposure time", 0, exposure_times)]
   >>> my_raster = Raster(data, input_wcs, uncertainty=np.sqrt(data), mask=mask,
   ...                    meta=meta, unit=u.ct, extra_coords=extra_coords_input)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
 
 To apply the exposure time correction simply do:
 
@@ -269,6 +270,7 @@ To apply the exposure time correction simply do:
   >>> print(my_raster.unit, my_raster.data.mean())
   ct 1.0
   >>> my_raster = my_raster.apply_exposure_time_correction() # Apply exposure time correction.
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
   >>> # Check data unit and average data value again.
   >>> print(my_raster.unit, my_raster.data.mean())
   ct / s 2.0
@@ -288,17 +290,20 @@ the ``force`` kwarg to override the check.
   >>> print(my_raster.unit, my_raster.data.mean())
   ct / s 2.0
   >>> my_raster = my_raster.apply_exposure_time_correction(force=True)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
   >>> print(my_raster.unit, my_raster.data.mean())
-  ct / s / s 4.0
+  ct / s2 4.0
 
 Should users like to undo the correction, they can set the ``undo`` kwarg.
 
 .. code-block:: python
 
   >>> print(my_raster.unit, my_raster.data.mean())
-  ct / s / s 4.0
-  >>> my_raster = my_raster.apply_exposure_time_correction(undo=True)
+  ct / s2 4.0
+  >>> my_raster = my_raster.apply_exposure_time_correction(undo=True, force=True)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
   >>> my_raster = my_raster.apply_exposure_time_correction(undo=True) # Undo correction twice.
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
   >>> print(my_raster.unit, my_raster.data.mean())
   ct 1.0
 
@@ -310,7 +315,8 @@ Again as before, users can override this check by setting the ``force`` kwarg.
 
   >>> print(my_raster.unit, my_raster.data.mean())
   ct 1.0
-  my_raster = my_raster.apply_exposure_time_correction(undo=True, force=True)
+  >>> my_raster = my_raster.apply_exposure_time_correction(undo=True, force=True)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
   >>> print(my_raster.unit, my_raster.data.mean())
   ct s 0.5
 
@@ -360,6 +366,7 @@ timestamps and exposure times as extra coordinates.
   >>> extra_coords_input0 = [("time", 0, timestamps0), ("exposure time", 0, exposure_times)]
   >>> raster0 = Raster(data, input_wcs, uncertainty=np.sqrt(data), mask=mask,
   ...                  meta=meta, unit=u.ct, extra_coords=extra_coords_input0)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
 
   >>> # Create 2nd raster
   >>> timestamps1 = Time([timestamps0[-1].to_datetime() + timedelta(minutes=i)
@@ -367,6 +374,7 @@ timestamps and exposure times as extra coordinates.
   >>> extra_coords_input1 = [("time", 0, timestamps1), ("exposure time", 0, exposure_times)]
   >>> raster1 = Raster(data*2, input_wcs, uncertainty=np.sqrt(data), mask=mask,
   ...                  meta=meta, unit=u.ct, extra_coords=extra_coords_input1)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
 
   >>> # Create 3rd raster
   >>> timestamps2 = Time([timestamps1[-1].to_datetime() + timedelta(minutes=i)
@@ -374,6 +382,7 @@ timestamps and exposure times as extra coordinates.
   >>> extra_coords_input2 = [("time", 0, timestamps2), ("exposure time", 0, exposure_times)]
   >>> raster2 = Raster(data*0.5, input_wcs, uncertainty=np.sqrt(data), mask=mask,
   ...                  meta=meta, unit=u.ct, extra_coords=extra_coords_input2)
+  INFO: uncertainty should have attribute uncertainty_type. [astropy.nddata.nddata]
 
 If we choose, we can define some sequence-level metadata in addition to any
 metadata attached to the individual raster scans:
@@ -395,7 +404,7 @@ We can now define our `~sunraster.RasterSequence` by doing:
 .. code-block:: python
 
   >>> from sunraster import RasterSequence
-  >>> my_sequence = RasterSequence([raster0, raster1, raster2], meta=seq_meta, slit_step_axis=0)
+  >>> my_sequence = RasterSequence([raster0, raster1, raster2], meta=seq_meta, common_axis=0)
 
 Dimensions
 ^^^^^^^^^^
@@ -546,7 +555,7 @@ the following:
   >>> print(my_sequence_roi.raster_dimensions) # See how slicing has changed dimensionality.
   (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
   >>> my_sequence_roi.SnS_dimensions  # Dimensionality can still be represented in SnS form.
-  [4., 2., 3.] pix
+  <Quantity [4., 2., 3.] pix>
 
 To slice in the sit-and-stare representation, do the following:
 
@@ -558,7 +567,7 @@ To slice in the sit-and-stare representation, do the following:
   >>> my_sequence_roi = my_sequence.slice_as_SnS[1:7, 1:3, 1:4]
 
   >>> print(my_sequence_roi.SnS_dimensions)  # See how slicing has changed dimensionality.
-  [6., 2., 3.] pix
+  [6. 2. 3.] pix
   >>> print(my_sequence_roi.raster_dimensions)  # Dimensionality can still be represented in raster form.
   (<Quantity 3. pix>, <Quantity [2., 3., 1.] pix>, <Quantity 2. pix>, <Quantity 3. pix>)
 
