@@ -1,1 +1,1 @@
-Make RasterSequence aware of instrument axis types.
+

@@ -405,7 +405,6 @@ We can now define our `~sunraster.RasterSequence` by doing:
 
   >>> from sunraster import RasterSequence
   >>> my_sequence = RasterSequence([raster0, raster1, raster2], meta=seq_meta, common_axis=0)
-  ['slit step' None 'spectral']
 
 Dimensions
 ^^^^^^^^^^
