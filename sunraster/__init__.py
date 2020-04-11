@@ -16,7 +16,7 @@ except ImportError:
 # Enforce Python version check during package import.
 __minimum_python_version__ = "3.7"
 
-__all__ = ['Raster', 'RasterSequence']
+__all__ = ['SpectrogramCube', 'SpectrogramSequence', 'RasterSequence']
 
 
 class UnsupportedPythonError(Exception):
@@ -28,5 +28,5 @@ if sys.version_info < tuple(int(val) for val in __minimum_python_version__.split
     raise UnsupportedPythonError(
         f"sunraster does not support Python < {__minimum_python_version__}")
 
-from .raster import Raster
-from .raster_sequence import RasterSequence
+from .spectrogram import SpectrogramCube
+from .spectrogram_sequence import SpectrogramSequence, RasterSequence

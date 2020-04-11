@@ -1,11 +1,12 @@
+import abc
 import textwrap
 
 import numpy as np
 import astropy.units as u
-from ndcube import NDCube
+from ndcube.ndcube import NDCube, NDCubeABC
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
-__all__ = ['Raster']
+__all__ = ['SpectrogramCube']
 
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
@@ -49,7 +50,61 @@ SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] 
 SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 
-class Raster(NDCube):
+class SpectrogramABC(abc.ABC):
+
+    # Abstract Base Class to define the basic API of Spectrogram classes.
+
+    @abc.abstractproperty
+    def spectral_axis(self):
+        """Return the spectral coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def time(self):
+        """Return the time coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def exposure_time(self):
+        """Return the exposure time for each exposure."""
+
+    @abc.abstractproperty
+    def lon(self):
+        """Return the longitude coordinates for each pixel."""
+
+    @abc.abstractproperty
+    def lat(self):
+        """Return the latitude coordinates for each pixel."""
+
+    @abc.abstractmethod
+    def apply_exposure_time_correction(self, undo=False, force=False):
+        """
+        Applies or undoes exposure time correction to data and uncertainty and
+        adjusts unit.
+
+        Correction is only applied (undone) if the object's unit doesn't (does)
+        already include inverse time.  This can be overridden so that correction
+        is applied (undone) regardless of unit by setting force=True.
+
+        Parameters
+        ----------
+        undo: `bool`
+            If False, exposure time correction is applied.
+            If True, exposure time correction is undone.
+            Default=False
+
+        force: `bool`
+            If not True, applies (undoes) exposure time correction only if unit
+            doesn't (does) already include inverse time.
+            If True, correction is applied (undone) regardless of unit.  Unit is still
+            adjusted accordingly.
+
+        Returns
+        -------
+        result: `SpectrogramCube`
+            New SpectrogramCube in new units.
+        """
+
+
+class SpectrogramCube(NDCube, SpectrogramABC):
     """
     Class representing a sit-and-stare or single raster of slit spectrogram
     data.
@@ -90,7 +145,7 @@ class Raster(NDCube):
 
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, copy=False, missing_axes=None):
-        # Initialize Raster.
+        # Initialize SpectrogramCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
 
@@ -110,24 +165,36 @@ class Raster(NDCube):
 
     def __str__(self):
         if self._time_name:
-            time_period = (self.time[0], self.time[-1])
+            if self.time.isscalar:
+                time_period = self.time
+            else:
+                time_period = (self.time[0], self.time[-1])
         else:
             time_period = None
         if self._longitude_name:
-            lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+            if self.lon.isscalar:
+                lon_range = self.lon
+            else:
+                lon_range = u.Quantity([self.lon.min(), self.lon.max()])
         else:
             lon_range = None
         if self._latitude_name:
-            lat_range = u.Quantity([self.lat.min(), self.lat.max()])
+            if self.lat.isscalar:
+                lat_range = self.lat
+            else:
+                lat_range = u.Quantity([self.lat.min(), self.lat.max()])
         else:
             lat_range = None
         if self._spectral_name:
-            spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+            if self.spectral_axis.isscalar:
+                spectral_range = self.spectral_axis
+            else:
+                spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
-                Raster
-                ------
+                {self.__class__.__name__}
+                {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
                 Pixel dimensions (Slit steps, Slit height, Spectral): {self.dimensions}
                 Longitude range: {lon_range}
@@ -147,7 +214,7 @@ class Raster(NDCube):
                               missing_axes=result.missing_axes)
 
     @property
-    def spectral(self):
+    def spectral_axis(self):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")
@@ -182,32 +249,6 @@ class Raster(NDCube):
         return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
-        """
-        Applies or undoes exposure time correction to data and uncertainty and
-        adjusts unit.
-
-        Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
-        is applied (undone) regardless of unit by setting force=True.
-
-        Parameters
-        ----------
-        undo: `bool`
-            If False, exposure time correction is applied.
-            If True, exposure time correction is undone.
-            Default=False
-
-        force: `bool`
-            If not True, applies (undoes) exposure time correction only if unit
-            doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
-            adjusted accordingly.
-
-        Returns
-        -------
-        result: `Raster`
-            New Raster in new units.
-        """
         # Get exposure time in seconds and change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         exposure_time_s = self.exposure_time.to(u.s).value
@@ -220,7 +261,7 @@ class Raster(NDCube):
                 exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
             else:
                 raise ValueError(
-                    "Raster dimensions must be 2 or 3. Dimensions={}".format(
+                    "SpectrogramCube dimensions must be 2 or 3. Dimensions={}".format(
                         len(self.dimensions.shape)))
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
@@ -229,8 +270,8 @@ class Raster(NDCube):
         else:
             new_data_arrays, new_unit = _calculate_exposure_time_correction(
                 (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
-        # Return new instance of Raster with correction applied/undone.
-        return Raster(
+        # Return new instance of SpectrogramCube with correction applied/undone.
+        return self.__class__(
             new_data_arrays[0], self.wcs,
             convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
             new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
@@ -244,18 +285,18 @@ class Raster(NDCube):
 
 def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     """
-    Finds name of a Raster axis type from WCS and extra coords.
+    Finds name of a SpectrogramCube axis type from WCS and extra coords.
 
     Parameters
     ----------
     supported_names: 1D `numpy.ndarray`
-        The names for the axis supported by `Raster`.
+        The names for the axis supported by `SpectrogramCube`.
 
     world_axis_physical_types: 1D `numpy.ndarray`
-        Output of Raster.world_axis_physical_types converted to an array.
+        Output of SpectrogramCube.world_axis_physical_types converted to an array.
 
     extra_coords: `dict` or `None`
-        Output of Raster.extra_coords
+        Output of SpectrogramCube.extra_coords
 
     Returns
     -------
