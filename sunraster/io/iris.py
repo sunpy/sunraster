@@ -19,6 +19,9 @@ DN_UNIT = {
                       DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"] * u.photon),
     "FUV": u.def_unit("DN_IRIS_FUV",
                       DETECTOR_GAIN["FUV"] / DETECTOR_YIELD["FUV"] * u.photon)}
+READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"],
+                 "FUV": 3.1*DN_UNIT["FUV"]}
+
 
 def read_iris_spectrograph_level2_fits(
         filenames,
