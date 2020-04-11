@@ -1,6 +1,0 @@
-Make RasterSequence aware of instrument axis types. This is in addition to
-``world_axis_physical_types``, which gives the real world coordinates of the axes. In contrast,
-these new axis types define the axes as ``raster scan``, ``slit step``, ``position along slit`` and ``spectral``.
-This information will update as the RasterSequence as it is sliced etc. This also breaks
-`~sunraster.raster_sequence.RasterSequence` out into its own module, like ``NDCubeSequence``
-as the lines of code are now enough to justify that.
