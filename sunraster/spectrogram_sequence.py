@@ -224,8 +224,18 @@ class RasterSequence(SpectrogramSequence):
         return _SequenceSlicer(self)
 
     def __getitem__(self, item):
-        raise NotImplementedError(f"Use {self.__class__.__name__}.slice_as_raster or "
-                                  f"{self.__class__.__name__}.slice_as_SnS.")
+        result = super().__getitem__(item)
+        if isinstance(result, self.__class__):
+            # If slit step axis sliced out, return SpectrogramSequence
+            # as the spectrogram cubes no longer represent a raster.
+            if len(item) > self._common_axis and isinstance(item[1:][self._common_axis],
+                                                            numbers.Integral):
+                result = SpectrogramSequence(result.data, common_axis=None, meta=result.meta)
+            else:
+                # Else, slice the instrument axis types accordingly.
+                result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                    self._single_scan_instrument_axes_types, item[1:])
+        return result
 
     @property
     def raster_instrument_axes_types(self):
@@ -264,21 +274,7 @@ class _SequenceSlicer:
         self.seq = seq
 
     def __getitem__(self, item):
-        # Slice RasterSequence using parent's getitem method,
-        # as RasterSequence's has be overidden with a NotImplementedError.
-        result = self.seq.__class__.__bases__[0].__getitem__(self.seq, item)
-        if isinstance(item, tuple):
-            if isinstance(result, self.seq.__class__):
-                # If slit step axis sliced out, return SpectrogramSequence
-                # as the spectrogram cubes no longer represent a raster.
-                if len(item) > self.seq._common_axis and \
-                        isinstance(item[1:][self.seq._common_axis], numbers.Integral):
-                    result = SpectrogramSequence(result.data, common_axis=None, meta=result.meta)
-                else:
-                    # Else, slice the instrument axis types accordingly.
-                    result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                        self.seq._single_scan_instrument_axes_types, item[1:])
-        return result
+        return self.seq[item]
 
 
 def _slice_scan_axis_types(single_scan_axes_types, item):
