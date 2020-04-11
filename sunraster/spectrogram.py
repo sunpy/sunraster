@@ -55,7 +55,7 @@ class SpectrogramABC(abc.ABC):
     # Abstract Base Class to define the basic API of Spectrogram classes.
 
     @abc.abstractproperty
-    def spectral(self):
+    def spectral_axis(self):
         """Return the spectral coordinates for each pixel."""
 
     @abc.abstractproperty
@@ -186,10 +186,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         else:
             lat_range = None
         if self._spectral_name:
-            if self.spectral.isscalar:
-                spectral_range = self.spectral
+            if self.spectral_axis.isscalar:
+                spectral_range = self.spectral_axis
             else:
-                spectral_range = u.Quantity([self.spectral.min(), self.spectral.max()])
+                spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
         else:
             spectral_range = None
         return (textwrap.dedent(f"""\
@@ -214,7 +214,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                               missing_axes=result.missing_axes)
 
     @property
-    def spectral(self):
+    def spectral_axis(self):
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")

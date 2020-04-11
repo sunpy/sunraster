@@ -45,8 +45,8 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         super().__init__(data_list, common_axis=common_axis, meta=meta)
 
     @property
-    def spectral(self):
-        return u.Quantity([raster.spectral for raster in self.data])
+    def spectral_axis(self):
+        return u.Quantity([raster.spectral_axis for raster in self.data])
 
     @property
     def time(self):
@@ -133,9 +133,9 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         else:
             lat_range = None
         if data0._spectral_name:
-            spectrals = self.spectral
-            spectral_min = spectrals.min()
-            spectral_max = spectrals.max()
+            spectral_vals = self.spectral_axis
+            spectral_min = spectral_vals.min()
+            spectral_max = spectral_vals.max()
             spectral_range = spectral_min if spectral_min == spectral_max else \
                 u.Quantity([spectral_min, spectral_max])
         else:
