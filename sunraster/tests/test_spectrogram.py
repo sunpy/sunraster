@@ -7,7 +7,7 @@ from ndcube.utils.wcs import WCS
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from sunraster import Raster
+from sunraster import SpectrogramCube
 
 # Define a sample wcs object
 h0 = {
@@ -38,47 +38,29 @@ extra_coords1 = [("time", 0,
 # Define meta data
 meta_seq = {"a": 0}
 
-# Define Rasters in various units.
-spectrogram_DN0 = Raster(
+# Define SpectrogramCubes in various units.
+spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords0, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN_per_s0 = Raster(
-    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords0, u.ct / u.s,
-    SOURCE_UNCERTAINTY_DN / single_exposure_time)
-spectrogram_DN_per_s_per_s0 = Raster(
-    SOURCE_DATA_DN /
-    single_exposure_time /
-    single_exposure_time,
-    wcs0,
-    extra_coords0,
-    u.ct /
-    u.s /
-    u.s,
-    SOURCE_UNCERTAINTY_DN /
-    single_exposure_time /
-    single_exposure_time)
-spectrogram_DN_s0 = Raster(
-    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords0, u.ct * u.s,
-    SOURCE_UNCERTAINTY_DN * single_exposure_time)
-spectrogram_DN1 = Raster(
+spectrogram_DN_per_s0 = SpectrogramCube(
+    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords0, u.ct/u.s,
+    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+spectrogram_DN_per_s_per_s0 = SpectrogramCube(
+    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords0, u.ct/u.s/u.s,
+    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+spectrogram_DN_s0 = SpectrogramCube(
+    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords0, u.ct*u.s,
+    SOURCE_UNCERTAINTY_DN*single_exposure_time)
+spectrogram_DN1 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords1, u.ct, SOURCE_UNCERTAINTY_DN)
-spectrogram_DN_per_s1 = Raster(
-    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords1, u.ct / u.s,
-    SOURCE_UNCERTAINTY_DN / single_exposure_time)
-spectrogram_DN_per_s_per_s1 = Raster(
-    SOURCE_DATA_DN /
-    single_exposure_time /
-    single_exposure_time,
-    wcs0,
-    extra_coords1,
-    u.ct /
-    u.s /
-    u.s,
-    SOURCE_UNCERTAINTY_DN /
-    single_exposure_time /
-    single_exposure_time)
-spectrogram_DN_s1 = Raster(
-    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords1, u.ct * u.s,
-    SOURCE_UNCERTAINTY_DN * single_exposure_time)
+spectrogram_DN_per_s1 = SpectrogramCube(
+    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords1, u.ct/u.s,
+    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+spectrogram_DN_per_s_per_s1 = SpectrogramCube(
+    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords1, u.ct/u.s/u.s,
+    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+spectrogram_DN_s1 = SpectrogramCube(
+    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
+    SOURCE_UNCERTAINTY_DN*single_exposure_time)
 
 
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
