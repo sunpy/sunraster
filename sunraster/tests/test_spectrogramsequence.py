@@ -105,17 +105,19 @@ raster_no_wave1 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_co
 sequence_DN_no_wave = RasterSequence([raster_no_wave0, raster_no_wave1], 0)
 
 # Define raster sequence with missing slit axes.
-raster_no_slit0 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
-                         missing_axes=[False, True, False])
-raster_no_slit1 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
-                         missing_axes=[False, True, False])
+#raster_no_slit0 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+#                                  missing_axes=[False, True, False])
+raster_no_slit0 = raster_no_slit1 = spectrogram_DN0[:, 0]
+#raster_no_slit1 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+#                                  missing_axes=[False, True, False])
 sequence_DN_no_slit = RasterSequence([raster_no_slit0, raster_no_slit1], 0)
 
 # Define raster sequence with missing slit step axes.
-raster_no_step0 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
-                         missing_axes=[False, False, True])
-raster_no_step1 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
-                         missing_axes=[False, False, True])
+#raster_no_step0 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+#                                  missing_axes=[False, False, True])
+raster_no_step0 = raster_no_step1 = spectrogram_DN0[0] 
+#raster_no_step1 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+#                                  missing_axes=[False, False, True])
 sequence_DN_no_step = RasterSequence([raster_no_step0, raster_no_step1], None)
 
 

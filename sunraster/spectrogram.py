@@ -106,8 +106,7 @@ class SpectrogramABC(abc.ABC):
 
 class SpectrogramCube(NDCube, SpectrogramABC):
     """
-    Class representing a sit-and-stare or single raster of slit spectrogram
-    data.
+    Class representing a sit-and-stare or single raster of slit spectrogram data.
 
     Must be described by a single WCS.
 
@@ -115,12 +114,21 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
+
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-    unit : `astropy.unit.Unit` or `str`
+
+    extra_coords : iterable of `tuple`, each with three entries, optional
+        (`str`, `int`, `astropy.units.quantity` or array-like)
+        Gives the name, axis of data, and values of coordinates of a data axis not
+        included in the WCS object.
+
+    unit : `astropy.unit.Unit` or `str`, optional
         Unit for the dataset. Strings that can be converted to a Unit are allowed.
-    meta : dict-like object
+
+    meta : dict-like object, optional
         Additional meta information about the dataset.
+
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
@@ -128,14 +136,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         such an interface is NDUncertainty - but isn’t mandatory. If the uncertainty
         has no such attribute the uncertainty is stored as UnknownUncertainty.
         Defaults to None.
+
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-    extra_coords : iterable of `tuple`, each with three entries
-        (`str`, `int`, `astropy.units.quantity` or array-like)
-        Gives the name, axis of data, and values of coordinates of a data axis not
-        included in the WCS object.
+
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every attribute
         before saving it while False tries to save every parameter as reference.
@@ -144,10 +150,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     """
 
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
-                 mask=None, copy=False, missing_axes=None):
+                 mask=None, copy=False, **kwargs):
         # Initialize SpectrogramCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
-                         extra_coords=extra_coords, copy=copy, missing_axes=missing_axes)
+                         extra_coords=extra_coords, copy=copy, **kwargs)
 
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords

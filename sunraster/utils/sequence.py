@@ -46,8 +46,8 @@ def _slice_sequence_as_SnS(sequence, item):
     ...                             (slice(0, cubeB.shape[2])) # doctest: +SKIP
     """
     # Convert item to a list of single Raster items for each relevant raster.
-    n_slit_steps = np.array([c.data.shape[sequence._slit_step_axis] for c in sequence.data])
-    sequence_items = convert_SnS_item_to_sequence_items(item, sequence._slit_step_axis,
+    n_slit_steps = np.array([c.data.shape[sequence._common_axis] for c in sequence.data])
+    sequence_items = convert_SnS_item_to_sequence_items(item, sequence._common_axis,
                                                         n_slit_steps)
     # Use sequence items to slice NDCubeSequence.
     return ndcube.utils.sequence.slice_sequence_by_sequence_items(sequence, sequence_items)
