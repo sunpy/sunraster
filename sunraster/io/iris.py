@@ -43,7 +43,7 @@ def read_iris_spectrograph_level2_fits(
 
     Returns
     -------
-    result: `sunraster.instr.iris.spectrograph.IRISSpectrograph`
+    result: `ndcube.NDCollection`
     """
     if isinstance(filenames, str):
         filenames = [filenames]
@@ -206,34 +206,13 @@ def read_iris_spectrograph_level2_fits(
                 out_uncertainty = None
             # Appending NDCube instance to the corresponding window key in dictionary's list.
             data_dict[window_name].append(
-                IRISSpectrogramCube(hdulist[window_fits_indices[i]].data, wcs_, out_uncertainty,
-                                    DN_unit, single_file_meta, window_extra_coords,
-                                    mask=data_mask))
+                SpectrogramCube(hdulist[window_fits_indices[i]].data, wcs=wcs_,
+                                uncertainty=out_uncertainty, unit=DN_unit, meta=single_file_meta,
+                                extra_coords=window_extra_coords, mask=data_mask))
         hdulist.close()
-    # Construct dictionary of IRISSpectrogramCubeSequences for spectral windows
-    data = dict([(window_name, IRISSpectrogramCubeSequence(data_dict[window_name],
-                                                           window_metas[window_name],
-                                                           slit_step_axis=0))
-                 for window_name in spectral_windows_req])
-    # Initialize an IRISSpectrograph object.
-    return IRISSpectrograph(data, meta=top_meta)
-
-
-def _produce_obs_repr_string(meta):
-    obs_info = [meta.get(key, "Unknown") for key in ["OBSID", "OBS_DESC", "STARTOBS", "ENDOBS"]]
-    return """OBS ID: {obs_id}
-OBS Description: {obs_desc}
-OBS period: {obs_start} -- {obs_end}""".format(obs_id=obs_info[0], obs_desc=obs_info[1],
-                                               obs_start=obs_info[2], obs_end=obs_info[3])
-
-
-def _try_parse_time_on_meta(meta):
-    result = None
-    try:
-        result = Time(meta)
-    except ValueError as err:
-        if "not a valid time string!" not in err.args[0]:
-            raise err
-        else:
-            pass
-    return result
+    # Construct dictionary of SpectrogramSequences for spectral windows
+    window_data_pairs = [(window_name, RasterSequence(data_dict[window_name], common_axis=0,
+                                                      meta=window_metas[window_name]))
+                         for window_name in spectral_windows_req]
+    # Initialize an NDCollection object.
+    return NDCollection(window_data_pairs, aligned_axes=(0, 1, 2), meta=top_meta)
