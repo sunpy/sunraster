@@ -1,13 +1,14 @@
 import copy
 
 import numpy as np
+from ndcube import NDCollection
+from ndcube.utils.wcs import WCS
+
 import astropy.units as u
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
-from ndcube.utils.wcs import WCS
-from ndcube import NDCollection
 
-from sunraster import SpectrogramCube, RasterSequence
+from sunraster import RasterSequence, SpectrogramCube
 
 __all__ = ['read_iris_spectrograph_level2_fits']
 
@@ -19,8 +20,8 @@ DN_UNIT = {
                       DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"] * u.photon),
     "FUV": u.def_unit("DN_IRIS_FUV",
                       DETECTOR_GAIN["FUV"] / DETECTOR_YIELD["FUV"] * u.photon)}
-READOUT_NOISE = {"NUV": 1.2*DN_UNIT["NUV"],
-                 "FUV": 3.1*DN_UNIT["FUV"]}
+READOUT_NOISE = {"NUV": 1.2 * DN_UNIT["NUV"],
+                 "FUV": 3.1 * DN_UNIT["FUV"]}
 
 
 def read_iris_spectrograph_level2_fits(
@@ -200,7 +201,7 @@ def read_iris_spectrograph_level2_fits(
             if uncertainty:
                 out_uncertainty = u.Quantity(
                     np.sqrt((hdulist[window_fits_indices[i]].data * DN_unit).to(u.photon).value +
-                             readout_noise.to(u.photon).value**2),
+                            readout_noise.to(u.photon).value**2),
                     unit=u.photon).to(DN_unit).value
             else:
                 out_uncertainty = None

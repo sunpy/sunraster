@@ -7,7 +7,7 @@ from ndcube.utils.wcs import WCS
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from sunraster import SpectrogramCube, RasterSequence
+from sunraster import RasterSequence, SpectrogramCube
 
 # Define an sample wcs objects.
 h0 = {
@@ -18,25 +18,39 @@ h0 = {
 wcs0 = WCS(header=h0, naxis=3)
 
 h2 = {
-    'CTYPE1': 'HPLN-TAN', 'CUNIT1': 'deg', 'CDELT1': 0.2, 'CRPIX1': 0, 'CRVAL1': 10,
+    'CTYPE1': 'HPLN-TAN',
+    'CUNIT1': 'deg',
+    'CDELT1': 0.2,
+    'CRPIX1': 0,
+    'CRVAL1': 10,
     'NAXIS1': 3,
-    'CTYPE2': 'HPLT-TAN', 'CUNIT2': 'deg', 'CDELT2': 0.5, 'CRPIX2': 2, 'CRVAL2': 0.5, 'NAXIS2': 2,
-    'CTYPE3': 'WAVE    ', 'CUNIT3': 'Angstrom', 'CDELT3': 0.4, 'CRPIX3': 2, 'CRVAL3': 1, 'NAXIS3': 2}
+    'CTYPE2': 'HPLT-TAN',
+    'CUNIT2': 'deg',
+    'CDELT2': 0.5,
+    'CRPIX2': 2,
+    'CRVAL2': 0.5,
+    'NAXIS2': 2,
+    'CTYPE3': 'WAVE    ',
+    'CUNIT3': 'Angstrom',
+    'CDELT3': 0.4,
+    'CRPIX3': 2,
+    'CRVAL3': 1,
+    'NAXIS3': 2}
 wcs2 = WCS(header=h2, naxis=3)
 
 # WCS with no spectral axis.
 h_no_wave = {
-        'CTYPE1': 'HPLT-TAN', 'CUNIT1': 'deg', 'CDELT1': 0.5, 'CRPIX1': 2, 'CRVAL1': 0.5, 'NAXIS1': 2,
-        'CTYPE2': 'HPLN-TAN', 'CUNIT2': 'deg', 'CDELT2': 0.4, 'CRPIX2': 2, 'CRVAL2': 1, 'NAXIS2': 2}
+    'CTYPE1': 'HPLT-TAN', 'CUNIT1': 'deg', 'CDELT1': 0.5, 'CRPIX1': 2, 'CRVAL1': 0.5, 'NAXIS1': 2,
+    'CTYPE2': 'HPLN-TAN', 'CUNIT2': 'deg', 'CDELT2': 0.4, 'CRPIX2': 2, 'CRVAL2': 1, 'NAXIS2': 2}
 wcs_no_wave = WCS(header=h_no_wave, naxis=2)
 
-SOURCE_DATA_DN = np.array([[[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]],
-                           [[ 0.563,  1.132, -1.343], [-0.719,  1.441, 1.566]]])
+SOURCE_DATA_DN = np.array([[[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]],
+                           [[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]]])
 SOURCE_UNCERTAINTY_DN = np.sqrt(SOURCE_DATA_DN)
 
 time_dim_len = SOURCE_DATA_DN.shape[0]
 single_exposure_time = 2.
-EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len)+single_exposure_time, unit=u.s)
+EXPOSURE_TIME = u.Quantity(np.zeros(time_dim_len) + single_exposure_time, unit=u.s)
 
 # Define sample extra coords
 extra_coords0 = [("time", 0,
@@ -44,16 +58,41 @@ extra_coords0 = [("time", 0,
                  ("exposure time", 0, EXPOSURE_TIME)]
 extra_coords1 = [("time", 0,
                   (Time('2017-01-01') +
-                   TimeDelta(np.arange(time_dim_len, time_dim_len*2), format='sec'))),
+                   TimeDelta(np.arange(time_dim_len, time_dim_len * 2), format='sec'))),
                  ("exposure time", 0, EXPOSURE_TIME)]
 
-extra_coords20 = [("time", 2,
-                   Time('2017-01-01') + TimeDelta(np.arange(SOURCE_DATA_DN.shape[2]), format='sec')),
-                  ("exposure time", 2, u.Quantity(np.zeros(SOURCE_DATA_DN.shape[2])+single_exposure_time, unit=u.s))]
-extra_coords21 = [("time", 2,
-                   (Time('2017-01-01') +
-                    TimeDelta(np.arange(SOURCE_DATA_DN.shape[2], SOURCE_DATA_DN.shape[2]*2), format='sec'))),
-                  ("exposure time", 2, u.Quantity(np.zeros(SOURCE_DATA_DN.shape[2])+single_exposure_time, unit=u.s))]
+extra_coords20 = [
+    ("time",
+     2,
+     Time('2017-01-01') +
+     TimeDelta(
+         np.arange(
+             SOURCE_DATA_DN.shape[2]),
+         format='sec')),
+    ("exposure time",
+     2,
+     u.Quantity(
+         np.zeros(
+             SOURCE_DATA_DN.shape[2]) +
+         single_exposure_time,
+         unit=u.s))]
+extra_coords21 = [
+    ("time",
+     2,
+     (Time('2017-01-01') +
+      TimeDelta(
+         np.arange(
+             SOURCE_DATA_DN.shape[2],
+             SOURCE_DATA_DN.shape[2] *
+             2),
+         format='sec'))),
+    ("exposure time",
+     2,
+     u.Quantity(
+         np.zeros(
+             SOURCE_DATA_DN.shape[2]) +
+         single_exposure_time,
+         unit=u.s))]
 
 # Define meta data
 meta_seq = {"a": 0}
@@ -74,29 +113,47 @@ spectrogram_DN21 = SpectrogramCube(
 sequence_DN2 = RasterSequence([spectrogram_DN20, spectrogram_DN21], meta=meta_seq, common_axis=2)
 
 spectrogram_DN_per_s0 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords0, u.ct/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords0, u.ct / u.s,
+    SOURCE_UNCERTAINTY_DN / single_exposure_time)
 spectrogram_DN_per_s1 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords1, u.ct/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords1, u.ct / u.s,
+    SOURCE_UNCERTAINTY_DN / single_exposure_time)
 sequence_DN_per_s = RasterSequence(
-        [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0)
+    [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0)
 
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords0, u.ct/u.s/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+    SOURCE_DATA_DN /
+    single_exposure_time /
+    single_exposure_time,
+    wcs0,
+    extra_coords0,
+    u.ct /
+    u.s /
+    u.s,
+    SOURCE_UNCERTAINTY_DN /
+    single_exposure_time /
+    single_exposure_time)
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords1, u.ct/u.s/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+    SOURCE_DATA_DN /
+    single_exposure_time /
+    single_exposure_time,
+    wcs0,
+    extra_coords1,
+    u.ct /
+    u.s /
+    u.s,
+    SOURCE_UNCERTAINTY_DN /
+    single_exposure_time /
+    single_exposure_time)
 sequence_DN_per_s_per_s = RasterSequence(
     [spectrogram_DN_per_s_per_s0, spectrogram_DN_per_s_per_s1], meta=meta_seq, common_axis=0)
 
-spectrogram_DN_s0 = SpectrogramCube( 
-    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords0, u.ct*u.s,
-    SOURCE_UNCERTAINTY_DN*single_exposure_time)
+spectrogram_DN_s0 = SpectrogramCube(
+    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords0, u.ct * u.s,
+    SOURCE_UNCERTAINTY_DN * single_exposure_time)
 spectrogram_DN_s1 = SpectrogramCube(
-    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
-    SOURCE_UNCERTAINTY_DN*single_exposure_time)
+    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords1, u.ct * u.s,
+    SOURCE_UNCERTAINTY_DN * single_exposure_time)
 sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq, common_axis=0)
 
 # Define raster sequence with no spectral axes.
@@ -105,18 +162,18 @@ raster_no_wave1 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, extra_co
 sequence_DN_no_wave = RasterSequence([raster_no_wave0, raster_no_wave1], 0)
 
 # Define raster sequence with missing slit axes.
-#raster_no_slit0 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+# raster_no_slit0 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
 #                                  missing_axes=[False, True, False])
 raster_no_slit0 = raster_no_slit1 = spectrogram_DN0[:, 0]
-#raster_no_slit1 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
+# raster_no_slit1 = SpectrogramCube(SOURCE_DATA_DN[:, 0], wcs0, extra_coords0, u.ct,
 #                                  missing_axes=[False, True, False])
 sequence_DN_no_slit = RasterSequence([raster_no_slit0, raster_no_slit1], 0)
 
 # Define raster sequence with missing slit step axes.
-#raster_no_step0 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+# raster_no_step0 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
 #                                  missing_axes=[False, False, True])
-raster_no_step0 = raster_no_step1 = spectrogram_DN0[0] 
-#raster_no_step1 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
+raster_no_step0 = raster_no_step1 = spectrogram_DN0[0]
+# raster_no_step1 = SpectrogramCube(SOURCE_DATA_DN[0], wcs0, extra_coords0, u.ct,
 #                                  missing_axes=[False, False, True])
 sequence_DN_no_step = RasterSequence([raster_no_step0, raster_no_step1], None)
 

@@ -67,7 +67,7 @@ The principles outlined there are the same as ``sunraster`` except that
 you will have have to replace ``sunpy`` (or ``astropy`` if reading the AstroPy
 guide -- also recommended) with ``sunraster`` in the commands
 and replace the url of the SunPy Github repo with that for the
-`sunraster GitHub repo`_.
+`sunraster GitHub repository`_.
 
 .. _issue tracker: https://github.com/sunpy/sunraster/issues
 .. _GitHub: https://github.com/
