@@ -242,7 +242,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_TIMES_NAMES}")
+                             f"{SUPPORTED_TIME_NAMES}")
         return self._get_axis_coord(self._time_name, self._time_loc)
 
     @property
@@ -263,24 +263,25 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_LATITUDE_NAME}")
+                             f"{SUPPORTED_LATITUDE_NAMES}")
         return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
-        # Get exposure time in seconds and change array's shape so that
-        # it can be broadcast with data and uncertainty arrays.
+        # Get exposure time in seconds.
         exposure_time_s = self.exposure_time.to(u.s).value
+        # If exposure time is not scalar, change array's shape so that
+        # it can be broadcast with data and uncertainty arrays.
         if not np.isscalar(exposure_time_s):
-            if len(self.dimensions) == 1:
-                pass
-            elif len(self.dimensions) == 2:
-                exposure_time_s = exposure_time_s[:, np.newaxis]
-            elif len(self.dimensions) == 3:
-                exposure_time_s = exposure_time_s[:, np.newaxis, np.newaxis]
+            # Get data axis of exposure time.
+            if self._exposure_time_loc == "extra_coords":
+                exposure_axis = self.extra_coords[self._exposure_time_name]["axis"]
             else:
-                raise ValueError(
-                    "SpectrogramCube dimensions must be 2 or 3. Dimensions={}".format(
-                        len(self.dimensions.shape)))
+                exposure_axis = get_axis_number_from_axis_name(self._exposure_time_name,
+                                                               self.world_axis_physical_types)
+            # Change array shape for broadcasting
+            item = [np.newaxis] * self.data.ndim
+            item[exposure_axis] = slice(None)
+            exposure_time_s = exposure_time_s[tuple(item)]
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data_arrays, new_unit = _uncalculate_exposure_time_correction(

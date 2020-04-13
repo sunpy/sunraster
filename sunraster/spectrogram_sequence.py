@@ -6,7 +6,6 @@ from ndcube import NDCubeSequence
 
 import astropy.units as u
 
-from sunraster import utils
 from sunraster.spectrogram import SpectrogramABC
 
 __all__ = ['SpectrogramSequence', 'RasterSequence']
@@ -265,7 +264,7 @@ class _SnSSlicer:
         self.seq = seq
 
     def __getitem__(self, item):
-        result = utils.sequence._slice_sequence_as_SnS(self.seq, item)
+        result = self.seq.index_as_cube[item]
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
             result._single_scan_instrument_axes_types = _slice_scan_axis_types(
                 self.seq._single_scan_instrument_axes_types, item)
