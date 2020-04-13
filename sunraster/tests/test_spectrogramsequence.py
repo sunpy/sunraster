@@ -7,7 +7,7 @@ from ndcube.utils.wcs import WCS
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from sunraster import RasterSequence, SpectrogramCube
+from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
 
 # Define an sample wcs objects.
 H0 = {
@@ -241,3 +241,7 @@ def test_raster_instrument_axes_types(input_sequence, expected_raster_axes_types
 ])
 def test_SnS_instrument_axes_types(input_sequence, expected_SnS_axes_types):
     assert input_sequence.SnS_instrument_axes_types == expected_SnS_axes_types
+
+
+def test_slice_as_raster():
+    assert isinstance(sequence_DN[:, 0], SpectrogramSequence)
