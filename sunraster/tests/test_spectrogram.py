@@ -96,7 +96,7 @@ def test_spectral_axis_error():
 
 
 def test_time():
-    assert all(spectrogram_DN0.time == EXTRA_COORDS0[0][2])
+    assert (spectrogram_DN0.time == EXTRA_COORDS0[0][2]).all()
 
 
 def test_time_error():
@@ -105,12 +105,30 @@ def test_time_error():
 
 
 def test_exposure_time():
-    assert all(spectrogram_DN0.exposure_time == EXTRA_COORDS0[1][2])
+    assert (spectrogram_DN0.exposure_time == EXTRA_COORDS0[1][2]).all()
 
 
 def test_exposure_time_error():
     with pytest.raises(ValueError):
         spectrogram_NO_COORDS.exposure_time
+
+
+def test_lon():
+    assert (spectrogram_DN0.lon == spectrogram_DN0.axis_world_coords("lon")).all()
+
+
+def test_lon_error():
+    with pytest.raises(ValueError):
+        spectrogram_NO_COORDS.lon
+
+
+def test_lat():
+    assert (spectrogram_DN0.lat == spectrogram_DN0.axis_world_coords("lat")).all()
+
+
+def test_lat_error():
+    with pytest.raises(ValueError):
+        spectrogram_NO_COORDS.lat
 
 
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [

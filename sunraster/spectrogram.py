@@ -263,7 +263,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def lat(self):
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_LATITUDE_NAME}")
+                             f"{SUPPORTED_LATITUDE_NAMES}")
         return self._get_axis_coord(self._latitude_name, self._latitude_loc)
 
     def apply_exposure_time_correction(self, undo=False, force=False):
