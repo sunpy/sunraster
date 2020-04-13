@@ -7,8 +7,6 @@
 # -- Project information -----------------------------------------------------
 
 import os
-import sys
-import datetime
 
 from sunraster import __version__
 

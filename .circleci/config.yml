@@ -1,4 +1,11 @@
 version: 2.1
+
+no-backports: &no-backports
+  name: Skip any branches called cherry-pick
+  command: |
+    if [[ "${CIRCLE_BRANCH}" == *"cherry-pick"* || "${CIRCLE_BRANCH}" == *"backport"* ]]; then
+      circleci step halt
+    fi
 skip-check: &skip-check
   name: Check for [ci skip]
   command: bash .circleci/early_exit.sh
@@ -46,13 +53,22 @@ jobs:
   html-docs:
     docker:
       - image: continuumio/miniconda3
+    environment:
+      SUNPY_SAMPLEDIR=/root/sunpy/data/sample_data/
     steps:
+      - run: *no-backports
       - checkout
       - run: *skip-check
+      - restore_cache:
+          keys: sample-data-v12
       - run: *merge-check
       - run: *apt-install
-      - run: pip install -U tox
+      - run: pip install -U tox tox-pypi-filter>=0.12
       - run: tox -e build_docs
+      - save_cache:
+          key: sample-data-v12
+          paths:
+            - /root/sunpy/data/sample_data/
       - run:
           name: Prepare for upload
           command: |
@@ -68,7 +84,7 @@ jobs:
           path: docs/_build/html
       - run:
           name: "Built documentation is available at:"
-          command: DOCS_URL="${CIRCLE_BUILD_URL}/artifacts/${CIRCLE_NODE_INDEX}/${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}/docs/_build/html/index.html"; echo $DOCS_URL
+          command: DOCS_URL="${CIRCLE_BUILD_URL}/artifacts/${CIRCLE_NODE_INDEX}/docs/_build/html/index.html"; echo $DOCS_URL
 
 workflows:
   version: 2

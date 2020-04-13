@@ -42,25 +42,43 @@ meta_seq = {"a": 0}
 spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords0, u.ct, SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s0 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords0, u.ct/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords0, u.ct / u.s,
+    SOURCE_UNCERTAINTY_DN / single_exposure_time)
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords0, u.ct/u.s/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+    SOURCE_DATA_DN /
+    single_exposure_time /
+    single_exposure_time,
+    wcs0,
+    extra_coords0,
+    u.ct /
+    u.s /
+    u.s,
+    SOURCE_UNCERTAINTY_DN /
+    single_exposure_time /
+    single_exposure_time)
 spectrogram_DN_s0 = SpectrogramCube(
-    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords0, u.ct*u.s,
-    SOURCE_UNCERTAINTY_DN*single_exposure_time)
+    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords0, u.ct * u.s,
+    SOURCE_UNCERTAINTY_DN * single_exposure_time)
 spectrogram_DN1 = SpectrogramCube(
     SOURCE_DATA_DN, wcs0, extra_coords1, u.ct, SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s1 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time, wcs0, extra_coords1, u.ct/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time)
+    SOURCE_DATA_DN / single_exposure_time, wcs0, extra_coords1, u.ct / u.s,
+    SOURCE_UNCERTAINTY_DN / single_exposure_time)
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
-    SOURCE_DATA_DN/single_exposure_time/single_exposure_time, wcs0, extra_coords1, u.ct/u.s/u.s,
-    SOURCE_UNCERTAINTY_DN/single_exposure_time/single_exposure_time)
+    SOURCE_DATA_DN /
+    single_exposure_time /
+    single_exposure_time,
+    wcs0,
+    extra_coords1,
+    u.ct /
+    u.s /
+    u.s,
+    SOURCE_UNCERTAINTY_DN /
+    single_exposure_time /
+    single_exposure_time)
 spectrogram_DN_s1 = SpectrogramCube(
-    SOURCE_DATA_DN*single_exposure_time, wcs0, extra_coords1, u.ct*u.s,
-    SOURCE_UNCERTAINTY_DN*single_exposure_time)
+    SOURCE_DATA_DN * single_exposure_time, wcs0, extra_coords1, u.ct * u.s,
+    SOURCE_UNCERTAINTY_DN * single_exposure_time)
 
 
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [

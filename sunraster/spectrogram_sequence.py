@@ -1,13 +1,13 @@
-import textwrap
 import numbers
+import textwrap
 
 import numpy as np
-import astropy.units as u
-import ndcube.utils.sequence
 from ndcube import NDCubeSequence
 
-from sunraster.spectrogram import SpectrogramABC
+import astropy.units as u
+
 from sunraster import utils
+from sunraster.spectrogram import SpectrogramABC
 
 __all__ = ['SpectrogramSequence', 'RasterSequence']
 
@@ -40,6 +40,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
     """
+
     def __init__(self, data_list, common_axis=None, meta=None):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=common_axis, meta=meta)
@@ -114,7 +115,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         if data0._time_name:
             start_time = data0.time.value if data0.time.isscalar else data0.time[0].value
             data_1 = self.data[-1]
-            stop_time = data_1.time.value if data_1.time.isscalar  else data_1.time[-1].value
+            stop_time = data_1.time.value if data_1.time.isscalar else data_1.time[-1].value
             time_period = start_time if start_time == stop_time else (start_time, stop_time)
         else:
             time_period = None
@@ -156,7 +157,8 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
 class RasterSequence(SpectrogramSequence):
     """
-    Class for holding, slicing and plotting series of spectrograph raster scans.
+    Class for holding, slicing and plotting series of spectrograph raster
+    scans.
 
     Parameters
     ----------
@@ -170,6 +172,7 @@ class RasterSequence(SpectrogramSequence):
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
     """
+
     def __init__(self, data_list, common_axis, meta=None):
         # Initialize Sequence.
         super().__init__(data_list, common_axis=common_axis, meta=meta)
@@ -189,9 +192,9 @@ class RasterSequence(SpectrogramSequence):
                                          self.data[0]._spectral_name)
         if len(spectral_raster_index) == 1:
             self._single_scan_instrument_axes_types[spectral_raster_index] = \
-                    self._spectral_axis_name
+                self._spectral_axis_name
         # Slit axis name.
-        w = self._single_scan_instrument_axes_types == None
+        w = self._single_scan_instrument_axes_types == None  # NOQA
         if w.sum() > 1:
             raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
         self._single_scan_instrument_axes_types[w] = self._slit_axis_name
@@ -265,7 +268,7 @@ class _SnSSlicer:
         result = utils.sequence._slice_sequence_as_SnS(self.seq, item)
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
             result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                    self.seq._single_scan_instrument_axes_types, item)
+                self.seq._single_scan_instrument_axes_types, item)
         return result
 
 
@@ -286,7 +289,7 @@ def _slice_scan_axis_types(single_scan_axes_types, item):
     single_scan_axes_types: `numpy.ndarray`
         Value of RasterSequence._single_scan_axes_types,
         i.e. array of strings giving type of each axis.
-    
+
     item: `int`, `slice` or `tuple` of `slice`s.
         The slicing item that get applied to the Raster instances within the RasterSequences.
 
@@ -294,7 +297,6 @@ def _slice_scan_axis_types(single_scan_axes_types, item):
     -------
     new_single_scan_axes_types: `numpy.ndarray`
         Update value of axis types with which to replace RasterSequence._single_scan_axes_types.
-
     """
     # Get boolean axes indices of axis items that aren't int,
     # i.e. axes that are not sliced away.

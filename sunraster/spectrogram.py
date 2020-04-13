@@ -2,9 +2,10 @@ import abc
 import textwrap
 
 import numpy as np
+from ndcube.ndcube import NDCube
+from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
+
 import astropy.units as u
-from ndcube.ndcube import NDCube, NDCubeABC
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format, data_axis_to_wcs_axis
 
 __all__ = ['SpectrogramCube']
 
@@ -56,23 +57,33 @@ class SpectrogramABC(abc.ABC):
 
     @abc.abstractproperty
     def spectral_axis(self):
-        """Return the spectral coordinates for each pixel."""
+        """
+        Return the spectral coordinates for each pixel.
+        """
 
     @abc.abstractproperty
     def time(self):
-        """Return the time coordinates for each pixel."""
+        """
+        Return the time coordinates for each pixel.
+        """
 
     @abc.abstractproperty
     def exposure_time(self):
-        """Return the exposure time for each exposure."""
+        """
+        Return the exposure time for each exposure.
+        """
 
     @abc.abstractproperty
     def lon(self):
-        """Return the longitude coordinates for each pixel."""
+        """
+        Return the longitude coordinates for each pixel.
+        """
 
     @abc.abstractproperty
     def lat(self):
-        """Return the latitude coordinates for each pixel."""
+        """
+        Return the latitude coordinates for each pixel.
+        """
 
     @abc.abstractmethod
     def apply_exposure_time_correction(self, undo=False, force=False):
@@ -106,7 +117,8 @@ class SpectrogramABC(abc.ABC):
 
 class SpectrogramCube(NDCube, SpectrogramABC):
     """
-    Class representing a sit-and-stare or single raster of slit spectrogram data.
+    Class representing a sit-and-stare or single raster of slit spectrogram
+    data.
 
     Must be described by a single WCS.
 
@@ -159,15 +171,15 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         self_extra_coords = self.extra_coords
         world_axis_physical_types = np.array(self.world_axis_physical_types)
         self._longitude_name, self._longitude_loc = _find_axis_name(
-                SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
         self._latitude_name, self._latitude_loc = _find_axis_name(
-                SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords)
         self._spectral_name, self._spectral_loc = _find_axis_name(
-                SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords)
         self._time_name, self._time_loc = _find_axis_name(
-                SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
-                SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
 
     def __str__(self):
         if self._time_name:
@@ -311,7 +323,6 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
 
     loc: `str`
         The location where the coordinate is stored: "wcs" or "extra_coords".
-
     """
     axis_name = None
     loc = None
