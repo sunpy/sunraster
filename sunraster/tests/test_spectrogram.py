@@ -8,6 +8,7 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 
 from sunraster import SpectrogramCube
+import sunraster.spectrogram
 
 # Define a sample wcs object
 H0 = {
@@ -140,3 +141,15 @@ def test_lat_error():
 def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
     output_cube = input_cube.apply_exposure_time_correction(undo=undo, force=force)
     assert_cubes_equal(output_cube, expected_cube)
+
+
+def test_calculate_exposure_time_correction_error():
+    with pytest.raises(ValueError):
+        sunraster.spectrogram._calculate_exposure_time_correction((SOURCE_DATA_DN), u.s,
+                                                                  EXTRA_COORDS0[1][2])
+
+
+def test_uncalculate_exposure_time_correction_error():
+    with pytest.raises(ValueError):
+        sunraster.spectrogram._uncalculate_exposure_time_correction((SOURCE_DATA_DN), u.ct,
+                                                                    EXTRA_COORDS0[1][2])
