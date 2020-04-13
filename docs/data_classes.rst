@@ -156,15 +156,15 @@ These properties inspect the WCS and extra coords objects and locate where and
 how the relevant coordinate information is stored.
 This is possible only if the coordinate name is supported by `sunraster`.
 This see these supported names, see ``sunraster.SpectrogramCube.SUPPORTED_LONGITUDE_NAMES``,
-``sunraster.SpectrogramCube.SUPPORTED_LATITUDE_NAMES``,
-``sunraster.SpectrogramCube.SUPPORTED_SPECTRAL_NAMES``, and
-``sunraster.SpectrogramCube.SUPPORTED_TIME_NAMES``.
+``sunraster.spectrogram.SUPPORTED_LATITUDE_NAMES``,
+``sunraster.spectrogram.SUPPORTED_SPECTRAL_NAMES``, and
+``sunraster.spectrogram.SUPPORTED_TIME_NAMES``.
 If the coordinate name cannot be found, these properties raise an error.
 
 In addition to the four primary coordinates, `~sunraster.SpectrogramCube` also provides a
 convenience for the exposure time, `sunraster.SpectrogramCube.exposure_time`.
 The supported exposure time coordinate names can be found under
-``sunraster.SpectrogramCube.SUPPORTED_EXPOSURE_NAMES``.
+``sunraster.spectrogram.SUPPORTED_EXPOSURE_NAMES``.
 
 Dimensions
 ^^^^^^^^^^
