@@ -93,6 +93,13 @@ def test_spectral_axis_error():
     with pytest.raises(ValueError):
         spectrogram_NO_COORDS.spectral_axis
 
+def test_time():
+    assert all(spectrogram_DN0.time == EXTRA_COORDS0[0][2])
+
+def test_time_error():
+    with pytest.raises(ValueError):
+        spectrogram_NO_COORDS.time
+
 @pytest.mark.parametrize("input_cube, undo, force, expected_cube", [
     (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
     (spectrogram_DN_per_s0, True, False, spectrogram_DN0),

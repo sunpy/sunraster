@@ -242,7 +242,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def time(self):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_TIMES_NAMES}")
+                             f"{SUPPORTED_TIME_NAMES}")
         return self._get_axis_coord(self._time_name, self._time_loc)
 
     @property
