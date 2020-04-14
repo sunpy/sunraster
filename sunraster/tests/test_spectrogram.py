@@ -145,11 +145,11 @@ def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
 
 def test_calculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._calculate_exposure_time_correction((SOURCE_DATA_DN), u.s,
+        sunraster.spectrogram._calculate_exposure_time_correction(SOURCE_DATA_DN, None, u.s,
                                                                   EXTRA_COORDS0[1][2])
 
 
 def test_uncalculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._uncalculate_exposure_time_correction((SOURCE_DATA_DN), u.ct,
+        sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct,
                                                                     EXTRA_COORDS0[1][2])
