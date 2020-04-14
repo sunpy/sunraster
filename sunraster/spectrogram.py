@@ -220,6 +220,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 Spectral range: {spectral_range}
                 Data unit: {self.unit}"""))
 
+    def __repr__(self):
+        return f"{object.__repr__(self)}\n{str(self)}"
+
     def __getitem__(self, item):
         result = super().__getitem__(item)
         if result.extra_coords is None:
