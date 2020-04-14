@@ -287,16 +287,19 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             exposure_time_s = exposure_time_s[tuple(item)]
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
-            new_data_arrays, new_unit = _uncalculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+            new_data, new_uncertainty, new_unit = _uncalculate_exposure_time_correction(
+                self.data, self.uncertainty, self.unit, exposure_time_s, force=force)
         else:
-            new_data_arrays, new_unit = _calculate_exposure_time_correction(
-                (self.data, self.uncertainty.array), self.unit, exposure_time_s, force=force)
+            new_data, new_uncertainty, new_unit = _calculate_exposure_time_correction(
+                self.data, self.uncertainty, self.unit, exposure_time_s, force=force)
         # Return new instance of SpectrogramCube with correction applied/undone.
+
         return self.__class__(
-            new_data_arrays[0], self.wcs,
-            convert_extra_coords_dict_to_input_format(self.extra_coords, self.missing_axes),
-            new_unit, new_data_arrays[1], self.meta, mask=self.mask, missing_axes=self.missing_axes)
+            new_data, self.wcs,
+            extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
+                                                                   self.missing_axes),
+            unit=new_unit, uncertainty=new_uncertainty, meta=self.meta, mask=self.mask,
+            missing_axes=self.missing_axes)
 
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
@@ -348,69 +351,103 @@ def _find_name_in_array(supported_names, names_array):
         return names_array[name_index]
 
 
-def _calculate_exposure_time_correction(old_data_arrays, old_unit, exposure_time,
-                                        force=False):
+def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
     """
-    Applies exposure time correction to data arrays.
+    Applies exposure time correction to data and uncertainty arrays.
+
     Parameters
     ----------
-    old_data_arrays: iterable of `numpy.ndarray`s
-        Arrays of data to be converted.
+    data: `numpy.ndarray`
+        Data array to be converted.
+
+    uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
+        The uncertainty of each element in data.
+
     old_unit: `astropy.unit.Unit`
         Unit of data arrays.
+
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
+
     Returns
     -------
-    new_data_arrays: `list` of `numpy.ndarray`s
-        Data arrays with exposure time corrected for.
-    new_unit_time_accounted: `astropy.unit.Unit`
-        Unit of new data arrays after exposure time correction.
+    new_data: `numpy.ndarray`
+        Data array with exposure time corrected for.
+
+    new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
+        The uncertainty of each element in new_data.
+
+    new_unit: `astropy.unit.Unit`
+        Unit of new_data array after exposure time correction.
     """
+
     # If force is not set to True and unit already includes inverse time,
     # raise error as exposure time correction has probably already been
     # applied and should not be applied again.
-    if force is not True and u.s in old_unit.decompose().bases:
+    if force is not True and u.s in unit.decompose().bases:
         raise ValueError(APPLY_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does not include inverse time and so
         # exposure does need to be applied, or
         # user has set force=True and wants the correction applied
         # regardless of the unit.
-        new_data_arrays = [old_data / exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit / u.s
-    return new_data_arrays, new_unit
+        new_data = data / exposure_time
+        if uncertainty:
+            uncertainty_unit = uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
+            new_uncertainty = uncertainty.__class__(uncertainty.array / exposure_time,
+                                                    unit=uncertainty_unit)
+        else:
+            new_uncertainty = uncertainty
+        new_unit = unit / u.s
+    return new_data, new_uncertainty, new_unit
 
 
-def _uncalculate_exposure_time_correction(old_data_arrays, old_unit,
-                                          exposure_time, force=False):
+def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
     """
-    Removes exposure time correction from data arrays.
+    Removes exposure time correction from data and uncertainty arrays.
+
     Parameters
     ----------
-    old_data_arrays: iterable of `numpy.ndarray`s
-        Arrays of data to be converted.
+    data: `numpy.ndarray`
+        Data array to be converted.
+
+    uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
+        The uncertainty of each element in data.
+
     old_unit: `astropy.unit.Unit`
         Unit of data arrays.
+
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
+
     Returns
     -------
-    new_data_arrays: `list` of `numpy.ndarray`s
-        Data arrays with exposure time correction removed.
-    new_unit_time_accounted: `astropy.unit.Unit`
-        Unit of new data arrays after exposure time correction removed.
+    new_data: `numpy.ndarray`
+        Data array with exposure time corrected for.
+
+    new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
+        The uncertainty of each element in new_data.
+
+    new_unit: `astropy.unit.Unit`
+        Unit of new_data array after exposure time correction.
     """
+
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
-    if force is not True and u.s in (old_unit * u.s).decompose().bases:
+    if force is not True and u.s in (unit * u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
     else:
         # Else, either unit does include inverse time and so
         # exposure does need to be removed, or
         # user has set force=True and wants the correction removed
         # regardless of the unit.
-        new_data_arrays = [old_data * exposure_time for old_data in old_data_arrays]
-        new_unit = old_unit * u.s
-    return new_data_arrays, new_unit
+        new_data = data * exposure_time
+        if uncertainty:
+            uncertainty_unit = uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
+            new_uncertainty = uncertainty.__class__(uncertainty.array * exposure_time,
+                                                    unit=uncertainty_unit)
+        else:
+            new_uncertainty = uncertainty
+        new_unit = unit * u.s
+    return new_data, new_uncertainty, new_unit
