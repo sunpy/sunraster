@@ -1,8 +1,8 @@
 An Introduction to ``sunraster``
 ================================
 
-``Sunraster`` is a free, open-source, SunPy-affiliated package that provides
-the tools to manipulate and visualize slit spectrograph data using the Python
+``sunraster`` is a free, open-source, SunPy-affiliated package that provides
+tools to manipulate and visualize slit spectrograph data using the Python
 programming language.  The ``sunraster`` classes link observations
 with various forms of supporting data including: measurement
 uncertainties; units; a data mask to mark pixels with
@@ -18,7 +18,7 @@ unit(s) of the data through those conversions.  This leads to more
 efficient and accurate solar science.
 
 The ``sunraster`` classes inherit more fundamental functionalities from the
-`ndcube`_ package.  It is a powerful, generic slicing API (application
+`ndcube`_ package.  These include a powerful, generic slicing API (application
 programmable interface) allowing users to manipulate the same data
 object as though it were 3D (time, position along slit, wavelength) or
 4D (raster scan number, slit step, position along slit, wavelength),

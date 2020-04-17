@@ -10,7 +10,7 @@ SpectrogramCube
 ---------------
 
 The fundamental data class of the ``sunraster`` package is `~sunraster.SpectrogramCube`.
-It is designed to handle data representing one or more spectrograms of some solar regions.
+It is designed to handle data representing one or more spectrograms of solar regions.
 `~sunraster.SpectrogramCube` stores its data as an array whose
 transformations between pixel and real world coordinates are described by
 a single ``astropy`` WCS (World Coordinate System) object.
@@ -897,7 +897,7 @@ Therefore, combining them in a `~sunraster.RasterSequence` is not appropriate.
 ``sunraster`` does not provide a suitable object for this purpose.
 However, because `~sunraster.SpectrogramCube` `~sunraster.SpectrogramSequence`
 and `~sunraster.RasterSequence` are instances of ``ndcube`` classes underneath,
-users can employ the `~ndcube.NDCollection` class for this purpose.
+users can employ the `ndcube.NDCollection` class for this purpose.
 `~ndcube.NDCollection` is a ``dict``-like class that provides additional slicing
 capabilities of its constituent data cubes along aligned axes.
 To see whether `~ndcube.NDCollection` could be helpful for your research, see

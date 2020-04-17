@@ -6,8 +6,8 @@ sunraster
     :target: http://www.sunpy.org
     :alt: Powered by SunPy Badge
 
-``Sunraster`` is an open-source Python library that provides the tools to read in and
-analyze slit spectrograph data using the Python programming language.
+``sunraster`` is an open-source Python library that provides the tools to read in and
+analyze spectrogram data using the Python programming language.
 
 Installation
 ============
@@ -40,7 +40,7 @@ The best way to do this is to create a new python virtual environment
 
     $ git clone https://github.com/<your username>/sunraster.git
     $ cd sunraster
-    $ pip install -e .[dev]
+    $ pip install -e .
 
 
 For detailed installation instructions (aimed at installing ``sunpy``),
