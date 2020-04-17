@@ -28,10 +28,8 @@ If you run into unexpected behavior or a bug please report it.
 All bugs are raised and stored on our `issue tracker`_.
 If you are not sure if your problem is a bug, a deficiency in functionality,
 or something else, send us a message on the SunPy chat room or an email
-to the developer mailing list.
-Ideally, we would like a short code example so we can run into the bug on our
-own machines.
-See :ref:`getting_help`.
+to the developer mailing list. Ideally, we would like a short code example
+so we can run into the bug on our own machines. See :ref:`getting_help`.
 
 .. _contributing_code:
 

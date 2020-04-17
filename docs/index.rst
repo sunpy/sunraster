@@ -2,7 +2,7 @@
 Welcome to the sunraster Guide
 ******************************
 
-Welcome to the sunraster User Guide. sunraster is a SunPy-affiliated
+Welcome to the ``sunraster`` User Guide. ``Sunraster`` is a SunPy-affiliated
 package designed for reading, manipulating and visualizing data taken
 with slit spectrograph instruments.
 

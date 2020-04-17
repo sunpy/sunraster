@@ -6,19 +6,35 @@ sunraster
     :target: http://www.sunpy.org
     :alt: Powered by SunPy Badge
 
-sunraster is an open-source Python library for something.
+``Sunraster`` is an open-source Python library that provides the tools to read in and
+analyze slit spectrograph data using the Python programming language.
 
 Installation
 ============
 
-There is no easy way to install this (yet).
+An easy way to install ``sunraster`` is to do so with the anaconda distribution
+using the conda-forge channel, with the following command at the terminal:
+
+.. code-block:: console
+
+  conda install --channel conda-forge sunraster
+
+Another equally easy way to install ``sunraster`` is with pip:
+
+.. code-block:: console
+
+  pip install sunraster
+
+For information on how to upgrade, please see the
+:ref:`Installing the Stable Version <stable_install>` section of the docs.
 
 Developing
 ==========
 
-If you want to develop sunraster you will need to install from GitHub.
-We suggest you fork sunraster so you can work on it.
-The best way to do this is to create a new python virtual environment (conda/pipenv or others) and then install the git version of sunraster:
+If you want to develop ``sunraster`` you will need to install from GitHub.
+We suggest you fork ``sunraster`` so you can work on it.
+The best way to do this is to create a new python virtual environment
+(conda/pipenv or others) and then install the git version of ``sunraster``:
 
 .. code:: bash
 
@@ -27,12 +43,13 @@ The best way to do this is to create a new python virtual environment (conda/pip
     $ pip install -e .[dev]
 
 
-For detailed installation instructions (aimed at installing sunpy), see the `Newcomers' guide`_ in the SunPy docs.
+For detailed installation instructions (aimed at installing ``sunpy``),
+see the `Newcomers' guide`_ in the SunPy docs.
 
 Getting Help
 ============
 
-For more information or to ask questions about sunraster, check out:
+For more information or to ask questions about ``sunraster``, check out:
 
 -  `sunraster Documentation`_
 -  `SunPy Matrix Channel`_
@@ -45,9 +62,11 @@ For more information or to ask questions about sunraster, check out:
 Contributing
 ============
 
-If you would like to get involved, start by joining the `SunPy mailing list`_ and check out the `Developers Guide`_ section of the SunPy docs.
+If you would like to get involved, start by joining the `SunPy mailing list`_ and
+check out the `Developers Guide`_ section of the SunPy docs.
 Stop by our chat room `#sunpy:openastronomy.org`_ if you have any questions.
-Help is always welcome so let us know what you like to work on, or check out the `issues page`_ for the list of known outstanding items.
+Help is always welcome so let us know what you like to work on, or check out the
+`issues page`_ for the list of known outstanding items.
 
 For more information on contributing to sunraster, please read SunPy's `Newcomers' guide`_.
 

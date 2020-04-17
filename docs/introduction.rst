@@ -1,26 +1,26 @@
 An Introduction to ``sunraster``
 ================================
 
-``sunraster`` is a free, open-source, SunPy-affiliated package that provides
-tools to manipulate and visualize slit spectrograph data using the Python
+``Sunraster`` is a free, open-source, SunPy-affiliated package that provides
+the tools to manipulate and visualize slit spectrograph data using the Python
 programming language.  The ``sunraster`` classes link observations
 with various forms of supporting data including: measurement
 uncertainties; units; a data mask to mark pixels with
 unreliable or unphysical data values; WCS (World Coordinate System)
 transformations that describe the position, wavelengths and times
 represented by the pixels; and general metadata.  These classes also
-provide methods for applying and removing exposure time correction to/from
+provide methods for applying and removing exposure time corrections to/from
 the observations. Moreover, because the data unit is linked
-to the object, it is always obvious what unit the data is in.  This
+to the object, it is always obvious what unit(s) the data is in.  This
 saves scientists the hassle of performing important, but laborious and
 repetitive data conversions and avoid confusion by always tracking the
-unit of the data through those conversions.  This leads to more
-efficient and accurate science.
+unit(s) of the data through those conversions.  This leads to more
+efficient and accurate solar science.
 
-``sunraster`` classes inherit more fundamental functionality from the
-`ndcube`_ package.  A powerful, generic slicing API (application
-programmable interface) allows users to manipulate the same data
-object as if it were 3D (time, position along slit, wavelength) or
+The ``sunraster`` classes inherit more fundamental functionalities from the
+`ndcube`_ package.  It is a powerful, generic slicing API (application
+programmable interface) allowing users to manipulate the same data
+object as though it were 3D (time, position along slit, wavelength) or
 4D (raster scan number, slit step, position along slit, wavelength),
 which is very useful when dealing with scanning slit-spectrograph data.
 The API simultaneously slices not only the data, but the uncertainties,
