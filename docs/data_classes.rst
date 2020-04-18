@@ -182,7 +182,7 @@ enable users to inspect the shape and WCS axis types of the
 
 `~sunraster.SpectrogramCube.dimensions` returns a `~astropy.units.Quantity`
 giving the length of each dimension in pixel units while
- `~sunraster.SpectrogramCube.world_axis_physical_types`
+`~sunraster.SpectrogramCube.world_axis_physical_types`
 returns an iterable of strings denoting the type of physical property
 represented by the axes.  The axis names are in accordance with the
 International Virtual Observatory Alliance (IVOA)
