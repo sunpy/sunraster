@@ -13,7 +13,7 @@ The fundamental data class of the ``sunraster`` package is `~sunraster.Spectrogr
 It is designed to handle data representing one or more spectrograms of solar regions.
 `~sunraster.SpectrogramCube` stores its data as an array whose
 transformations between pixel and real world coordinates are described by
-a single astropy WCS (World Coordinate System) object.
+a single ``astropy`` WCS (World Coordinate System) object.
 (For data that is described by multiple WCS objects, see the
 :ref:`sequence` :ref:`raster_sequence` sections below.)
 `~sunraster.SpectrogramCube` is subclassed from `ndcube.NDCube` and so inherits the
@@ -52,16 +52,14 @@ WCS object is reversed relative to the data array.
 
 We have defined the first axis to be spatial (helioprojective longitude and latitude)
 which implies that this series of spectrograms represents a raster scan across a
-solar region.
-The second axis (position along slit) also has coordinates of helioprojective
-longitude and latitude.
+solar region. The second axis (position along slit) also has coordinates of
+helioprojective longitude and latitude.
 Although we often think of the x-dimension as longitude and the
 y-dimension as latitude, latitude and longitude are in fact coupled dimensions.
 This means that -- except in a small number of edge cases -- moving along the slit
 in y-direction will cause both the latitude AND longitude to change, even if
-only slightly.
-This is important to understand when interacting with the WCS object,
-and hence the `~sunraster.SpectrogramCube` class.
+only slightly. This is important to understand when interacting
+with the WCS object, and hence the `~sunraster.SpectrogramCube` class.
 The 3rd axis (spectral) has coordinates of wavelength.
 
 Now that we have a data array and a corresponding WCS object, we can
@@ -80,14 +78,13 @@ whole as all relevant data and metadata is sliced simultaneously.
 
 Thanks to the fact that `~sunraster.SpectrogramCube` is subclassed from
 `~ndcube.NDCube`, you can also supply additional data to the instance.
-These include: metadata (`dict` or dict-like) located in `sunraster.SpectrogramCube.meta`;
-a data mask (boolean `numpy.ndarray`) located in `sunraster.SpectrogramCube.mask`
+These include: metadata (``dict`` or dict-like) located in `sunraster.SpectrogramCube.meta`;
+a data mask (boolean ``numpy.ndarray``) located in ``sunraster.SpectrogramCube.mask``
 for marking reliable and unreliable pixels;
-a unit (`astropy.units.Unit` or unit `str`) located at `sunraster.SpectrogramCube.unit`;
+a unit (``astropy.units.Unit`` or unit `str`) located at ``sunraster.SpectrogramCube.unit``;
 and an uncertainty array (`numpy.ndarray`) located in `~sunraster.SpectrogramCube.uncertainty`
-describing the uncertainty of each data array value.
-It is advised that you use one of astropy's uncertainty classes to describe
-your uncertainty.
+describing the uncertainty of each data array value. It is advised that you use
+one of astropy's uncertainty classes to describe your uncertainty.
 However, this is not required by `~sunraster.SpectrogramCube`.
 A simple array will still work but will cause a warning to be raised.
 Here is an example of how to instantiate these attributes.
@@ -113,31 +110,33 @@ The primary location for coordinate information in a `~sunraster.SpectrogramCube
 instance is its WCS.
 The coordinate values for each axis and pixel can be accessed via the
 `~sunraster.SpectrogramCube.axis_world_coords`, `~sunraster.SpectrogramCube.pixel_to_world` and
-`~sunraster.SpectrogramCube.world_to_pixel` methods inherited from `ndcube.NDCube`.
+`~sunraster.SpectrogramCube.world_to_pixel` methods inherited from ``ndcube.NDCube``.
 To learn how to use these coordinate transformation methods, see the
-`NDCube coordinate transformations documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#coordinate-transformations>`_
+`NDCube coordinate transformations documentation
+<https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#coordinate-transformations>`_
 
 Extra Coordinates
 *****************
 
 `~sunraster.SpectrogramCube` can also store array-based real world coordinates
 that aren't described by the WCS object.
-These can be accessed via the `sunraster.SpectrogramCube.extra_coords` property,
+These can be accessed via the ``sunraster.SpectrogramCube.extra_coords`` property,
 also inherited from `~ndcube.NDCube`.
 `~sunraster.SpectrogramCube.extra_coords` is particularly useful if
 the temporal axis is convolved with space, as is the case for raster scans.
 Therefore, if the WCS object only supplies (lat, lon) for the x-axis, the
 timestamp of each exposure can be attached separately, e.g. as an
-`astropy.time.Time` object.
-`~sunraster.SpectrogramCube.extra_coords` is not restricted to timestamps.
-The user can supply any additional coordinate as an `astropy.units.Quantity`
-or other array-like.
+``astropy.time.Time`` object. `~sunraster.SpectrogramCube.extra_coords`
+is not restricted to timestamps. The user can supply any additional coordinate
+as an ``astropy.units.Quantity`` or other array-like.
 Metadata that has a relationship with an axis but isn't strictly a coordinate
 can also be stored, e.g. the exposure time of each image.
 (See :ref:`cube_exposure_time_correction` for more on `~sunraster.SpectrogramCube`'s
 handling of exposure times.)
 To learn how to attach extra coordinates to a `~sunraster.SpectrogramCube` instance
-and how to access them once attached, see the `NDCube extra coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#extra-coordinates>`_
+and how to access them once attached, see the
+`NDCube extra coordinates documentation
+<https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#extra-coordinates>`_
 
 Coordinate Properties
 *********************
@@ -151,7 +150,7 @@ Note that both `sunraster.SpectrogramCube.lon` and `sunraster.SpectrogramCube.la
 return 2-D data because longitude and latitude are couple dimensions.
 These properties inspect the WCS and extra coords objects and locate where and
 how the relevant coordinate information is stored.
-This is possible only if the coordinate name is supported by `sunraster`.
+This is possible only if the coordinate name is supported by ``sunraster``.
 To see these supported names, see
 ``sunraster.SpectrogramCube.SUPPORTED_LONGITUDE_NAMES``,
 ``sunraster.spectrogram.SUPPORTED_LATITUDE_NAMES``,
@@ -162,7 +161,7 @@ If you think additional coordinate names should be supported,
 please let us know by `raising an issue on our GitHub repo. <https://github.com/sunpy/sunraster/issues>`
 
 In addition to the four primary coordinates, there is also a convenience
-for the exposure time, `sunraster.SpectrogramCube.exposure_time`.
+for the exposure time, ``sunraster.SpectrogramCube.exposure_time``.
 The supported exposure time coordinate names can be found under
 ``sunraster.spectrogram.SUPPORTED_EXPOSURE_NAMES``.
 
@@ -211,7 +210,7 @@ Plotting
 
 To quickly and easily visualize spectrograms,
 `~sunraster.SpectrogramCube` inherits a simple-to-use,
-yet powerful plotting method from `ndcube.NDCube`.
+yet powerful plotting method from `~ndcube.NDCube`.
 It is intended to be a useful quicklook tool and not a
 replacement for high quality plots or animations, e.g. for
 publications.  The plot method can be called very simply.
@@ -255,7 +254,7 @@ Let's recreate our spectrogram object again, but this time with exposure times o
   ...                                   extra_coords=extra_coords_input)
 
 Note that the API for supplying extra coordinates is an iterable of
-tuples of the form (`str`, `int`, `~astropy.units.Quantity` or array-like).
+tuples of the form (``str``, ``int``, `~astropy.units.Quantity` or array-like).
 The 0th entry gives the name of the coordinate, the 1st entry gives the data
 axis to which the extra coordinate corresponds, and the 2nd entry
 gives the value of that coordinate at each pixel along the axis.
@@ -465,14 +464,12 @@ where the additional dimension represent the coordinates for different
 Exposure Time Correction
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Analagous to `~sunraster.SpectrogramCube`, `~sunraster.SpectrogramSequence`
+Analogous to `~sunraster.SpectrogramCube`, `~sunraster.SpectrogramSequence`
 also provides a `~sunraster.SpectrogramSequence.apply_exposure_time_coorection`
-method.
-This is simply a wrapper around the `~sunraster.SpectrogramCube` version that
-saves users from apply or removing the exposure time correction to each
-`~sunraster.SpectrogramCube` manually.
-To remind yourself how that method works, see the `~sunraster.SpectrogramCube`
-:ref:`cube_exposure_time_correction` section.
+method. This is simply a wrapper around the `~sunraster.SpectrogramCube` version
+that saves users from apply or removing the exposure time correction to each
+`~sunraster.SpectrogramCube` manually. To remind yourself how that method works,
+see the `~sunraster.SpectrogramCube` :ref:`cube_exposure_time_correction` section.
 
 Slicing
 ^^^^^^^
@@ -836,7 +833,7 @@ Which is displayed depends on the dimensionality of the `~sunraster.RasterSequen
 and the inputs of the user.
 `~sunraster.RasterSequence.plot_as_raster` and
 `~sunraster.RasterSequence.plot_as_SnS` are in fact simply aliases for the
-`ndcube.NDCubeSequence.plot` and `ndcube.NDCubeSequence.plot_as_cube` methods,
+``ndcube.NDCubeSequence.plot`` and ``ndcube.NDCubeSequence.plot_as_cube`` methods,
 respectively.
 For learn more about how these routines work and the optional inputs that
 enable users to customize their output, see the
@@ -899,9 +896,9 @@ Therefore, combining them in a `~sunraster.RasterSequence` is not appropriate.
 
 ``sunraster`` does not provide a suitable object for this purpose.
 However, because `~sunraster.SpectrogramCube` `~sunraster.SpectrogramSequence`
-and `~sunraster.RasterSequence` are instances of `ndcube` classes underneath,
+and `~sunraster.RasterSequence` are instances of ``ndcube`` classes underneath,
 users can employ the `ndcube.NDCollection` class for this purpose.
-`~ndcube.NDCollection` is a `dict`-like class that provides additional slicing
+`~ndcube.NDCollection` is a ``dict``-like class that provides additional slicing
 capabilities of its constituent data cubes along aligned axes.
 To see whether `~ndcube.NDCollection` could be helpful for your research, see
 the

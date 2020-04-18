@@ -2,7 +2,7 @@
 Installation
 ============
 
-``sunraster`` requires Python 3.5+, SunPy 0.9+, ndcube 1.0.1+, astropy and
+``sunraster`` requires Python 3.7+, SunPy 1.0.0+, ndcube 1.3.0+, astropy and
 matplotlib.
 
 Below we will outline how to install ``sunraster``.
@@ -58,7 +58,7 @@ and `SunPy`_. Both of these have stable released versions that work
 with ``sunraster``. However, some developers may want to use the latest
 updates of these packages in their work with ``sunraster``. Below we will first
 outline how to install ``sunraster`` with its stable dependencies, and then
-with the development versions of ndcube and SunPy.
+with the development versions of ``ndcube`` and ``sunpy``.
 
 To install these packages we will use a combination of conda, conda
 environments, pip and git. We will assume these are all installed on
@@ -91,7 +91,7 @@ users should type:
 
   activate sunraster-dev
 
-while Linux and MacOS users should type:
+whereas Linux and MacOS users should type:
 
 .. code-block:: console
 
@@ -110,7 +110,7 @@ want ``sunraster-git`` to reside, type:
 
 Install ``sunraster``
 """""""""""""""""""""
-Finally, we can install the ``sunraster`` development version.
+Finally, we can install the ``sunraster`` development version:
 
 .. code-block:: console
 
@@ -148,7 +148,7 @@ packages.  From the command line, type:
 The first line opens a conda channel so that ``sunraster`` and its
 dependencies can be installed. The second line creates the
 ``sunraster-dev`` conda environment with a list of dependencies. Next,
-you must activate that environment, i.e. switch into it.  Windows
+you must activate that environment, i.e. switch into it. Windows
 users should type:
 
 .. code-block:: console
@@ -159,7 +159,7 @@ while Linux and MacOS users should type:
 
 .. code-block:: console
 
-  source activate sunraster-dev
+  conda activate sunraster-dev
 
 Remove Stable Versions of ``sunpy`` and ``ndcube``
 """"""""""""""""""""""""""""""""""""""""""""""""""
@@ -168,10 +168,13 @@ We installed the stable versions of SunPy and ndcube above in
 order to get get all their dependencies. Now that is done, the second
 step is to remove the stable versions of SunPy and ndcube, leaving the
 dependencies intact.
-CAUTION: Make sure you are in (have activated) the ``sunraster-dev``
-conda environment otherwise the next step will remove SunPy and ndcube
-from the wrong conda environment. From the command line in any
-directory, type:
+
+.. note::
+
+    **CAUTION**: Make sure you are in (have activated) the ``sunraster-dev``
+    conda environment otherwise the next step will remove SunPy and ndcube
+    from the wrong conda environment. From the command line in any
+    directory, type:
 
 .. code-block:: console
 
@@ -199,16 +202,16 @@ directory in which you want your repos to live, type:
 
 If you already have these repos cloned, make sure they are up-to-date
 but by pulling the latest version of the master branches. For example,
-for sunpy, do:
+for ``sunpy``, do:
 
 .. code-block:: console
 
   cd ~/github_repos/sunpy-git
   git pull origin master
 
-assuming that ``origin`` is the remote pointing to the main sunpy
+assuming that ``origin`` is the remote pointing to the main ``sunpy``
 repo, i.e. https://github.com/sunpy/sunpy.git. The same should be done
-for ndcube and ``sunraster``. To determine the correct remote name , ``cd``
+for ``ndcube`` and ``sunraster``. To determine the correct remote name , ``cd``
 into the repo's directory and do
 
 .. code-block:: console
@@ -235,7 +238,7 @@ an Python/IPython/Jupyter Notebook session from any directory and try:
   import sunraster
 
 N.B. To ensure you continue to have the latest version of ``sunraster``, be
-sure to regularly update the sunpy, ndcube and ``sunraster`` git repos as
+sure to regularly update the ``sunpy``, ``ndcube`` and ``sunraster`` git repos as
 discussed at the end of :ref:`clone_repos`.
 
 .. _ndcube: http://docs.sunpy.org/projects/ndcube/en/stable/
