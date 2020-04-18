@@ -25,9 +25,6 @@ Another equally easy way to install ``sunraster`` is with pip:
 
   pip install sunraster
 
-For information on how to upgrade, please see the
-:ref:`Installing the Stable Version <stable_install>` section of the docs.
-
 Developing
 ==========
 
