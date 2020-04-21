@@ -1,3 +1,12 @@
+Sunraster v0.1.2 (2020-04-21)
+=============================
+
+Bug Fixes
+---------
+
+- Bump min ndcube version to fix bug caused when OS is bot 64-bit. (`#162 <https://github.com/sunpy/sunraster/pull/162>`__)
+
+
 Sunraster v0.1.1 (2020-04-20)
 =============================
 
