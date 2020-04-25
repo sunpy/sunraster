@@ -61,7 +61,7 @@ def read_iris_spectrograph_level2_fits(
             # Else take the appropriate windows
             if not spectral_windows:
                 spectral_windows_req = windows_in_obs
-                window_fits_indices = range(1, len(hdulist) - 2)
+                window_fits_indices = range(1, len(hdulist) - 1)
             else:
                 if isinstance(spectral_windows, str):
                     spectral_windows_req = [spectral_windows]
@@ -123,16 +123,16 @@ def read_iris_spectrograph_level2_fits(
                               for window_name in spectral_windows_req])
         # Determine extra coords for this raster.
         times = (Time(hdulist[0].header["STARTOBS"]) +
-                 TimeDelta(hdulist[-2].data[:, hdulist[-2].header["TIME"]], format='sec'))
+                 TimeDelta(hdulist[-1].data[:, hdulist[-1].header["TIME"]], format='sec'))
         np.arange(int(hdulist[0].header["NRASTERP"]))
-        pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
-        pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
-        xcenix = hdulist[-2].data[:, hdulist[-2].header["XCENIX"]] * u.arcsec
-        ycenix = hdulist[-2].data[:, hdulist[-2].header["YCENIX"]] * u.arcsec
-        obs_vrix = hdulist[-2].data[:, hdulist[-2].header["OBS_VRIX"]] * u.m / u.s
-        ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
-        exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
-        exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
+        pztx = hdulist[-1].data[:, hdulist[-1].header["PZTX"]] * u.arcsec
+        pzty = hdulist[-1].data[:, hdulist[-1].header["PZTY"]] * u.arcsec
+        xcenix = hdulist[-1].data[:, hdulist[-1].header["XCENIX"]] * u.arcsec
+        ycenix = hdulist[-1].data[:, hdulist[-1].header["YCENIX"]] * u.arcsec
+        obs_vrix = hdulist[-1].data[:, hdulist[-1].header["OBS_VRIX"]] * u.m / u.s
+        ophaseix = hdulist[-1].data[:, hdulist[-1].header["OPHASEIX"]]
+        exposure_times_fuv = hdulist[-1].data[:, hdulist[-1].header["EXPTIMEF"]] * u.s
+        exposure_times_nuv = hdulist[-1].data[:, hdulist[-1].header["EXPTIMEN"]] * u.s
         # If OBS is raster, include raster positions.  Otherwise don't.
         if top_meta["NRASTERP"] > 1:
             general_extra_coords = [("time", 0, times),
