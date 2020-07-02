@@ -1,0 +1,1 @@
+Include a base time to output of `sunraster.SpectrogramCube.time` when time is derived from WCS and a recognized base time can be found in meta.
