@@ -186,7 +186,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self.time.isscalar:
                 time_period = self.time
             else:
-                time_period = (self.time[0], self.time[-1])
+                time_period = (str(self.time.min()), str(self.time.max()))
         else:
             time_period = None
         if self._longitude_name:
