@@ -1,5 +1,6 @@
 import abc
 import textwrap
+import numbers
 
 import numpy as np
 from astropy.time import TimeDelta
@@ -8,6 +9,7 @@ from ndcube.ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
 __all__ = ['SpectrogramCube']
+
 
 # Define some custom error messages.
 APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
@@ -162,7 +164,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     """
 
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
-                 mask=None, copy=False, **kwargs):
+                 mask=None, instrument_axes=None, copy=False, **kwargs):
         # Initialize SpectrogramCube.
         super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
                          extra_coords=extra_coords, copy=copy, **kwargs)
@@ -180,6 +182,14 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
             SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
+
+        # Set up instrument axes if set.
+        if instrument_axes is None:
+            self.instrument_axes = instrument_axes
+        elif len(instrument_axes) != data.ndim:
+            raise ValueError("Length of instrument_axes must match number of data axes.")
+        else:
+            self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
     def __str__(self):
         if self._time_name:
@@ -214,7 +224,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 {self.__class__.__name__}
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
-                Pixel dimensions (Slit steps, Slit height, Spectral): {self.dimensions}
+                Instrument axes: {self.instrument_axes}
+                Pixel dimensions: {self.dimensions}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
@@ -224,15 +235,40 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         return f"{object.__repr__(self)}\n{str(self)}"
 
     def __getitem__(self, item):
+        # Slice SpectrogramCube using parent slicing.
         result = super().__getitem__(item)
+
+        # As result is an NDCube, must put extra coord back into input format
+        # to create a SpectrogramCube.
         if result.extra_coords is None:
             extra_coords = None
         else:
             extra_coords = convert_extra_coords_dict_to_input_format(result.extra_coords,
                                                                      result.missing_axes)
+
+        # Slice instrument_axes if it exists.
+        # If item is a slice, cube dimensionality is not reduced
+        # so instrument_axes need not be sliced.
+        if self.instrument_axes is None or isinstance(item, slice):
+            instrument_axes = self.instrument_axes
+        else:
+            # If item is int, instrument_axes needs slicing.
+            if isinstance(item, numbers.Integral):
+                instrument_axes = self.instrument_axes[1:]
+            # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
+            elif isinstance(item, tuple):
+                instr_item = [isinstance(i, numbers.Integral) for i in item] + \
+                        [False] * (len(self.instrument_axes) - len(item))
+                instrument_axes = self.instrument_axes[np.invert(instr_item)]
+            else:
+                raise TypeError("Unrecognized slice item. Must be int, slice or tuple.")
+            # If slicing causes cube to be a scalar, set instrument_axes to None.
+            if len(instrument_axes) == 0:
+                instrument_axes = None
+
         return self.__class__(result.data, result.wcs, extra_coords, result.unit,
                               result.uncertainty, result.meta, mask=result.mask,
-                              missing_axes=result.missing_axes)
+                              missing_axes=result.missing_axes, instrument_axes=instrument_axes)
 
     @property
     def spectral_axis(self):
