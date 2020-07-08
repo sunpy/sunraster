@@ -1,0 +1,1 @@
+Add optional instrument_axes attribute to SpectrogramCube to enable users to keep track of axes (including through slicing) when axes may have a significance not fully described by the world axis physical types.

@@ -85,7 +85,8 @@ spectrogram_DN_s1 = SpectrogramCube(
     SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, WCS0, EXTRA_COORDS1, u.ct * u.s,
     SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
 spectrogram_NO_COORDS = SpectrogramCube(SOURCE_DATA_DN, WCS_NO_COORDS)
-
+spectrogram_instrument_axes = SpectrogramCube(
+    SOURCE_DATA_DN, WCS0, EXTRA_COORDS0, u.ct, SOURCE_UNCERTAINTY_DN, instrument_axes=("a", "b", "c"))
 
 def test_spectral_axis():
     assert all(spectrogram_DN0.spectral_axis == spectrogram_DN0.axis_world_coords("em.wl"))
@@ -153,3 +154,15 @@ def test_uncalculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
         sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct,
                                                                     EXTRA_COORDS0[1][2])
+
+@pytest.mark.parametrize("item,expected", [
+        (0, np.array(["b", "c"])),
+        (slice(0, 1), np.array(["a", "b", "c"])),
+        ((slice(None), 0), np.array(["a", "c"])),
+        ((slice(None), slice(None), slice(0, 1)), np.array(["a", "b", "c"])),
+        ])
+def test_instrument_axes_slicing(item, expected):
+    sliced_cube = spectrogram_instrument_axes[item]
+    output = sliced_cube.instrument_axes
+    print(output, output.shape, expected, expected.shape)
+    assert all(output == expected)
