@@ -183,13 +183,13 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
             SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
 
-        # Set up instrument axes is set.
-        if instrument_axes is not None:
-            if len(instrument_axes) != data.ndim:
-                raise ValueError("Number of instrument axes must match number of data axes.")
-            self.instrument_axes = np.asarray(instrument_axes, dtype=str)
+        # Set up instrument axes if set.
+        if instrument_axes is None:
+            self.instrument_axes = instrument_axes
+        elif len(instrument_axes) != data.ndim:
+            raise ValueError("Length of instrument_axes must match number of data axes.")
         else:
-            self.instrument_axes = None
+            self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
     def __str__(self):
         if self._time_name:
@@ -235,26 +235,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         return f"{object.__repr__(self)}\n{str(self)}"
 
     def __getitem__(self, item):
-        # Slice instrument_axes if they exist.
-        if self.instrument_axes is not None:
-            # If item is int, instrument_axes needs slicing.
-            if isinstance(item, numbers.Integral):
-                instrument_axes = self.instrument_axes[1:]
-            # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
-            elif isinstance(item, tuple):
-                instr_item = [isinstance(i, numbers.Integral) for i in item] + \
-                        [False] * (self.data.ndim - len(item))
-                instrument_axes = self.instrument_axes[np.invert(instr_item)]
-            # If item a slice, cube dimensionality is not reduced
-            # so instrument_axes need not be sliced.
-            else:
-                instrument_axes = self.instrument_axes
-            # If slicing causes cube to be a scalar, set instrument_axes to None.
-            if len(instrument_axes) == 0:
-                instrument_axes = None
-        else:
-            instrument_axes = self.instrument_axes
-
         # Slice SpectrogramCube using parent slicing.
         result = super().__getitem__(item)
 
@@ -265,6 +245,26 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         else:
             extra_coords = convert_extra_coords_dict_to_input_format(result.extra_coords,
                                                                      result.missing_axes)
+
+        # Slice instrument_axes if it exists.
+        # If item is a slice, cube dimensionality is not reduced
+        # so instrument_axes need not be sliced.
+        if self.instrument_axes is None or isinstance(item, slice):
+            instrument_axes = self.instrument_axes
+        else:
+            # If item is int, instrument_axes needs slicing.
+            if isinstance(item, numbers.Integral):
+                instrument_axes = self.instrument_axes[1:]
+            # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
+            elif isinstance(item, tuple):
+                instr_item = [isinstance(i, numbers.Integral) for i in item] + \
+                        [False] * (len(self.instrument_axes) - len(item))
+                instrument_axes = self.instrument_axes[np.invert(instr_item)]
+            else:
+                raise TypeError("Unrecognized slice item. Must be int, slice or tuple.")
+            # If slicing causes cube to be a scalar, set instrument_axes to None.
+            if len(instrument_axes) == 0:
+                instrument_axes = None
 
         return self.__class__(result.data, result.wcs, extra_coords, result.unit,
                               result.uncertainty, result.meta, mask=result.mask,
