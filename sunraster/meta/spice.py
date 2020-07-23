@@ -1,15 +1,18 @@
+import copy
 
 from astropy.io import fits
 import astropy.units as u
+
+from sunraster.meta.meta import Meta, SlitSpectrographMetaABC
 
 
 __all__ = ["SPICEMeta"]
 
 
-class SPICEMeta(fits.header.Header, SlitSpectrographMetaABC):
+class SPICEMeta(Meta, SlitSpectrographMetaABC):
     def _get_unit(self, key):
         try:
-            return [s.split("]") for s in self.comments[key].split("[")[1:]][0][:-1][0]
+            return [s.split("]") for s in self.get_comment[key].split("[")[1:]][0][:-1][0]
         except IndexError:
             return None
         
@@ -28,7 +31,7 @@ class SPICEMeta(fits.header.Header, SlitSpectrographMetaABC):
         
     @property
     def spectral_window(self):
-        spectral_window = self["EXTNAME"]
+        spectral_window = self.get("EXTNAME")
         redundant_txt = "WINDOW"
         if redundant_txt in spectral_window:
             spectral_window = np.asanyarray(spectral_window.split("_"))
@@ -57,24 +60,32 @@ class SPICEMeta(fits.header.Header, SlitSpectrographMetaABC):
         return self._construct_quantity("RSUN_REF")
     
     @property
-    def rsun_obs(self):
+    def rsun_angular(self):
         return self._construct_quantity("RSUN_ARC")
     
     @property
-    def obsid(self):
+    def observing_mode_id(self):
         return self.get("OBS_ID", None)
     
     @property
-    def obsvr(self):
+    def observatory_radial_velocity(self):
         return self.get("OBS_VR", None)
 
     @property
-    def dsun(self):
+    def distance_to_sun(self):
         return self._construct_quantity("DSUN_OBS")
     
     @property
-    def date(self):
+    def date_reference(self):
         return self._construct_time("DATE-OBS")
+
+    @property
+    def date_start(self):
+        return self._construct_time("DATE-BEG")
+
+    @property
+    def date_end(self):
+        return self._construct_time("DATE-END")
 
     @property
     def observer_coordinate(self):
