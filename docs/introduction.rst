@@ -1,5 +1,5 @@
-An Introduction to ``sunraster``
-================================
+An Introduction to sunraster
+============================
 
 ``sunraster`` is a free, open-source, SunPy-affiliated package that provides
 tools to manipulate and visualize slit spectrograph data using the Python

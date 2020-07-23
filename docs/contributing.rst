@@ -1,6 +1,6 @@
-=============================
-Contributing to ``sunraster``
-=============================
+=========================
+Contributing to sunraster
+=========================
 
 We are always enthusiastic to welcome new users and developers who want
 to enhance the ``sunraster``.
