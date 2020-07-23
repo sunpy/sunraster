@@ -1,52 +1,54 @@
+import abc
+
 __all__ = ["RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
-class RemoteSensorMetaABC():
-    @property
+class RemoteSensorMetaABC(abc.ABCMeta):
+    @abc.abstractmethod
     def detector(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def instrument(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def observatory(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def processing_level(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def rsun_meters(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def rsun_obs(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def dsun(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def observer_coordinate(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def date(self):
         pass
 
 
 class SlitSpectrographMetaABC(RemoteSensorMetaABC):
-    @property
+    @abc.abstractmethod
     def spectral_window(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def obsid(self):
         pass
     
-    @property
+    @abc.abstractmethod
     def obsvr(self):
         pass
