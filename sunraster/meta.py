@@ -69,7 +69,7 @@ class Meta():
         self.original_header = copy.deepcopy(header)
 
     def get(self, key, default=None):
-        return self._get_fits(key, default):
+        return self._get_fits(key, default)
 
     def _get_fits(self, key, default=None):
         return self.raw_meta.get(key, default)

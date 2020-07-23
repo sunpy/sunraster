@@ -3,7 +3,7 @@ import copy
 from astropy.io import fits
 import astropy.units as u
 
-from sunraster.meta.meta import Meta, SlitSpectrographMetaABC
+from sunraster.meta import Meta, SlitSpectrographMetaABC
 
 
 __all__ = ["SPICEMeta"]
