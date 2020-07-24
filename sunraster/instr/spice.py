@@ -4,14 +4,51 @@ import numpy as np
 from astropy.io import fits
 import astropy.units as u
 from astropy.coordinates import SkyCoord
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
+from astropy.wcs import WCS
 from sunpy.coordinates import HeliographicStonyhurst
 from ndcube import NDCollection
 
 from sunraster.meta import Meta, SlitSpectrographMetaABC
+from sunraster import SpectrogramCube
 
 
-__all__ = ["SPICEMeta"]
+__all__ = ["read_spice_l2_fits", "SPICEMeta"]
+
+
+def read_spice_l2_fits(filename):
+    pass
+
+
+def _read_spice_exp_l2_fits(filename):
+    windows = []
+    with fits.open(filename) as hdulist:
+        for hdu in hdulist:
+            meta = SPICEMeta(hdu.header)
+            # Rename WCS time axis to time.
+            meta.update([("CTYPE4", "TIME")])
+            # Define exposure times from metadata.
+            exp_times = TimeDelta([meta.get("XPOSURE")], format="sec")
+            data = hdu.data
+            wcs = WCS(hdu.header)
+            spectrogram = SpectrogramCube(data=data, mask=np.isnan(data),
+                                          wcs=wcs,
+                                          extra_coords=[("exposure time", None, exp_times)],
+                                          meta=meta, unit=u.Unit(meta.get("BUNIT")))
+            #spectrogram = spectrogram[0, :, :, 0]
+            windows.append((hdu.header["EXTNAME"], spectrogram))
+    if len(windows) > 1:
+        return NDCollection(windows, aligned_axes=(1,))
+    else:
+        return spectrogram
+
+
+def _read_spice_raster_l2_fits(filename):
+    pass
+
+
+def _read_spice_sns_l2_fits(filename):
+    pass
 
 
 class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
