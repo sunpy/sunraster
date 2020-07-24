@@ -3,10 +3,10 @@ import textwrap
 import numbers
 
 import numpy as np
+from astropy.time import TimeDelta
+import astropy.units as u
 from ndcube.ndcube import NDCube
 from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
-
-import astropy.units as u
 
 __all__ = ['SpectrogramCube']
 
@@ -282,7 +282,14 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_TIME_NAMES}")
-        return self._get_axis_coord(self._time_name, self._time_loc)
+        times = self._get_axis_coord(self._time_name, self._time_loc)
+        if isinstance(times, (u.Quantity, TimeDelta)):
+            try:
+                if self.meta.date_reference:
+                    times += self.meta.date_reference
+            except AttributeError:
+                pass
+        return times
 
     @property
     def exposure_time(self):
