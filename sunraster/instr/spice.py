@@ -24,7 +24,8 @@ def _read_spice_exp_l2_fits(filename):
     windows = []
     with fits.open(filename) as hdulist:
         for hdu in hdulist:
-            meta = SPICEMeta(hdu.header)
+            meta = SPICEMeta(hdu.header,
+                             comments=_convert_fits_comments_to_key_value_pairs(hdu.header))
             # Rename WCS time axis to time.
             meta.update([("CTYPE4", "TIME")])
             # Define exposure times from metadata.
@@ -44,20 +45,51 @@ def _read_spice_exp_l2_fits(filename):
 
 
 def _read_spice_raster_l2_fits(filename):
-    pass
+    windows = []
+    with fits.open(filename) as hdulist:
+        for i, hdu in enumerate(hdulist):
+            meta = SPICEMeta(hdu.header,
+                             comments=_convert_fits_comments_to_key_value_pairs(hdu.header))
+            if meta.get("EXTNAME") != "VARIABLE_KEYWORDS":
+                # Rename WCS time axis to time.
+                meta.update([("CTYPE4", "TIME")])
+                # Define exposure times from metadata.
+                exp_times = TimeDelta(np.repeat(meta.get("XPOSURE"), hdu.data.shape[-1]), format="sec")
+                wcs = WCS(hdu.header)
+                data = hdu.data
+                spectrogram = SpectrogramCube(
+                    data=data, wcs=wcs, mask=np.isnan(data),
+                    extra_coords=[("exposure time", -1, exp_times)], meta=meta,
+                    instrument_axes=("raster scan", "spectral", "slit", "slit step"))
+                windows.append((meta.get("EXTNAME"), spectrogram))
+    if len(windows) > 1:
+        aligned_axes = np.where(np.asarray(spectrogram.world_axis_physical_types) != "em.wl")[0]
+        aligned_axes = tuple([int(i) for i in aligned_axes])
+        return NDCollection(windows, aligned_axes=aligned_axes)
+    else:
+        return spectrogram
 
 
 def _read_spice_sns_l2_fits(filename):
     pass
 
 
+def _convert_fits_comments_to_key_value_pairs(fits_header):
+    keys = np.unique(np.array(list(fits_header.keys())))
+    keys = keys[keys != '']
+    return [(key, fits_header.comments[key]) for key in keys]
+
+
 class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
     # ---------- SPICE-specific convenience methods ----------
     def _get_unit(self, key):
-        try:
-            return [s.split("]") for s in self.get_comment(key).split("[")[1:]][0][:-1][0]
-        except IndexError:
-            return None
+        comment = self.comments.get(key)
+        if comment:
+            try:
+                return [s.split("]") for s in comment.split("[")[1:]][0][:-1][0]
+            except IndexError:
+                pass
+        return None
 
     def _construct_quantity(self, key):
         val = self.get(key)
