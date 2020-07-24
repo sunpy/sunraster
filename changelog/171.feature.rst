@@ -1,0 +1,1 @@
+Create new Metadata classes for defining mapping of metadata from instrument-specific files to a general metedata API. Includes a specific mapping for SolO/SPICE.
