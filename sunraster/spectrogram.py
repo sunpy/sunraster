@@ -285,8 +285,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         times = self._get_axis_coord(self._time_name, self._time_loc)
         if isinstance(times, (u.Quantity, TimeDelta)):
             try:
-                if self.meta.date:
-                    times += self.meta.date
+                if self.meta.date_reference:
+                    times += self.meta.date_reference
             except AttributeError:
                 pass
         return times
