@@ -16,62 +16,62 @@ from sunraster import SpectrogramCube
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
 
-def read_spice_l2_fits(filename):
-    pass
+def read_spice_l2_fits(filename, windows=None, memmap=True):
+    """Read SPICE level 2 FITS file.
 
+    Parameters
+    ----------
+    filename: `str`
+        The name, including path, of the SPICE FITS file to read.
 
-def _read_spice_exp_l2_fits(filename):
-    windows = []
-    with fits.open(filename) as hdulist:
-        for hdu in hdulist:
-            meta = SPICEMeta(hdu.header,
-                             comments=_convert_fits_comments_to_key_value_pairs(hdu.header))
-            # Rename WCS time axis to time.
-            meta.update([("CTYPE4", "TIME")])
-            # Define exposure times from metadata.
-            exp_times = TimeDelta([meta.get("XPOSURE")], format="sec")
-            data = hdu.data
-            wcs = WCS(hdu.header)
-            spectrogram = SpectrogramCube(data=data, mask=np.isnan(data),
-                                          wcs=wcs,
-                                          extra_coords=[("exposure time", None, exp_times)],
-                                          meta=meta, unit=u.Unit(meta.get("BUNIT")))
-            #spectrogram = spectrogram[0, :, :, 0]
-            windows.append((hdu.header["EXTNAME"], spectrogram))
-    if len(windows) > 1:
-        return NDCollection(windows, aligned_axes=(1,))
-    else:
-        return spectrogram
+    windows: iterable of `str`
+        The names of the windows to read.
+        Default=None implies all windows read out.
 
+    memmap: `bool`
+        If True, FITS file is reading with memory mapping.
 
-def _read_spice_raster_l2_fits(filename):
-    windows = []
-    with fits.open(filename) as hdulist:
+    Returns
+    -------
+    output: `ndcube.NDCollection` or `sunraster.SpectrogramCube`
+        A collection of spectrogram cubes, one for each window.
+        If only one window present or requested, a single spectrogram cube is returned.
+    """
+    window_cubes = []
+    with fits.open(filename, memmap=memmap) as hdulist:
+        # Retrieve window names from FITS file.
+        if windows is None:
+            windows = [hdu.header["EXTNAME"] for hdu in hdulist
+                       if hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS"]
         for i, hdu in enumerate(hdulist):
-            meta = SPICEMeta(hdu.header,
-                             comments=_convert_fits_comments_to_key_value_pairs(hdu.header))
-            if meta.get("EXTNAME") != "VARIABLE_KEYWORDS":
+            if hdu.header["EXTNAME"] in windows:
+                # Define metadata object.
+                meta = spice.SPICEMeta(hdu.header,
+                                       comments=spice._convert_fits_comments_to_key_value_pairs(hdu.header))
                 # Rename WCS time axis to time.
                 meta.update([("CTYPE4", "TIME")])
+                new_header = copy.deepcopy(hdu.header)
+                new_header["CTYPE4"] = "TIME"
+                # Define WCS from new header
+                wcs = WCS(new_header)
                 # Define exposure times from metadata.
                 exp_times = TimeDelta(np.repeat(meta.get("XPOSURE"), hdu.data.shape[-1]), format="sec")
-                wcs = WCS(hdu.header)
+                # Define data cube.
                 data = hdu.data
                 spectrogram = SpectrogramCube(
-                    data=data, wcs=wcs, mask=np.isnan(data),
+                    data=data, wcs=wcs, mask=np.isnan(data), unit=u.adu,
                     extra_coords=[("exposure time", -1, exp_times)], meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"))
-                windows.append((meta.get("EXTNAME"), spectrogram))
+                window_cubes.append((meta.get("EXTNAME"), spectrogram))
+
     if len(windows) > 1:
         aligned_axes = np.where(np.asarray(spectrogram.world_axis_physical_types) != "em.wl")[0]
         aligned_axes = tuple([int(i) for i in aligned_axes])
-        return NDCollection(windows, aligned_axes=aligned_axes)
+        output = NDCollection(window_cubes, aligned_axes=aligned_axes)
     else:
-        return spectrogram
+        output = spectrogram
 
-
-def _read_spice_sns_l2_fits(filename):
-    pass
+    return output
 
 
 def _convert_fits_comments_to_key_value_pairs(fits_header):
