@@ -1,4 +1,5 @@
 import textwrap
+import copy
 
 import numpy as np
 from astropy.io import fits
@@ -46,8 +47,8 @@ def read_spice_l2_fits(filename, windows=None, memmap=True):
         for i, hdu in enumerate(hdulist):
             if hdu.header["EXTNAME"] in windows:
                 # Define metadata object.
-                meta = spice.SPICEMeta(hdu.header,
-                                       comments=spice._convert_fits_comments_to_key_value_pairs(hdu.header))
+                meta = SPICEMeta(
+                        hdu.header, comments=_convert_fits_comments_to_key_value_pairs(hdu.header))
                 # Rename WCS time axis to time.
                 meta.update([("CTYPE4", "TIME")])
                 new_header = copy.deepcopy(hdu.header)
@@ -160,7 +161,7 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
 
     @property
     def observatory_radial_velocity(self):
-        return self.get("OBS_VR")
+        return self._construct_quantity("OBS_VR")
 
     @property
     def distance_to_sun(self):
