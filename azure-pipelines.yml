@@ -56,8 +56,8 @@ jobs:
       - linux: codestyle
         name: python_codestyle
 
-      - linux: py37-oldestdeps
-        name: py37_oldestdeps
+        #- linux: py37-oldestdeps
+        #name: py37_oldestdeps
 
       - linux: py38-devdeps
         name: py38_test_devdeps
