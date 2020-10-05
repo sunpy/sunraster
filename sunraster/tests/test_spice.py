@@ -75,7 +75,12 @@ def spice_fits_header():
 
 @pytest.fixture
 def spice_meta(spice_fits_header):
-    return SPICEMeta(spice_fits_header)
+    return SPICEMeta(spice_fits_header,
+                     comments=zip(spice_fits_header.keys(), spice_fits_header.comments))
+
+
+def _construct_expected_time(date_info):
+    return Time(date_info[0], format="fits", scale=date_info[1][1:4].lower())
 
 
 def test_meta_spectral_window(spice_meta):
@@ -111,7 +116,7 @@ def test_meta_observing_mode_id(spice_meta):
 
 
 def test_meta_observatory_radial_velocity(spice_meta):
-    assert spice_meta.observatory_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0]
+    assert spice_meta.observatory_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
 
 
 def test_meta_distance_to_sun(spice_meta):
@@ -119,21 +124,21 @@ def test_meta_distance_to_sun(spice_meta):
 
 
 def test_meta_date_reference(spice_meta):
-    assert spice_meta.date_reference == DATE_REFERENCE[0]
+    assert spice_meta.date_reference == _construct_expected_time(DATE_REFERENCE)
 
 
 def test_meta_date_start(spice_meta):
-    assert spice_meta.date_start == DATE_START[0]
+    assert spice_meta.date_start == _construct_expected_time(DATE_START)
 
 
 def test_meta_date_end(spice_meta):
-    assert spice_meta.date_end == DATE_END[0]
+    assert spice_meta.date_end == _construct_expected_time(DATE_END)
 
 
 def test_meta_observer_coordinate(spice_meta):
-    obstime = Time(DATE_REFERENCE[0], format="fits", scale="utc")
+    obstime = _construct_expected_time(DATE_REFERENCE)
     observer_coordinate = SkyCoord(
-            lon=HGLN_OBS[0]*u.deg, lat=HGLT_OBS[0]*u.deg, radius=DISTANCE_TO_SUN[0],
+            lon=HGLN_OBS[0], lat=HGLT_OBS[0], radius=DISTANCE_TO_SUN[0],
             unit=(u.deg, u.deg, u.m), obstime=obstime, frame=HeliographicStonyhurst)
     assert spice_meta.observer_coordinate.lon == observer_coordinate.lon
     assert spice_meta.observer_coordinate.lat == observer_coordinate.lat
@@ -191,10 +196,10 @@ def test_meta_carrington_rotation(spice_meta):
 
 
 def test_meta_date_start_earth(spice_meta):
-    date_start_earth = Time(DATE_START_EARTH[0], format="fits", scale="utc")
+    date_start_earth = _construct_expected_time(DATE_START_EARTH)
     assert spice_meta.date_start_earth == date_start_earth
 
 
 def test_meta_date_start_sun(spice_meta):
-    date_start_sun = Time(DATE_START_SUN[0], format="fits", scale="utc")
+    date_start_sun = _construct_expected_time(DATE_START_SUN)
     assert spice_meta.date_start_sun == date_start_sun
