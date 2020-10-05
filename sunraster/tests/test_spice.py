@@ -41,35 +41,35 @@ DATE_START_SUN = ('2020-06-02T07:43:26.686', '[UTC] DATE-BEG - SUN_TIME')
 @pytest.fixture
 def spice_fits_header():
     hdr = fits.Header()
-    hdr["EXTNAME"] = SPECTRAL_WINDOW
-    hdr["DETECTOR"] = DETECTOR
-    hdr["INSTRUME"] = INSTRUMENT
-    hdr["OBSRVTRY"] = OBSERVATORY
-    hdr["LEVEL"] = PROCESSING_LEVEL
-    hdr["RSUN_REF"] = RSUN_METERS
-    hdr["RSUN_ARC"] = RSUN_ANGULAR
-    hdr["OBS_ID"] = OBSERVING_MODE_ID
-    hdr["OBS_VR"] = OBSERVATORY_RADIAL_VELOCITY
-    hdr["DSUN_OBS"] = DISTANCE_TO_SUN
-    hdr["DATE-OBS"] = DATE_REFERENCE
-    hdr["DATE-BEG"] = DATE_START
-    hdr["DATE-END"] = DATE_END
-    hdr["HGLN_OBS"] = HGLN_OBS
-    hdr["HGLT_OBS"] = HGLT_OBS
-    hdr["SPIOBSID"] = SPICE_OBSERVING_MODE_ID
-    hdr["DARKMAP"] = DARKMAP
-    hdr["BLACKLEV"] = BLACKLEV
-    hdr["WIN_TYPE"] = WINDOW_TYPE
-    hdr["WINTABID"] = WINDOW_TABLE_ID
-    hdr["SLIT_ID"] = SLIT_ID
-    hdr["SLIT_WID"] = SLIT_WIDTH
-    hdr["DUMBBELL"] = DUMBBELL
-    hdr["SOLAR_B0"] = SOLAR_B0
-    hdr["SOLAR_P0"] = SOLAR_P0
-    hdr["SOLAR_EP"] = SOLAR_EP
-    hdr["CAR_ROT"] = CARRINGTON_ROTATION_NUMBER
-    hdr["DATE_EAR"] = DATE_START_EARTH
-    hdr["DATE_SUN"] = DATE_START_SUN
+    hdr.append(tuple(["EXTNAME"] + list(SPECTRAL_WINDOW)))
+    hdr.append(tuple(["DETECTOR"] + list(DETECTOR)))
+    hdr.append(tuple(["INSTRUME"] + list(INSTRUMENT)))
+    hdr.append(tuple(["OBSRVTRY"] + list(OBSERVATORY)))
+    hdr.append(tuple(["LEVEL"] + list(PROCESSING_LEVEL)))
+    hdr.append(tuple(["RSUN_REF"] + list(RSUN_METERS)))
+    hdr.append(tuple(["RSUN_ARC"] + list(RSUN_ANGULAR)))
+    hdr.append(tuple(["OBS_ID"] + list(OBSERVING_MODE_ID)))
+    hdr.append(tuple(["OBS_VR"] + list(OBSERVATORY_RADIAL_VELOCITY)))
+    hdr.append(tuple(["DSUN_OBS"] + list(DISTANCE_TO_SUN)))
+    hdr.append(tuple(["DATE-OBS"] + list(DATE_REFERENCE)))
+    hdr.append(tuple(["DATE-BEG"] + list(DATE_START)))
+    hdr.append(tuple(["DATE-END"] + list(DATE_END)))
+    hdr.append(tuple(["HGLN_OBS"] + list(HGLN_OBS)))
+    hdr.append(tuple(["HGLT_OBS"] + list(HGLT_OBS)))
+    hdr.append(tuple(["SPIOBSID"] + list(SPICE_OBSERVING_MODE_ID)))
+    hdr.append(tuple(["DARKMAP"] + list(DARKMAP)))
+    hdr.append(tuple(["BLACKLEV"] + list(BLACKLEV)))
+    hdr.append(tuple(["WIN_TYPE"] + list(WINDOW_TYPE)))
+    hdr.append(tuple(["WINTABID"] + list(WINDOW_TABLE_ID)))
+    hdr.append(tuple(["SLIT_ID"] + list(SLIT_ID)))
+    hdr.append(tuple(["SLIT_WID"] + list(SLIT_WIDTH)))
+    hdr.append(tuple(["DUMBBELL"] + list(DUMBBELL)))
+    hdr.append(tuple(["SOLAR_B0"] + list(SOLAR_B0)))
+    hdr.append(tuple(["SOLAR_P0"] + list(SOLAR_P0)))
+    hdr.append(tuple(["SOLAR_EP"] + list(SOLAR_EP)))
+    hdr.append(tuple(["CAR_ROT"] + list(CARRINGTON_ROTATION_NUMBER)))
+    hdr.append(tuple(["DATE_EAR"] + list(DATE_START_EARTH)))
+    hdr.append(tuple(["DATE_SUN"] + list(DATE_START_SUN)))
     return hdr
 
 
