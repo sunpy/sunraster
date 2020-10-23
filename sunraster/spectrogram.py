@@ -346,7 +346,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
-            return self.axis_world_coord_values(axis_name)[0]
+            return self.axis_world_coords_values(axis_name)[0]
         elif coord_loc == "extra_coords":
             return self.extra_coords[axis_name]["value"]
 
