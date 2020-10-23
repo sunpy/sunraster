@@ -63,7 +63,7 @@ jobs:
         name: py38_test_devdeps
 
       - linux: ndcube
-        name: ndcube13
+        name: ndcube14
 
 # On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
 - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), not(contains(variables['Build.SourceBranch'], 'master'))) }}:
