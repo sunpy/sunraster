@@ -31,6 +31,7 @@ trigger:
 jobs:
 - template: run-tox-env.yml@OpenAstronomy
   parameters:
+    default_python: '3.8'
     submodules: false
     coverage: codecov
     posargs: -n=4
@@ -62,8 +63,8 @@ jobs:
       - linux: py38-devdeps
         name: py38_test_devdeps
 
-      - linux: devndcube
-        name: devndcube
+      - linux: py38-ndcube14dev
+        name: py38_ndcube14dev
 
 # On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
 - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), not(contains(variables['Build.SourceBranch'], 'master'))) }}:
