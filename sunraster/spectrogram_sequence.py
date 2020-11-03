@@ -187,8 +187,9 @@ class RasterSequence(SpectrogramSequence):
         if self._common_axis is not None:
             self._single_scan_instrument_axes_types[self._common_axis] = self._slit_step_axis_name
         # Spectral axis name.
-        spectral_raster_index = np.where(np.array(self.data[0].world_axis_physical_types) ==
-                                         self.data[0]._spectral_name)
+        spectral_raster_index = [physical_type == (self.data[0]._spectral_name,)
+                                 for physical_type in self.data[0].array_axis_physical_types]
+        spectral_raster_index = np.arange(self.data[0].data.ndim)[spectral_raster_index]
         if len(spectral_raster_index) == 1:
             self._single_scan_instrument_axes_types[spectral_raster_index] = \
                 self._spectral_axis_name
@@ -202,8 +203,8 @@ class RasterSequence(SpectrogramSequence):
 
     raster_dimensions = SpectrogramSequence.dimensions
     SnS_dimensions = SpectrogramSequence.cube_like_dimensions
-    raster_world_axis_physical_types = SpectrogramSequence.world_axis_physical_types
-    SnS_world_axis_physical_types = SpectrogramSequence.cube_like_world_axis_physical_types
+    raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
+    SnS_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
     raster_axis_extra_coords = SpectrogramSequence.sequence_axis_extra_coords
     SnS_axis_extra_coords = SpectrogramSequence.common_axis_extra_coords
     plot_as_raster = SpectrogramSequence.plot
