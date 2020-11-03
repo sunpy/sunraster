@@ -56,14 +56,14 @@ jobs:
       - linux: codestyle
         name: python_codestyle
 
-        #- linux: py37-oldestdeps
-        #name: py37_oldestdeps
+      - linux: py37-oldestdeps
+        name: py37_oldestdeps
 
       - linux: py38-devdeps
         name: py38_test_devdeps
 
-      - linux: ndcube
-        name: ndcube14
+      - linux: devndcube
+        name: devndcube
 
 # On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
 - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), not(contains(variables['Build.SourceBranch'], 'master'))) }}:
