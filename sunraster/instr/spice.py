@@ -17,7 +17,7 @@ from sunraster import SpectrogramCube
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
 
-def read_spice_l2_fits(filename, windows=None, memmap=True):
+def read_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False):
     """Read SPICE level 2 FITS file.
 
     Parameters
@@ -27,10 +27,19 @@ def read_spice_l2_fits(filename, windows=None, memmap=True):
 
     windows: iterable of `str`
         The names of the windows to read.
-        Default=None implies all windows read out.
+        All windows must of the same type: dumbbell and regular.
+        Default=None implies all narrow-slit or dumbbell windows read out
+        depending on value of read_dumbells kwarg.  See below.
 
     memmap: `bool`
         If True, FITS file is reading with memory mapping.
+
+    read_dumbbells: `bool`
+        Defines whether dumbbell or regular windows are returned.
+        If True, returns the dumbbell windows.
+        If False, returns regular windows.
+        Default=False
+        Ignored if windows kwarg is set.
 
     Returns
     -------
@@ -39,11 +48,21 @@ def read_spice_l2_fits(filename, windows=None, memmap=True):
         If only one window present or requested, a single spectrogram cube is returned.
     """
     window_cubes = []
+    dumbbell_label = "DUMBBELL"
     with fits.open(filename, memmap=memmap) as hdulist:
-        # Retrieve window names from FITS file.
+        # Derive names of windows to be read.
         if windows is None:
-            windows = [hdu.header["EXTNAME"] for hdu in hdulist
-                       if hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS"]
+            if read_dumbbells:
+                windows = [hdu.header["EXTNAME"] for hdu in hdulist
+                           if dumbbell_label in hdu.header["EXTNAME"]]
+            else:
+                windows = [hdu.header["EXTNAME"] for hdu in hdulist
+                           if (hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS" and
+                               dumbbell_label not in hdu.header["EXTNAME"])]
+        dumbbells_requested = [dumbbell_label in window for window in windows]
+        if any(dumbbells_requested) and not all(dumbbells_requested):
+            raise ValueError("Cannot read dumbbell and other window types simultaneously.")
+        # Retrieve window names from FITS file.
         for i, hdu in enumerate(hdulist):
             if hdu.header["EXTNAME"] in windows:
                 # Define metadata object.
