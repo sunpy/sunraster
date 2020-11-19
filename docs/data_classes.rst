@@ -169,7 +169,7 @@ Dimensions
 ^^^^^^^^^^
 
 The `~sunraster.SpectrogramCube.dimensions` and
-`~sunraster.SpectrogramCube.world_axis_physical_types` methods
+`~sunraster.SpectrogramCube.array_axis_physical_types` methods
 enable users to inspect the shape and WCS axis types of the
 `~sunraster.SpectrogramCube` instance.
 
@@ -177,15 +177,20 @@ enable users to inspect the shape and WCS axis types of the
 
   >>> my_spectrograms.dimensions
   <Quantity [3., 4., 5.] pix>
-  >>> my_spectrograms.world_axis_physical_types
-  ('custom:pos.helioprojective.lon', 'custom:pos.helioprojective.lat', 'em.wl')
+  >>> my_spectrograms.array_axis_physical_types
+  [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('em.wl',)]
 
 `~sunraster.SpectrogramCube.dimensions` returns a `~astropy.units.Quantity`
 giving the length of each dimension in pixel units while
-`~sunraster.SpectrogramCube.world_axis_physical_types`
-returns an iterable of strings denoting the type of physical property
-represented by the axes.  The axis names are in accordance with the
-International Virtual Observatory Alliance (IVOA)
+`~sunraster.SpectrogramCube.array_axis_physical_types`
+returns an list of tuples where each tuple contains the types of physical properties
+associated with each array axis. Since more than one physical type be associated with
+an array axis because they are dependent, e.g. latitude/longitude, or because of the
+rastering naturing of the instrument, e.g. latitude/longitude and time, the length of each
+tuple can be greater than one.
+The axis names are in accordance with the International Virtual Observatory Alliance (IVOA)
 `UCD1+ controlled vocabulary <http://www.ivoa.net/documents/REC/UCD/UCDlist-20070402.html>`_.
 
 .. _spectrogram_slicing:
@@ -414,14 +419,17 @@ Dimensions
 In order to inspect the dimensionlity of our sequence and the physical properties
 to which the axes correspond, we can use the
 `~sunraster.SpectrogramSequence.dimensions` and
-`~sunraster.SpectrogramSequence.world_axis_physical_types` properties.
+`~sunraster.SpectrogramSequence.array_axis_physical_types` properties.
 
 .. code-block:: python
 
   >>> my_sequence.dimensions
   (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
-  >>> my_sequence.world_axis_physical_types
-  ('meta.obs.sequence', 'custom:pos.helioprojective.lon', 'custom:pos.helioprojective.lat', 'em.wl')
+  >>> my_sequence.array_axis_physical_types
+  [('meta.obs.sequence',),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('em.wl',)]
 
 Note that this is the same API as `~sunraster.SpectrogramCube` except that
 `sunraster.SpectrogramSequence.dimensions` returns an iterable of
@@ -430,12 +438,12 @@ This is because of its inheritance from  `~ndcube.NDCubeSequence`
 rather than `~ndcube.NDCube`.
 Also note that there are now four dimensions, as the sequence is treated
 as though it were an additional data axis.
-This can be very helpful of you have a series of 2D spectrograms and
+This can be very helpful if you have a series of 2D spectrograms and
 want to use the sequence axis to represent time.
-`sunraster.SpectrogramSequence.world_axis_physical_types`
-returns a tuple of the same `IVOA UCD1+ controlled words
+`sunraster.SpectrogramSequence.array_axis_physical_types`
+returns a list of tuples of the same `IVOA UCD1+ controlled words
 <http://www.ivoa.net/documents/REC/UCD/UCDlist-20070402.html>`
-used by `sunraster.SpectrogramCube.world_axis_physical_types`.
+used by `sunraster.SpectrogramCube.array_axis_physical_types`.
 The sequence axis is given the label ``'meta.obs.sequence'``.
 
 .. _sequence_coords:
@@ -632,20 +640,25 @@ Dimensions
 ^^^^^^^^^^
 
 `~sunraster.RasterSequence` provides a version of the
-`~sunraster.SpectrogramSequence.world_axis_physical_axis_types` property for
+`~sunraster.SpectrogramSequence.array_axis_physical_axis_types` property for
 both raster and SnS representations.
 
 .. code-block:: python
 
-  >>> my_rasters.raster_world_axis_physical_types
-  ('meta.obs.sequence', 'custom:pos.helioprojective.lon', 'custom:pos.helioprojective.lat', 'em.wl')
+  >>> my_rasters.raster_array_axis_physical_types
+  [('meta.obs.sequence',),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('em.wl',)]
 
-  >>> my_rasters.SnS_world_axis_physical_types
-  ('custom:pos.helioprojective.lon', 'custom:pos.helioprojective.lat', 'em.wl')
+  >>> my_rasters.SnS_array_axis_physical_types
+  [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+   ('em.wl',)]
 
 In the raster case, ``'meta.obs.sequence'`` represents the raster scan number axis.
 For those familiar with `~ndcube.NDCubeSequence`, these are simply aliases for the
-`~ndcube.NDCubeSequence.world_axis_physical_axis_types` and
+`~ndcube.NDCubeSequence.array_axis_physical_axis_types` and
 `~ndcube.NDCubeSequence.cube_like_world_axis_physical_axis_types`, respectively.
 
 The length of each axis can also be displayed in either the raster or SnS representation.
