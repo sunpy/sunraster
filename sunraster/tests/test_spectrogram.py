@@ -1,8 +1,8 @@
 
+from astropy.wcs import WCS
 import numpy as np
 import pytest
 from ndcube.tests.helpers import assert_cubes_equal
-from ndcube.utils.wcs import WCS
 
 import astropy.units as u
 from astropy.time import Time, TimeDelta

@@ -182,32 +182,40 @@ class RasterSequence(SpectrogramSequence):
         self._slit_step_axis_name = SLIT_STEP_AXIS_NAME
         self._slit_axis_name = SLIT_AXIS_NAME
         self._spectral_axis_name = SPECTRAL_AXIS_NAME
-        self._single_scan_instrument_axes_types = np.empty(self.data[0].data.ndim, dtype=object)
-        # Slit step axis name.
-        if self._common_axis is not None:
-            self._single_scan_instrument_axes_types[self._common_axis] = self._slit_step_axis_name
-        # Spectral axis name.
-        spectral_raster_index = np.where(np.array(self.data[0].world_axis_physical_types) ==
-                                         self.data[0]._spectral_name)
-        if len(spectral_raster_index) == 1:
-            self._single_scan_instrument_axes_types[spectral_raster_index] = \
-                self._spectral_axis_name
-        # Slit axis name.
-        w = self._single_scan_instrument_axes_types == None  # NOQA
-        if w.sum() > 1:
-            raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
-        self._single_scan_instrument_axes_types[w] = self._slit_axis_name
-        # Remove any instrument axes types whose axes are missing.
-        self._single_scan_instrument_axes_types.astype(str)
+        self._set_single_scan_instrument_axes_types()
 
     raster_dimensions = SpectrogramSequence.dimensions
     SnS_dimensions = SpectrogramSequence.cube_like_dimensions
-    raster_world_axis_physical_types = SpectrogramSequence.world_axis_physical_types
-    SnS_world_axis_physical_types = SpectrogramSequence.cube_like_world_axis_physical_types
+    raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
+    SnS_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
     raster_axis_extra_coords = SpectrogramSequence.sequence_axis_extra_coords
     SnS_axis_extra_coords = SpectrogramSequence.common_axis_extra_coords
     plot_as_raster = SpectrogramSequence.plot
     plot_as_SnS = SpectrogramSequence.plot_as_cube
+
+    def _set_single_scan_instrument_axes_types(self):
+        if len(self.data) < 1:
+            self._single_scan_instrument_axes_types = np.empty((0,), dtype=object)
+        else:
+            self._single_scan_instrument_axes_types = np.empty(self.data[0].data.ndim, dtype=object)
+            # Slit step axis name.
+            if self._common_axis is not None:
+                self._single_scan_instrument_axes_types[self._common_axis] = \
+                    self._slit_step_axis_name
+            # Spectral axis name.
+            spectral_raster_index = [physical_type == (self.data[0]._spectral_name,)
+                                     for physical_type in self.data[0].array_axis_physical_types]
+            spectral_raster_index = np.arange(self.data[0].data.ndim)[spectral_raster_index]
+            if len(spectral_raster_index) == 1:
+                self._single_scan_instrument_axes_types[spectral_raster_index] = \
+                    self._spectral_axis_name
+            # Slit axis name.
+            w = self._single_scan_instrument_axes_types == None  # NOQA
+            if w.sum() > 1:
+                raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
+            self._single_scan_instrument_axes_types[w] = self._slit_axis_name
+            # Remove any instrument axes types whose axes are missing.
+            self._single_scan_instrument_axes_types.astype(str)
 
     @property
     def slice_as_SnS(self):
@@ -235,8 +243,10 @@ class RasterSequence(SpectrogramSequence):
                 result = SpectrogramSequence(result.data, common_axis=None, meta=result.meta)
             else:
                 # Else, slice the instrument axis types accordingly.
-                result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                    self._single_scan_instrument_axes_types, item[1:])
+                result._set_single_scan_instrument_axes_types()
+                #result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+                #    self._single_scan_instrument_axes_types, item[1:])
+
         return result
 
     @property
@@ -266,8 +276,9 @@ class _SnSSlicer:
     def __getitem__(self, item):
         result = self.seq.index_as_cube[item]
         if isinstance(item, tuple) and not isinstance(item[0], numbers.Integral):
-            result._single_scan_instrument_axes_types = _slice_scan_axis_types(
-                self.seq._single_scan_instrument_axes_types, item)
+            result._set_single_scan_instrument_axes_types()
+            #result._single_scan_instrument_axes_types = _slice_scan_axis_types(
+            #    self.seq._single_scan_instrument_axes_types, item)
         return result
 
 

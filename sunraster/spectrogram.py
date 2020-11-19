@@ -171,7 +171,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
-        world_axis_physical_types = np.array(self.world_axis_physical_types)
+        world_axis_physical_types = np.array(self.wcs.world_axis_physical_types)
         self._longitude_name, self._longitude_loc = _find_axis_name(
             SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
         self._latitude_name, self._latitude_loc = _find_axis_name(
@@ -225,7 +225,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
                 Instrument axes: {self.instrument_axes}
-                Pixel dimensions: {self.dimensions}
+                Pixel dimensions: {self.dimensions.astype(int)}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
@@ -346,7 +346,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
-            return self.axis_world_coords(axis_name)
+            return self.axis_world_coords_values(axis_name)[0]
         elif coord_loc == "extra_coords":
             return self.extra_coords[axis_name]["value"]
 

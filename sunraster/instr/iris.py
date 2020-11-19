@@ -1,8 +1,8 @@
 import copy
 
+from astropy.wcs import WCS
 import numpy as np
 from ndcube import NDCollection
-from ndcube.utils.wcs import WCS
 
 import astropy.units as u
 from astropy.io import fits
