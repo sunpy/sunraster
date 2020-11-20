@@ -82,8 +82,7 @@ jobs:
       test_command: 'pytest -p no:warnings --doctest-rst -m "not figure" --pyargs sunraster'
       submodules: false
       targets:
-        - wheels_linux
-        - wheels_macos
+        - wheels_universal
         - sdist
       dependsOn:
         - py37_osx
