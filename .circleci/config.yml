@@ -50,42 +50,6 @@ jobs:
       - run: pip install --progress-bar off .[all,dev]
       - run: pip install -e .[all,dev]
 
-  html-docs:
-    docker:
-      - image: continuumio/miniconda3
-    environment:
-      SUNPY_SAMPLEDIR=/root/sunpy/data/sample_data/
-    steps:
-      - run: *no-backports
-      - checkout
-      - run: *skip-check
-      - restore_cache:
-          keys: sample-data-v12
-      - run: *merge-check
-      - run: *apt-install
-      - run: pip install -U tox tox-pypi-filter>=0.12
-      - run: tox -e build_docs
-      - save_cache:
-          key: sample-data-v12
-          paths:
-            - /root/sunpy/data/sample_data/
-      - run:
-          name: Prepare for upload
-          command: |
-            # If it's not a PR, don't upload
-            if [ -z "${CIRCLE_PULL_REQUEST}" ]; then
-              rm -r docs/_build/html/*
-            else
-              # If it is a PR, delete sources, because it's a lot of files
-              # which we don't really need to upload
-              rm -r docs/_build/html/_sources
-            fi
-      - store_artifacts:
-          path: docs/_build/html
-      - run:
-          name: "Built documentation is available at:"
-          command: DOCS_URL="${CIRCLE_BUILD_URL}/artifacts/${CIRCLE_NODE_INDEX}/docs/_build/html/index.html"; echo $DOCS_URL
-
 workflows:
   version: 2
 
@@ -96,10 +60,6 @@ workflows:
   pip-install:
     jobs:
       - pip-install
-
-  test-documentation:
-    jobs:
-      - html-docs
 
 notify:
   webhooks:
