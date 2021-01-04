@@ -156,11 +156,11 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         return self._construct_quantity("RSUN_ARC")
 
     @property
-    def observing_mode_id(self):
+    def spice_observation_id(self):
         return self.get("SPIOBSID")
 
     @property
-    def observatory_radial_velocity(self):
+    def observer_radial_velocity(self):
         return self._construct_quantity("OBS_VR")
 
     @property
@@ -180,7 +180,7 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         return self._construct_time("DATE-END")
 
     @property
-    def observer_coordinate(self):
+    def observer_location(self):
         lon_unit = u.deg
         lat_unit = u.deg
         radius_unit = u.m
@@ -213,10 +213,6 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
     @property
     def window_type(self):
         return self.get("WIN_TYPE")
-
-    @property
-    def window_table_id(self):
-        return self.get("WINTABID")
 
     @property
     def slit_id(self):

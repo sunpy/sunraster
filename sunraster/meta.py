@@ -24,7 +24,7 @@ class MetaABC(abc.ABCMeta):
         pass
 
     @abc.abstractproperty
-    def observer_coordinate(self):
+    def observer_location(self):
         """Coordinate of observatory location based on header info."""
         pass
 
@@ -78,7 +78,7 @@ class SlitSpectrographMetaABC(RemoteSensorMetaABC):
         pass
 
     @abc.abstractproperty
-    def observatory_radial_velocity(self):
+    def observer_radial_velocity(self):
         """Velocity of observatory in direction of source."""
         pass
 
