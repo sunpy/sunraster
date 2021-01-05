@@ -11,14 +11,112 @@ from sunpy.coordinates import HeliographicStonyhurst
 from ndcube import NDCollection
 
 from sunraster.meta import Meta, SlitSpectrographMetaABC
-from sunraster import SpectrogramCube
+from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
 
 
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
 
-def read_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False):
+def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=False):
     """Read SPICE level 2 FITS file.
+
+    Parameters
+    ----------
+    filenames: iterable of `str`
+        The name(s), including path, of the SPICE FITS file(s) to read.
+
+    windows: iterable of `str`
+        The names of the windows to read.
+        All windows must of the same type: dumbbell and regular.
+        Default=None implies all narrow-slit or dumbbell windows read out
+        depending on value of read_dumbells kwarg.  See below.
+
+    memmap: `bool`
+        If True, FITS file is reading with memory mapping.
+
+    read_dumbbells: `bool`
+        Defines whether dumbbell or regular windows are returned.
+        If True, returns the dumbbell windows.
+        If False, returns regular windows.
+        Default=False
+        Ignored if windows kwarg is set.
+
+    Returns
+    -------
+    output: `ndcube.NDCollection` or `sunraster.SpectrogramCube`, `sunraster.RasterSequence`,
+        `sunraster.SpectrogramSequence`
+        A collection of spectrogram/raster cubes/sequences, one for each window.
+        If only one window present or requested, a single spectrogram cube
+        or sequence is returned.
+    """
+    # Sanitize inputs.
+    if isinstance(filenames, str):
+        filenames = [filenames]
+    # Read first file.
+    first_cubes = _read_single_spice_l2_fits(filenames[0], windows=windows, memmap=memmap,
+                                             read_dumbbells=read_dumbbells)
+    # Derive information for consistency checks between files and read subsequent files.
+    if len(filenames) > 1:
+        # Wrap windows from first file in lists
+        # so windows from other files can be appended.
+        cube_lists = dict([(key, [value]) for key, value in first_cubes.items()])
+        # Get info from first file for consistency checks between files.
+        first_meta = _get_meta_from_last_added(cube_lists)
+        first_obs_id = _get_obsid(first_meta)
+        is_raster = "ras" in first_meta.get("FILENAME")
+        if windows is None:
+            windows = list(cube_lists.keys())
+        # Read subsequent files and append output to relevant window in cube_lists.
+        for i, filename in enumerate(filenames[1:]):
+            cube_lists = _read_single_spice_l2_fits(filename, windows=windows, memmap=memmap,
+                                                    read_dumbbells=read_dumbbells,
+                                                    output=cube_lists)
+            # Check this file's data is consistent with first file.
+            next_obs_id = _get_obsid(_get_meta_from_last_added(cube_lists))
+            if next_obs_id != first_obs_id:
+                raise ValueError(
+                    "All files must correspond to same observing campaign/SPICE OBS ID. "
+                     f"First file SPICE OBS ID: {first_obs_id}; "
+                     f"{i+1}th file SPICE OBS ID: {next_obs_id}")
+        # Depending on type of file, combine data from different files into
+        # SpectrogramSequences and RasterSequences.
+        if is_raster:
+            sequence_class = RasterSequence
+        else:
+            sequence_class = SpectrogramSequence
+        window_sequences = [(key, sequence_class([v[0] for v in value], common_axis=2))
+                            for key, value in cube_lists.items()]
+    else:
+        window_sequences = list(first_cubes.items())
+    # Aligned axes
+    if len(window_sequences) > 1:
+        # Data should be aligned along all axes except the spectral axis.
+        # But they should be aligned along all axes if they come from the same spectral window,
+        # e.g. because they are dumbbell windows.
+        first_spectral_window = window_sequences[0][1][0].meta.spectral_window
+        if all([window[1][0].meta.spectral_window == first_spectral_window
+                for window in window_sequences]):
+            aligned_axes = tuple(range(len(data.shape)))
+        else:
+            aligned_axes = np.where(
+                np.asarray(window_sequences[0][1].world_axis_physical_types) != "em.wl")[0]
+            aligned_axes = tuple([int(i) for i in aligned_axes])
+        return NDCollection(window_sequences, aligned_axes=aligned_axes)
+    else:
+        return window_sequences[0][1]
+
+
+def _get_meta_from_last_added(obj):
+    return list(obj.values())[0][-1].meta
+
+
+def _get_obsid(spice_meta):
+    return spice_meta.spice_observation_id
+
+
+def _read_single_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False,
+                               output=None):
+    """Read SPICE level 2 FITS file(s).
 
     Parameters
     ----------
@@ -41,11 +139,15 @@ def read_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False
         Default=False
         Ignored if windows kwarg is set.
 
+    output: `dict` of `list`s (optional)
+        A dictionary of lists with the same keys are the windows kwarg.
+        The output for each window will be appended to the list corresponding
+        the window's name.
+
     Returns
     -------
-    output: `ndcube.NDCollection` or `sunraster.SpectrogramCube`
+    output: `dict` of `sunraster.SpectrogramCube`
         A collection of spectrogram cubes, one for each window.
-        If only one window present or requested, a single spectrogram cube is returned.
     """
     window_cubes = []
     dumbbell_label = "DUMBBELL"
@@ -82,22 +184,15 @@ def read_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False
                     data=data, wcs=wcs, mask=np.isnan(data), unit=u.adu,
                     extra_coords=[("exposure time", -1, exp_times)], meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"))
-                window_cubes.append((meta.get("EXTNAME"), spectrogram))
-
-    if len(windows) > 1:
-        # Data should be aligned along all axes except the spectral axis.
-        # But they should be aligned along all axes if they come from the same spectral window,
-        # e.g. because they are dumbbell windows.
-        first_spectral_window = window_cubes[0][1].meta.spectral_window
-        if all([window[1].meta.spectral_window == first_spectral_window for window in window_cubes]):
-            aligned_axes = tuple(range(len(data.shape)))
-        else:
-            aligned_axes = np.where(np.asarray(spectrogram.world_axis_physical_types) != "em.wl")[0]
-            aligned_axes = tuple([int(i) for i in aligned_axes])
-        output = NDCollection(window_cubes, aligned_axes=aligned_axes)
+                window_name = meta.get("EXTNAME")
+                if output is None:
+                    window_cubes.append((window_name, spectrogram))
+                else:
+                    output[window_name].append(spectrogram)
+    if output is None:
+        return dict(window_cubes)
     else:
-        output = spectrogram
-    return output
+        return output
 
 
 def _convert_fits_comments_to_key_value_pairs(fits_header):
