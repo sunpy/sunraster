@@ -85,12 +85,18 @@ def read_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False
                 window_cubes.append((meta.get("EXTNAME"), spectrogram))
 
     if len(windows) > 1:
-        aligned_axes = np.where(np.asarray(spectrogram.world_axis_physical_types) != "em.wl")[0]
-        aligned_axes = tuple([int(i) for i in aligned_axes])
+        # Data should be aligned along all axes except the spectral axis.
+        # But they should be aligned along all axes if they come from the same spectral window,
+        # e.g. because they are dumbbell windows.
+        first_spectral_window = window_cubes[0][1].meta.spectral_window
+        if all([window[1].meta.spectral_window == first_spectral_window for window in window_cubes]):
+            aligned_axes = tuple(range(len(data.shape)))
+        else:
+            aligned_axes = np.where(np.asarray(spectrogram.world_axis_physical_types) != "em.wl")[0]
+            aligned_axes = tuple([int(i) for i in aligned_axes])
         output = NDCollection(window_cubes, aligned_axes=aligned_axes)
     else:
         output = spectrogram
-
     return output
 
 
@@ -143,11 +149,20 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
     @property
     def spectral_window(self):
         spectral_window = self.get("EXTNAME")
+        # Remove redundant text associated with dumbbells.
+        joiner = "_"
+        if self.contains_dumbbell:
+            dummy_txt = ""
+            spectral_window = spectral_window.replace("DUMBBELL", dummy_txt)
+            spectral_window = spectral_window.replace("UPPER", dummy_txt)
+            spectral_window = spectral_window.replace("LOWER", dummy_txt)
+            spectral_window = joiner.join(list(filter((dummy_txt).__ne__,
+                                                      spectral_window.split(joiner))))
+        # Remove other redundant text from window name.
         redundant_txt = "WINDOW"
         if redundant_txt in spectral_window:
-            spectral_window = np.asanyarray(spectral_window.split("_"))
-            idx = np.array([redundant_txt not in window_chunk for window_chunk in spectral_window])
-            spectral_window = "_".join(spectral_window[idx])
+            spectral_window = joiner.join([comp for comp in spectral_window.split(joiner)
+                                           if "WINDOW" not in comp])
         return spectral_window
 
     @property
@@ -242,10 +257,14 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         return self._construct_quantity("SLIT_WID")
 
     @property
-    def dumbbell(self):
-        dumbell_types = ["none", "lower", "upper"]
-        dumbell_idx = self.get("DUMBBELL")
-        return dumbell_types[dumbell_idx]
+    def contains_dumbbell(self):
+        return self.get("DUMBBELL") in [1, 2]
+
+    @property
+    def dumbbell_type(self):
+        dumbbell_types = [None, "lower", "upper"]
+        dumbbell_idx = self.get("DUMBBELL")
+        return dumbbell_types[dumbbell_idx]
 
     @property
     def solar_B0(self):
