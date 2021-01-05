@@ -111,12 +111,12 @@ def test_meta_rsun_angular(spice_meta):
     assert spice_meta.rsun_angular == RSUN_ANGULAR[0] * u.arcsec
 
 
-def test_meta_observing_mode_id(spice_meta):
-    assert spice_meta.observing_mode_id == SPICE_OBSERVING_MODE_ID[0]
+def test_meta_spice_observation_id(spice_meta):
+    assert spice_meta.spice_observation_id == SPICE_OBSERVING_MODE_ID[0]
 
 
-def test_meta_observatory_radial_velocity(spice_meta):
-    assert spice_meta.observatory_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
+def test_meta_observer_radial_velocity(spice_meta):
+    assert spice_meta.observer_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
 
 
 def test_meta_distance_to_sun(spice_meta):
@@ -135,16 +135,16 @@ def test_meta_date_end(spice_meta):
     assert spice_meta.date_end == _construct_expected_time(DATE_END)
 
 
-def test_meta_observer_coordinate(spice_meta):
+def test_meta_observer_location(spice_meta):
     obstime = _construct_expected_time(DATE_REFERENCE)
-    observer_coordinate = SkyCoord(
+    observer_location = SkyCoord(
             lon=HGLN_OBS[0], lat=HGLT_OBS[0], radius=DISTANCE_TO_SUN[0],
             unit=(u.deg, u.deg, u.m), obstime=obstime, frame=HeliographicStonyhurst)
-    assert spice_meta.observer_coordinate.lon == observer_coordinate.lon
-    assert spice_meta.observer_coordinate.lat == observer_coordinate.lat
-    assert spice_meta.observer_coordinate.radius == observer_coordinate.radius
-    assert spice_meta.observer_coordinate.obstime == observer_coordinate.obstime
-    assert spice_meta.observer_coordinate.frame.name == observer_coordinate.frame.name
+    assert spice_meta.observer_location.lon == observer_location.lon
+    assert spice_meta.observer_location.lat == observer_location.lat
+    assert spice_meta.observer_location.radius == observer_location.radius
+    assert spice_meta.observer_location.obstime == observer_location.obstime
+    assert spice_meta.observer_location.frame.name == observer_location.frame.name
 
 
 def test_meta_observing_mode_id_solar_orbiter(spice_meta):
@@ -163,10 +163,6 @@ def test_meta_window_type(spice_meta):
     assert spice_meta.window_type == WINDOW_TYPE[0]
 
 
-def test_meta_window_table_id(spice_meta):
-    assert spice_meta.window_table_id == WINDOW_TABLE_ID[0]
-
-
 def test_meta_slit_id(spice_meta):
     assert spice_meta.slit_id == SLIT_ID[0]
 
@@ -175,8 +171,12 @@ def test_meta_slit_width(spice_meta):
     assert spice_meta.slit_width == SLIT_WIDTH[0] * u.arcsec
 
 
-def test_meta_dumbbell(spice_meta):
-    assert spice_meta.dumbbell == "none"
+def test_meta_contains_dumbbell(spice_meta):
+    assert spice_meta.contains_dumbbell is False
+
+
+def test_meta_dumbbell_type(spice_meta):
+    assert spice_meta.dumbbell_type is None
 
 
 def test_meta_solar_B0(spice_meta):
