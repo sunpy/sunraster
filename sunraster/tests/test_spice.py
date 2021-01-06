@@ -87,13 +87,11 @@ def spice_meta(spice_fits_header):
                      comments=zip(spice_fits_header.keys(), spice_fits_header.comments))
 
 
-
-
 @pytest.fixture
 def spice_rasdb_filename(tmp_path):
     """
     Inserts data into a raster SPICE FITS file with dumbbells and returns new filename.
-    
+
     A new FITS file is saved in a tmp file path.
     """
     filename = "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
@@ -119,7 +117,7 @@ def spice_rasdb_filename(tmp_path):
 def spice_sns_filename(tmp_path):
     """
     Inserts data into a sit-and-stare SPICE FITS file and returns new filename.
-    
+
     A new FITS file is saved in a tmp file path.
     """
     filename = "solo_L2_spice-n-sit_20200620T235901_V01_16777431-000.fits"
