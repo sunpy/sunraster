@@ -88,22 +88,22 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
                             for key, value in cube_lists.items()]
     else:
         window_sequences = list(first_cubes.items())
-    # Aligned axes
     if len(window_sequences) > 1:
         # Data should be aligned along all axes except the spectral axis.
-        # But they should be aligned along all axes if they come from the same spectral window,
-        # e.g. because they are dumbbell windows.
-        first_spectral_window = window_sequences[0][1][0].meta.spectral_window
+        # But they should be aligned along all axes if they come from the
+        # same spectral window, e.g. because they are dumbbell windows.
+        first_sequence = window_sequences[0][1]
+        first_spectral_window = first_sequence[0].meta.spectral_window
         if all([window[1][0].meta.spectral_window == first_spectral_window
                 for window in window_sequences]):
-            aligned_axes = tuple(range(len(data.shape)))
+            aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
             aligned_axes = np.where(
-                np.asarray(window_sequences[0][1].world_axis_physical_types) != "em.wl")[0]
+                np.asarray(first_sequence.world_axis_physical_types) != "em.wl")[0]
             aligned_axes = tuple([int(i) for i in aligned_axes])
-        return NDCollection(window_sequences, aligned_axes=aligned_axes)
     else:
-        return window_sequences[0][1]
+        aligned_axes = None
+    return NDCollection(window_sequences, aligned_axes=aligned_axes)
 
 
 def _get_meta_from_last_added(obj):

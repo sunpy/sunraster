@@ -1,11 +1,13 @@
+import astropy.units as u
 import pytest
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
-import astropy.units as u
 from astropy.time import Time
+from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
-from sunraster.instr.spice import SPICEMeta
+from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
+from sunraster.instr.spice import read_spice_l2_fits, SPICEMeta
 
 
 SPECTRAL_WINDOW = ('WINDOW0_74.73', 'Extension name')
@@ -77,6 +79,21 @@ def spice_fits_header():
 def spice_meta(spice_fits_header):
     return SPICEMeta(spice_fits_header,
                      comments=zip(spice_fits_header.keys(), spice_fits_header.comments))
+
+
+@pytest.fixture
+def read_spice_l2_fits_return_type():
+    return NDCollection
+
+
+@pytest.fixture
+def spice_rasdb_fits_url():
+    return "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
+
+
+@pytest.fixture
+def spice_sns_fits_url():
+    return "solo_L2_spice-n-sit_20200617T022358_V01_16777395-000.fits"
 
 
 def _construct_expected_time(date_info):
@@ -203,3 +220,77 @@ def test_meta_date_start_earth(spice_meta):
 def test_meta_date_start_sun(spice_meta):
     date_start_sun = _construct_expected_time(DATE_START_SUN)
     assert spice_meta.date_start_sun == date_start_sun
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_single_file_multiple_windows(spice_rasdb_fits_url):
+    filename = spice_rasdb_fits_url
+    result = read_spice_l2_fits(filename)
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_single_file_window(spice_rasdb_fits_url):
+    filename = spice_rasdb_fits_url
+    result = read_spice_l2_fits(filename, windows=["WINDOW0_70.01"])
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert set(result.aligned_axes.values()) == {None}
+    assert len(result) == 1
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_single_file_dumbbells(spice_rasdb_fits_url):
+    filename = spice_rasdb_fits_url
+    result = read_spice_l2_fits(filename, read_dumbbells=True)
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert all(window.meta.contains_dumbbell for window in result.values())
+    assert set(result.aligned_axes.values()) == {tuple(range(4))}
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_fits_url):
+    filenames = [spice_rasdb_fits_url] * 2
+    result = read_spice_l2_fits(filenames)
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all(window.dimensions[0] == len(filenames) for window in result.values())
+    assert all(isinstance(window, RasterSequence) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_fits_url):
+    filenames = [spice_rasdb_fits_url] * 2
+    result = read_spice_l2_fits(filenames, windows=["WINDOW0_70.01"])
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert set(result.aligned_axes.values()) == {None}
+    assert len(result) == 1
+    assert all(window.dimensions[0] == len(filenames) for window in result.values())
+    assert all(isinstance(window, RasterSequence) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_fits_url):
+    filenames = [spice_sns_fits_url] * 2
+    result = read_spice_l2_fits(filenames)
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all(window.dimensions[0] == len(filenames) for window in result.values())
+    assert all(isinstance(window, SpectrogramSequence) for window in result.values())
+
+
+@pytest.mark.remote_data
+def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_fits_url):
+    filenames = [spice_rasdb_fits_url] * 2
+    result = read_spice_l2_fits(filenames, read_dumbbells=True)
+    assert isinstance(result, _read_spice_l2_fits_return_type())
+    assert all(window.meta.contains_dumbbell for window in result.values())
+    assert set(result.aligned_axes.values()) == {tuple(range(4))}
+    assert all(window.dimensions[0] == len(filenames) for window in result.values())
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
