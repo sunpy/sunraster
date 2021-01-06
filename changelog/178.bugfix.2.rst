@@ -1,0 +1,1 @@
+Stop `~sunraster.spectrogram_sequence.SpectrogramSequence` crashing when time coord not 1-D.

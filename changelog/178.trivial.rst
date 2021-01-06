@@ -1,0 +1,1 @@
+Altered names of some SPICEMeta properties.
