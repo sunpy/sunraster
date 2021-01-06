@@ -133,7 +133,7 @@ def spice_sns_filename(tmp_path):
         tmp_spice_path = tmp_path / "spice"
         tmp_spice_path.mkdir()
         new_filename = os.path.join(tmp_spice_path, filename)
-        new_hdulist.writeto(new_filename, overwrite=True)
+        new_hdulist.writeto(new_filename, output_verify="fix+ignore", overwrite=True)
     return new_filename
 
 
