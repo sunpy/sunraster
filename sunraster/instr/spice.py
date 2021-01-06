@@ -63,7 +63,6 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         # Get info from first file for consistency checks between files.
         first_meta = _get_meta_from_last_added(cube_lists)
         first_obs_id = _get_obsid(first_meta)
-        is_raster = "ras" in first_meta.get("FILENAME")
         if windows is None:
             windows = list(cube_lists.keys())
         # Read subsequent files and append output to relevant window in cube_lists.
@@ -80,11 +79,13 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
                      f"{i+1}th file SPICE OBS ID: {next_obs_id}")
         # Depending on type of file, combine data from different files into
         # SpectrogramSequences and RasterSequences.
+        is_raster = "ras" in first_meta.get("FILENAME") and \
+            not any([window[1].meta.contains_dumbbell for window in cube_lists.values()])
         if is_raster:
             sequence_class = RasterSequence
         else:
             sequence_class = SpectrogramSequence
-        window_sequences = [(key, sequence_class([v[0] for v in value], common_axis=2))
+        window_sequences = [(key, sequence_class([v[0] for v in value], common_axis=-1))
                             for key, value in cube_lists.items()]
     else:
         window_sequences = list(first_cubes.items())
