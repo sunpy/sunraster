@@ -46,7 +46,7 @@ EXTRA_COORDS1 = [("time", 0,
 
 # Define SpectrogramCubes in various units.
 spectrogram_DN0 = SpectrogramCube(
-    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct, 
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct / u.s,
@@ -67,7 +67,7 @@ spectrogram_DN_s0 = SpectrogramCube(
     SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct * u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
 spectrogram_DN1 = SpectrogramCube(
-    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct, 
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct / u.s,
@@ -89,7 +89,7 @@ spectrogram_DN_s1 = SpectrogramCube(
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
 spectrogram_NO_COORDS = SpectrogramCube(SOURCE_DATA_DN, WCS_NO_COORDS)
 spectrogram_instrument_axes = SpectrogramCube(
-    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct, 
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN, mask=MASK, instrument_axes=("a", "b", "c"))
 
 def test_spectral_axis():

@@ -166,7 +166,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, instrument_axes=None, copy=False, **kwargs):
         # Initialize SpectrogramCube.
-        super().__init__(data, wcs=wcs, uncertainty=uncertainty, mask=mask, meta=meta, 
+        super().__init__(data, wcs=wcs, uncertainty=uncertainty, mask=mask, meta=meta,
                          unit=unit, extra_coords=extra_coords, copy=copy, **kwargs)
 
         # Determine labels and location of each key real world coordinate.
