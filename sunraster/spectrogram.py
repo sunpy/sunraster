@@ -166,8 +166,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
                  mask=None, instrument_axes=None, copy=False, **kwargs):
         # Initialize SpectrogramCube.
-        super().__init__(data, wcs, uncertainty=uncertainty, mask=mask, meta=meta, unit=unit,
-                         extra_coords=extra_coords, copy=copy, **kwargs)
+        super().__init__(data, wcs=wcs, uncertainty=uncertainty, mask=mask, meta=meta,
+                         unit=unit, extra_coords=extra_coords, copy=copy, **kwargs)
 
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
@@ -266,9 +266,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if len(instrument_axes) == 0:
                 instrument_axes = None
 
-        return self.__class__(result.data, result.wcs, extra_coords, result.unit,
-                              result.uncertainty, result.meta, mask=result.mask,
-                              missing_axes=result.missing_axes, instrument_axes=instrument_axes)
+        return self.__class__(result.data, wcs=result.wcs, uncertainty=result.uncertainty,
+                              mask=result.mask, meta=result.meta, unit=result.unit,
+                              extra_coords=extra_coords, missing_axes=result.missing_axes,
+                              instrument_axes=instrument_axes)
 
     @property
     def spectral_axis(self):
@@ -338,7 +339,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # Return new instance of SpectrogramCube with correction applied/undone.
 
         return self.__class__(
-            new_data, self.wcs,
+            new_data, wcs=self.wcs,
             extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
                                                                    self.missing_axes),
             unit=new_unit, uncertainty=new_uncertainty, meta=self.meta, mask=self.mask,
