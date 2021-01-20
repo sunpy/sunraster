@@ -107,7 +107,8 @@ def spice_rasdb_filename(tmp_path):
                                          header=hdulist[3].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
-        tmp_spice_path.mkdir()
+        if not os.path.exists(tmp_spice_path):
+            tmp_spice_path.mkdir()
         new_filename = os.path.join(tmp_spice_path, filename)
         new_hdulist.writeto(new_filename, overwrite=True)
     return new_filename
@@ -129,7 +130,8 @@ def spice_sns_filename(tmp_path):
                                          header=hdulist[1].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
-        tmp_spice_path.mkdir()
+        if not os.path.exists(tmp_spice_path):
+            tmp_spice_path.mkdir()
         new_filename = os.path.join(tmp_spice_path, filename)
         new_hdulist.writeto(new_filename, output_verify="fix+ignore", overwrite=True)
     return new_filename
@@ -318,7 +320,6 @@ def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
-#@pytest.mark.remote_data
 def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
     filenames = [spice_rasdb_filename] * 2
     result = read_spice_l2_fits(filenames, read_dumbbells=True)
@@ -329,9 +330,7 @@ def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
-"""
-def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_rasdb_filename):
+def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
     with pytest.raises(ValueError):
-        filenames = [spice_rasdb_filename, spice_rasdb_filename]
+        filenames = [spice_rasdb_filename, spice_sns_filename]
         result = read_spice_l2_fits(filenames)
-"""

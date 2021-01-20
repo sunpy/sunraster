@@ -1,5 +1,6 @@
-import textwrap
 import copy
+import numbers
+import textwrap
 
 import numpy as np
 from astropy.io import fits
@@ -15,6 +16,9 @@ from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
 
 
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
+
+
+INCORRECT_OBSID_MESSAGE = "File has incorrect SPIOBSID."
 
 
 def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=False):
@@ -67,16 +71,18 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
             windows = list(cube_lists.keys())
         # Read subsequent files and append output to relevant window in cube_lists.
         for i, filename in enumerate(filenames[1:]):
-            cube_lists = _read_single_spice_l2_fits(filename, windows=windows, memmap=memmap,
-                                                    read_dumbbells=read_dumbbells,
-                                                    output=cube_lists)
-            # Check this file's data is consistent with first file.
-            next_obs_id = _get_obsid(_get_meta_from_last_added(cube_lists))
-            if next_obs_id != first_obs_id:
-                raise ValueError(
-                    "All files must correspond to same observing campaign/SPICE OBS ID. "
-                     f"First file SPICE OBS ID: {first_obs_id}; "
-                     f"{i+1}th file SPICE OBS ID: {next_obs_id}")
+            try:
+                cube_lists = _read_single_spice_l2_fits(filename, windows=windows, memmap=memmap,
+                                                        read_dumbbells=read_dumbbells,
+                                                        output=cube_lists, spice_id=first_obs_id)
+            except ValueError as err:
+                err_message = err.args[0]
+                if INCORRECT_OBSID_MESSAGE in err_message:
+                    this_obs_id = err_message.split()[-1]
+                    raise ValueError(
+                        "All files must correspond to same observing campaign/SPICE OBS ID. "
+                         f"First file SPICE OBS ID: {first_obs_id}; "
+                         f"{i+1}th file SPICE OBS ID: {this_obs_id}")
         # Depending on type of file, combine data from different files into
         # SpectrogramSequences and RasterSequences.
         is_raster = "ras" in first_meta.get("FILENAME") and \
@@ -88,6 +94,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         window_sequences = [(key, sequence_class([v[0] for v in value], common_axis=-1))
                             for key, value in cube_lists.items()]
     else:
+        # If only one file being read, leave data in SpectrogramCube objects.
         window_sequences = list(first_cubes.items())
     if len(window_sequences) > 1:
         # Data should be aligned along all axes except the spectral axis.
@@ -116,7 +123,7 @@ def _get_obsid(spice_meta):
 
 
 def _read_single_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbells=False,
-                               output=None):
+                               output=None, spice_id=None):
     """Read SPICE level 2 FITS file(s).
 
     Parameters
@@ -145,6 +152,10 @@ def _read_single_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbel
         The output for each window will be appended to the list corresponding
         the window's name.
 
+    spice_id: `int` (optional)
+        If not None, file must have a SPIOBSID equal to this value.
+        Otherwise an error is raised
+
     Returns
     -------
     output: `dict` of `sunraster.SpectrogramCube`
@@ -153,6 +164,9 @@ def _read_single_spice_l2_fits(filename, windows=None, memmap=True, read_dumbbel
     window_cubes = []
     dumbbell_label = "DUMBBELL"
     with fits.open(filename, memmap=memmap) as hdulist:
+        if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
+            raise ValueError(f"{INCORRECT_OBSID_MESSAGE}  "
+                             f"Expected {spice_id}.  Got {hdulist[0].header['SPIOBSID']}.")
         # Derive names of windows to be read.
         if windows is None:
             if read_dumbbells:
