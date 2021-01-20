@@ -8,11 +8,8 @@ import sys
 
 from .spectrogram import SpectrogramCube
 from .spectrogram_sequence import RasterSequence, SpectrogramSequence
+from .version import version as __version__
 
-try:
-    from .version import __version__
-except ImportError:
-    __version__ = "unknown"
 
 # Enforce Python version check during package import.
 __minimum_python_version__ = "3.7"

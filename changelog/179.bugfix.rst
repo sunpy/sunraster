@@ -1,0 +1,1 @@
+Ensure args are passed correctly to NDCube constructor by SpectrogramCube by entering them as kwargs instead of ordered args.

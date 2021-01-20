@@ -1,11 +1,19 @@
+import os.path
+
+import astropy.units as u
+import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
-import astropy.units as u
 from astropy.time import Time
+from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
-from sunraster.instr.spice import SPICEMeta
+from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
+from sunraster.instr.spice import read_spice_l2_fits, SPICEMeta
+from sunraster.tests import test_data_dir
+
+READ_SPICE_L2_FITS_RETURN_TYPE = NDCollection
 
 
 SPECTRAL_WINDOW = ('WINDOW0_74.73', 'Extension name')
@@ -79,6 +87,56 @@ def spice_meta(spice_fits_header):
                      comments=zip(spice_fits_header.keys(), spice_fits_header.comments))
 
 
+@pytest.fixture
+def spice_rasdb_filename(tmp_path):
+    """
+    Inserts data into a raster SPICE FITS file with dumbbells and returns new filename.
+
+    A new FITS file is saved in a tmp file path.
+    """
+    filename = "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
+    with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
+        new_hdulist = fits.HDUList()
+        new_hdulist.append(fits.PrimaryHDU(np.random.rand(1, 48, 832, 30),
+                                           header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 48, 832, 30),
+                                         header=hdulist[1].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30),
+                                         header=hdulist[2].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30),
+                                         header=hdulist[3].header))
+        new_hdulist.append(hdulist[-1])
+        tmp_spice_path = tmp_path / "spice"
+        if not os.path.exists(tmp_spice_path):
+            tmp_spice_path.mkdir()
+        new_filename = os.path.join(tmp_spice_path, filename)
+        new_hdulist.writeto(new_filename, overwrite=True)
+    return new_filename
+
+
+@pytest.fixture
+def spice_sns_filename(tmp_path):
+    """
+    Inserts data into a sit-and-stare SPICE FITS file and returns new filename.
+
+    A new FITS file is saved in a tmp file path.
+    """
+    filename = "solo_L2_spice-n-sit_20200620T235901_V01_16777431-000.fits"
+    with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
+        new_hdulist = fits.HDUList()
+        new_hdulist.append(fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1),
+                                           header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(32, 48, 1024, 1),
+                                         header=hdulist[1].header))
+        new_hdulist.append(hdulist[-1])
+        tmp_spice_path = tmp_path / "spice"
+        if not os.path.exists(tmp_spice_path):
+            tmp_spice_path.mkdir()
+        new_filename = os.path.join(tmp_spice_path, filename)
+        new_hdulist.writeto(new_filename, output_verify="fix+ignore", overwrite=True)
+    return new_filename
+
+
 def _construct_expected_time(date_info):
     return Time(date_info[0], format="fits", scale=date_info[1][1:4].lower())
 
@@ -111,12 +169,12 @@ def test_meta_rsun_angular(spice_meta):
     assert spice_meta.rsun_angular == RSUN_ANGULAR[0] * u.arcsec
 
 
-def test_meta_observing_mode_id(spice_meta):
-    assert spice_meta.observing_mode_id == SPICE_OBSERVING_MODE_ID[0]
+def test_meta_spice_observation_id(spice_meta):
+    assert spice_meta.spice_observation_id == SPICE_OBSERVING_MODE_ID[0]
 
 
-def test_meta_observatory_radial_velocity(spice_meta):
-    assert spice_meta.observatory_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
+def test_meta_observer_radial_velocity(spice_meta):
+    assert spice_meta.observer_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
 
 
 def test_meta_distance_to_sun(spice_meta):
@@ -135,16 +193,16 @@ def test_meta_date_end(spice_meta):
     assert spice_meta.date_end == _construct_expected_time(DATE_END)
 
 
-def test_meta_observer_coordinate(spice_meta):
+def test_meta_observer_location(spice_meta):
     obstime = _construct_expected_time(DATE_REFERENCE)
-    observer_coordinate = SkyCoord(
+    observer_location = SkyCoord(
             lon=HGLN_OBS[0], lat=HGLT_OBS[0], radius=DISTANCE_TO_SUN[0],
             unit=(u.deg, u.deg, u.m), obstime=obstime, frame=HeliographicStonyhurst)
-    assert spice_meta.observer_coordinate.lon == observer_coordinate.lon
-    assert spice_meta.observer_coordinate.lat == observer_coordinate.lat
-    assert spice_meta.observer_coordinate.radius == observer_coordinate.radius
-    assert spice_meta.observer_coordinate.obstime == observer_coordinate.obstime
-    assert spice_meta.observer_coordinate.frame.name == observer_coordinate.frame.name
+    assert spice_meta.observer_location.lon == observer_location.lon
+    assert spice_meta.observer_location.lat == observer_location.lat
+    assert spice_meta.observer_location.radius == observer_location.radius
+    assert spice_meta.observer_location.obstime == observer_location.obstime
+    assert spice_meta.observer_location.frame.name == observer_location.frame.name
 
 
 def test_meta_observing_mode_id_solar_orbiter(spice_meta):
@@ -163,10 +221,6 @@ def test_meta_window_type(spice_meta):
     assert spice_meta.window_type == WINDOW_TYPE[0]
 
 
-def test_meta_window_table_id(spice_meta):
-    assert spice_meta.window_table_id == WINDOW_TABLE_ID[0]
-
-
 def test_meta_slit_id(spice_meta):
     assert spice_meta.slit_id == SLIT_ID[0]
 
@@ -175,8 +229,12 @@ def test_meta_slit_width(spice_meta):
     assert spice_meta.slit_width == SLIT_WIDTH[0] * u.arcsec
 
 
-def test_meta_dumbbell(spice_meta):
-    assert spice_meta.dumbbell == "none"
+def test_meta_contains_dumbbell(spice_meta):
+    assert spice_meta.contains_dumbbell is False
+
+
+def test_meta_dumbbell_type(spice_meta):
+    assert spice_meta.dumbbell_type is None
 
 
 def test_meta_solar_B0(spice_meta):
@@ -203,3 +261,76 @@ def test_meta_date_start_earth(spice_meta):
 def test_meta_date_start_sun(spice_meta):
     date_start_sun = _construct_expected_time(DATE_START_SUN)
     assert spice_meta.date_start_sun == date_start_sun
+
+
+def test_read_spice_l2_fits_single_file_multiple_windows(spice_rasdb_filename):
+    filename = spice_rasdb_filename
+    result = read_spice_l2_fits(filename)
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+def test_read_spice_l2_fits_single_file_window(spice_rasdb_filename):
+    filename = spice_rasdb_filename
+    result = read_spice_l2_fits(filename, windows=["WINDOW0_70.51"])
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert result.aligned_axes is None
+    assert len(result) == 1
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+def test_read_spice_l2_fits_single_file_dumbbells(spice_rasdb_filename):
+    filename = spice_rasdb_filename
+    result = read_spice_l2_fits(filename, read_dumbbells=True)
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert all(window.meta.contains_dumbbell for window in result.values())
+    assert set(result.aligned_axes.values()) == {tuple(range(4))}
+    assert all(isinstance(window, SpectrogramCube) for window in result.values())
+
+
+def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_filename):
+    filenames = [spice_rasdb_filename] * 2
+    result = read_spice_l2_fits(filenames)
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all([window.dimensions[0].value == len(filenames) for window in result.values()])
+    assert all([isinstance(window, RasterSequence) for window in result.values()])
+
+
+def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename):
+    filenames = [spice_rasdb_filename] * 2
+    result = read_spice_l2_fits(filenames, windows=["WINDOW0_70.51"])
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert result.aligned_axes is None
+    assert len(result) == 1
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(isinstance(window, RasterSequence) for window in result.values())
+
+
+def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
+    filenames = [spice_sns_filename] * 2
+    result = read_spice_l2_fits(filenames)
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
+    assert len(result) == 2
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(isinstance(window, SpectrogramSequence) for window in result.values())
+
+
+def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
+    filenames = [spice_rasdb_filename] * 2
+    result = read_spice_l2_fits(filenames, read_dumbbells=True)
+    assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
+    assert all(window[0].meta.contains_dumbbell for window in result.values())
+    assert set(result.aligned_axes.values()) == {tuple(range(4))}
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(isinstance(window, SpectrogramSequence) for window in result.values())
+
+
+def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
+    with pytest.raises(ValueError):
+        filenames = [spice_rasdb_filename, spice_sns_filename]
+        result = read_spice_l2_fits(filenames)

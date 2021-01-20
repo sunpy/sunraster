@@ -36,57 +36,99 @@ schedules:
       - master
     always: true
 
-jobs:
-- template: run-tox-env.yml@OpenAstronomy
-  parameters:
-    default_python: '3.8'
-    submodules: false
-    coverage: codecov
-    posargs: -n=4
-    libraries:
-      yum:
-        - openssl-devel
-        - freetype-devel
-        - libpng-devel
-    envs:
-      - macos: py37
-        name: py37_osx
-        posargs: -n=1
+pr:
+  autoCancel: true
 
-      - linux32: py38-32bit
-        name: py38_test_32bit
+stages:
+  - stage: FirstPhaseTests
+    displayName: Core Tests
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        default_python: '3.8'
+        submodules: false
+        coverage: codecov
+        toxdeps: tox-pypi-filter
+        posargs: -n=4
 
-      - windows: py37
-        name: py37_win
+        envs:
+          - linux: codestyle
+            name: style_check
+            pytest: false
+            libraries: {}
 
-      - linux: py38-online
-        name: py38_online
+          - linux: py38
 
-      - linux: codestyle
-        name: python_codestyle
+  - stage: SecondPhaseTests
+    displayName: Stage 2 Tests
+    dependsOn: FirstPhaseTests
+    jobs:
+    - template: run-tox-env.yml@OpenAstronomy
+      parameters:
+        default_python: '3.8'
+        submodules: false
+        coverage: codecov
+        toxdeps: tox-pypi-filter
+        posargs: -n=4
+        libraries:
+          apt:
+            - graphviz
 
-      - linux: py37-oldestdeps
-        name: py37_oldestdeps
+        envs:
+          - macos: py37
 
-      - linux: py38-ndcube14dev
-        name: py38_ndcube14dev
+          - windows: py39
 
-# On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
-- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), not(contains(variables['Build.SourceBranch'], 'master'))) }}:
-  - template: publish.yml@OpenAstronomy
-    parameters:
-      # Only Upload to PyPI on tags
-      ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
-        pypi_connection_name : 'PyPI'
-      test_extras: 'dev'
-      test_command: 'pytest -p no:warnings --doctest-rst -m "not figure" --pyargs sunraster'
-      submodules: false
-      targets:
-        - wheels_universal
-        - sdist
-      dependsOn:
-        - py37_osx
-        - py37_win
-        - py38_online
-        - py37_oldestdeps
-        - py38_test_32bit
+          - linux: build_docs
+            posargs: " "
+            pytest: false
+
+          - linux: py38-online
+
+          - linux: py37-oldestdeps
+
+          - linux: py38-ndcube14dev
+
+          - linux: py38-ndcube20dev
+
+
+  - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
+    - stage: CronTests
+      displayName: Cron Tests
+      dependsOn: []  # Don't wait on other stages
+      jobs:
+      - template: run-tox-env.yml@OpenAstronomy
+        parameters:
+          default_python: '3.8'
+          submodules: false
+          coverage: codecov
+          toxdeps: tox-pypi-filter
+          posargs: -n=4
+
+          libraries:
+            yum:
+              - openssl-devel
+              - freetype-devel
+              - libpng-devel
+              - hdf5-devel
+
+          envs:
+            - linux: py38-devdeps
+
+  # On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
+  - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.SourceBranchName'], 'master'), eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual'))) }}:
+    - stage: Release
+      dependsOn: SecondPhaseTests
+      jobs:
+      - template: publish.yml@OpenAstronomy
+        parameters:
+          # Only Upload to PyPI on tags
+          ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+            pypi_connection_name : 'PyPI'
+          test_extras: 'dev'
+          test_command: 'pytest -p no:warnings --doctest-rst -m "not figure" --pyargs sunpy'
+          submodules: false
+          targets:
+            - wheels_cp3[78]-manylinux*x86_64
+            - wheels_cp3[78]-macosx*
+            - sdist

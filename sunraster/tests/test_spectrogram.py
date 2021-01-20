@@ -29,6 +29,7 @@ WCS_NO_COORDS = WCS(header=H_NO_COORDS, naxis=3)
 SOURCE_DATA_DN = np.array([[[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]],
                            [[0.563, 1.132, -1.343], [-0.719, 1.441, 1.566]]])
 SOURCE_UNCERTAINTY_DN = np.sqrt(SOURCE_DATA_DN)
+MASK = SOURCE_DATA_DN > 1
 
 TIME_DIM_LEN = SOURCE_DATA_DN.shape[0]
 SINGLES_EXPOSURE_TIME = 2.
@@ -45,48 +46,51 @@ EXTRA_COORDS1 = [("time", 0,
 
 # Define SpectrogramCubes in various units.
 spectrogram_DN0 = SpectrogramCube(
-    SOURCE_DATA_DN, WCS0, EXTRA_COORDS0, u.ct, SOURCE_UNCERTAINTY_DN)
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct,
+    uncertainty=SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s0 = SpectrogramCube(
-    SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, WCS0, EXTRA_COORDS0, u.ct / u.s,
-    SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME)
+    SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct / u.s,
+    uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME)
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN /
     SINGLES_EXPOSURE_TIME /
     SINGLES_EXPOSURE_TIME,
-    WCS0,
-    EXTRA_COORDS0,
-    u.ct /
+    wcs=WCS0,
+    extra_coords=EXTRA_COORDS0,
+    unit=u.ct /
     u.s /
     u.s,
-    SOURCE_UNCERTAINTY_DN /
+    uncertainty=SOURCE_UNCERTAINTY_DN /
     SINGLES_EXPOSURE_TIME /
     SINGLES_EXPOSURE_TIME)
 spectrogram_DN_s0 = SpectrogramCube(
-    SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, WCS0, EXTRA_COORDS0, u.ct * u.s,
-    SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
+    SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct * u.s,
+    uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
 spectrogram_DN1 = SpectrogramCube(
-    SOURCE_DATA_DN, WCS0, EXTRA_COORDS1, u.ct, SOURCE_UNCERTAINTY_DN)
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct,
+    uncertainty=SOURCE_UNCERTAINTY_DN)
 spectrogram_DN_per_s1 = SpectrogramCube(
-    SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, WCS0, EXTRA_COORDS1, u.ct / u.s,
-    SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME)
+    SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct / u.s,
+    uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME)
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN /
     SINGLES_EXPOSURE_TIME /
     SINGLES_EXPOSURE_TIME,
-    WCS0,
-    EXTRA_COORDS1,
-    u.ct /
+    wcs=WCS0,
+    extra_coords=EXTRA_COORDS1,
+    unit=u.ct /
     u.s /
     u.s,
-    SOURCE_UNCERTAINTY_DN /
+    uncertainty=SOURCE_UNCERTAINTY_DN /
     SINGLES_EXPOSURE_TIME /
     SINGLES_EXPOSURE_TIME)
 spectrogram_DN_s1 = SpectrogramCube(
-    SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, WCS0, EXTRA_COORDS1, u.ct * u.s,
-    SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
+    SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME, wcs=WCS0, extra_coords=EXTRA_COORDS1, unit=u.ct * u.s,
+    uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME)
 spectrogram_NO_COORDS = SpectrogramCube(SOURCE_DATA_DN, WCS_NO_COORDS)
 spectrogram_instrument_axes = SpectrogramCube(
-    SOURCE_DATA_DN, WCS0, EXTRA_COORDS0, u.ct, SOURCE_UNCERTAINTY_DN, instrument_axes=("a", "b", "c"))
+    SOURCE_DATA_DN, wcs=WCS0, extra_coords=EXTRA_COORDS0, unit=u.ct,
+    uncertainty=SOURCE_UNCERTAINTY_DN, mask=MASK, instrument_axes=("a", "b", "c"))
 
 def test_spectral_axis():
     assert all(spectrogram_DN0.spectral_axis == spectrogram_DN0.axis_world_coords("em.wl"))
@@ -164,5 +168,30 @@ def test_uncalculate_exposure_time_correction_error():
 def test_instrument_axes_slicing(item, expected):
     sliced_cube = spectrogram_instrument_axes[item]
     output = sliced_cube.instrument_axes
-    print(output, output.shape, expected, expected.shape)
     assert all(output == expected)
+
+
+def test_ndcube_components_after_slicing():
+    """Tests all cube components are correctly propagated by slicing."""
+    # Slice test object
+    item = tuple([slice(0, 1)] * 3)
+    sliced_cube = spectrogram_instrument_axes[item]
+    # Generate expected result.
+    data = spectrogram_instrument_axes.data[item]
+    uncertainty = spectrogram_instrument_axes.uncertainty[item]
+    mask = spectrogram_instrument_axes.mask[item]
+    extra_coords = list(EXTRA_COORDS0)
+    ec_axis = 0
+    ec0 = list(extra_coords[0])
+    ec0[-1]= ec0[-1][item[ec_axis]]
+    ec1 = list(extra_coords[1])
+    ec1[-1]= ec1[-1][item[ec_axis]]
+    extra_coords = (tuple(ec0), tuple(ec1))
+    wcs = spectrogram_instrument_axes.wcs[item]
+    expected_cube = SpectrogramCube(data=data, wcs=wcs, uncertainty=uncertainty, mask=mask,
+                                    meta=spectrogram_instrument_axes.meta,
+                                    unit=spectrogram_instrument_axes.unit,
+                                    extra_coords=extra_coords,
+                                    missing_axes=spectrogram_instrument_axes.missing_axes,
+                                    instrument_axes=spectrogram_instrument_axes.instrument_axes)
+    assert_cubes_equal(sliced_cube, expected_cube)
