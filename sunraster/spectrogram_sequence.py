@@ -112,9 +112,9 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     def __str__(self):
         data0 = self.data[0]
         if data0._time_name:
-            start_time = data0.time.value if data0.time.isscalar else data0.time[0].value
+            start_time = data0.time.value if data0.time.isscalar else data0.time.value.squeeze()[0]
             data_1 = self.data[-1]
-            stop_time = data_1.time.value if data_1.time.isscalar else data_1.time[-1].value
+            stop_time = data_1.time.value if data_1.time.isscalar else data_1.time.value.squeeze()[-1]
             time_period = start_time if start_time == stop_time else (start_time, stop_time)
         else:
             time_period = None
