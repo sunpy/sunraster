@@ -1,1 +1,0 @@
-Replace RasterSequence world_axis_physical_type properties with versions using NDCubeSequence.array_axis_physical_types.

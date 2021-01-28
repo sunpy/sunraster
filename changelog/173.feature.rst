@@ -1,1 +1,0 @@
-Provide functions to read SPICE file. Also refactor Meta class to be dict-like.
