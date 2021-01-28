@@ -89,7 +89,7 @@ stages:
 
           - linux: py38-ndcube14dev
 
-          - linux: py38-ndcube20dev
+            #- linux: py38-ndcube20dev
 
 
   - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
