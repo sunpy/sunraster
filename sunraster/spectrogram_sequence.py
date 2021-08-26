@@ -1,10 +1,11 @@
 import numbers
 import textwrap
 
+import astropy.units as u
 import numpy as np
+from astropy.coordinates import SkyCoord
 from ndcube import NDCubeSequence
 
-import astropy.units as u
 
 from sunraster.spectrogram import SpectrogramABC
 
@@ -64,6 +65,14 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     def lat(self):
         return u.Quantity([raster.lat for raster in self.data])
 
+    @property
+    def celestial(self):
+        sc = SkyCoord([raster.celestial for raster in self.data])
+        sc_shape = list(sc.shape)
+        sc_shape.insert(0, len(self.data))
+        sc_shape[1] = int(sc_shape[1] / sc_shape[0])
+        return sc.reshape(sc_shape)
+
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
         Applies or undoes exposure time correction to data and uncertainty and
@@ -118,19 +127,24 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             time_period = start_time if start_time == stop_time else (start_time, stop_time)
         else:
             time_period = None
-        if data0._longitude_name:
-            lons = self.lon
-            lon_min = lons.min()
-            lon_max = lons.max()
-            lon_range = lon_min if lon_min == lon_max else u.Quantity([lon_min, lon_max])
+        if data0._longitude_name or data0._latitude_name:
+            sc = self.celestial
+            component_names = dict(
+                [(item, key) for key, item in sc.representation_component_names.items()])
+            lon = getattr(sc, component_names["lon"])
+            lat = getattr(sc, component_names["lat"])
+            if sc.isscalar:
+                lon_range = lon
+                lat_range = lat
+            else:
+                lon_range = u.Quantity([lon.min(), lon.max()])
+                lat_range = u.Quantity([lat.min(), lat.max()])
+                if lon_range[0] == lon_range[1]:
+                    lon_range = lon_range[0]
+                if lat_range[0] == lat_range[1]:
+                    lat_range = lat_range[0]
         else:
             lon_range = None
-        if data0._latitude_name:
-            lats = self.lat
-            lat_min = lats.min()
-            lat_max = lats.max()
-            lat_range = lat_min if lat_min == lat_max else u.Quantity([lat_min, lat_max])
-        else:
             lat_range = None
         if data0._spectral_name:
             spectral_vals = self.spectral_axis
@@ -188,10 +202,22 @@ class RasterSequence(SpectrogramSequence):
     SnS_dimensions = SpectrogramSequence.cube_like_dimensions
     raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
     SnS_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
-    raster_axis_extra_coords = SpectrogramSequence.sequence_axis_extra_coords
-    SnS_axis_extra_coords = SpectrogramSequence.common_axis_extra_coords
+    raster_axis_coords = SpectrogramSequence.sequence_axis_coords
+    SnS_axis_coords = SpectrogramSequence.common_axis_coords
     plot_as_raster = SpectrogramSequence.plot
     plot_as_SnS = SpectrogramSequence.plot_as_cube
+
+    @property
+    def raster_axis_extra_coords(self):
+        warnings.warn(
+            "'.raster_axis_extra_coords is deprecated. Please use '.raster_axis_coords'.")
+        return self.raster_axis_coords
+
+    @property
+    def SnS_axis_extra_coords(self):
+        warnings.warn(
+            "'.SnS_axis_extra_coords is deprecated. Please use '.SnS_axis_coords'.")
+        return self.SnS_axis_coords
 
     def _set_single_scan_instrument_axes_types(self):
         if len(self.data) < 1:

@@ -1,12 +1,12 @@
 import abc
-import textwrap
 import numbers
+import textwrap
+import warnings
 
-import numpy as np
-from astropy.time import TimeDelta
 import astropy.units as u
+import numpy as np
+from astropy.time import Time
 from ndcube.ndcube import NDCube
-from ndcube.utils.cube import convert_extra_coords_dict_to_input_format
 
 __all__ = ['SpectrogramCube']
 
@@ -87,6 +87,12 @@ class SpectrogramABC(abc.ABC):
         Return the latitude coordinates for each pixel.
         """
 
+    @abc.abstractproperty
+    def celestial(self):
+        """
+        Return the celestial coordinates for each pixel.
+        """
+
     @abc.abstractmethod
     def apply_exposure_time_correction(self, undo=False, force=False):
         """
@@ -163,11 +169,11 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         Default is False.
     """
 
-    def __init__(self, data, wcs, extra_coords=None, unit=None, uncertainty=None, meta=None,
+    def __init__(self, data, wcs, unit=None, uncertainty=None, meta=None,
                  mask=None, instrument_axes=None, copy=False, **kwargs):
         # Initialize SpectrogramCube.
         super().__init__(data, wcs=wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-                         unit=unit, extra_coords=extra_coords, copy=copy, **kwargs)
+                         unit=unit, copy=copy, **kwargs)
 
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
@@ -199,19 +205,20 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 time_period = (str(self.time.min()), str(self.time.max()))
         else:
             time_period = None
-        if self._longitude_name:
-            if self.lon.isscalar:
-                lon_range = self.lon
+        if self._longitude_name or self._latitude_name:
+            sc = self.celestial
+            component_names = dict(
+                [(item, key) for key, item in sc.representation_component_names.items()])
+            lon = getattr(sc, component_names["lon"])
+            lat = getattr(sc, component_names["lat"])
+            if sc.isscalar:
+                lon_range = lon
+                lat_range = lat
             else:
-                lon_range = u.Quantity([self.lon.min(), self.lon.max()])
+                lon_range = u.Quantity([lon.min(), lon.max()])
+                lat_range = u.Quantity([lat.min(), lat.max()])
         else:
             lon_range = None
-        if self._latitude_name:
-            if self.lat.isscalar:
-                lat_range = self.lat
-            else:
-                lat_range = u.Quantity([self.lat.min(), self.lat.max()])
-        else:
             lat_range = None
         if self._spectral_name:
             if self.spectral_axis.isscalar:
@@ -237,15 +244,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def __getitem__(self, item):
         # Slice SpectrogramCube using parent slicing.
         result = super().__getitem__(item)
-
-        # As result is an NDCube, must put extra coord back into input format
-        # to create a SpectrogramCube.
-        if result.extra_coords is None:
-            extra_coords = None
-        else:
-            extra_coords = convert_extra_coords_dict_to_input_format(result.extra_coords,
-                                                                     result.missing_axes)
-
         # Slice instrument_axes if it exists.
         # If item is a slice, cube dimensionality is not reduced
         # so instrument_axes need not be sliced.
@@ -265,11 +263,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             # If slicing causes cube to be a scalar, set instrument_axes to None.
             if len(instrument_axes) == 0:
                 instrument_axes = None
-
-        return self.__class__(result.data, wcs=result.wcs, uncertainty=result.uncertainty,
-                              mask=result.mask, meta=result.meta, unit=result.unit,
-                              extra_coords=extra_coords, missing_axes=result.missing_axes,
-                              instrument_axes=instrument_axes)
+            result.instrument_axes = instrument_axes
+        return result
 
     @property
     def spectral_axis(self):
@@ -283,35 +278,44 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         if not self._time_name:
             raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_TIME_NAMES}")
-        times = self._get_axis_coord(self._time_name, self._time_loc)
-        if isinstance(times, (u.Quantity, TimeDelta)):
-            try:
-                if self.meta.date_reference:
-                    times += self.meta.date_reference
-            except AttributeError:
-                pass
-        return times
+        return Time(self._get_axis_coord(self._time_name, self._time_loc))
 
     @property
     def exposure_time(self):
         if not self._exposure_time_name:
             raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
+        return self._get_axis_coord_values(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def lon(self):
+        warnings.warn("'.lon' is deprecated.  Please use '.celestial'.")
         if not self._longitude_name:
             raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LONGITUDE_NAMES}")
-        return self._get_axis_coord(self._longitude_name, self._longitude_loc)
+        return self._get_axis_coord_values(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
+        warnings.warn("'.lat' is deprecated.  Please use '.celestial'.")
         if not self._latitude_name:
             raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_LATITUDE_NAMES}")
-        return self._get_axis_coord(self._latitude_name, self._latitude_loc)
+        return self._get_axis_coord_values(self._latitude_name, self._latitude_loc)
+
+    @property
+    def celestial(self):
+        if self._longitude_name:
+            celestial_name = self._longitude_name
+            celestial_loc = self._longitude_loc
+        elif self._latitude_name:
+            celestial_name = self._latitude_name
+            celestial_loc = self._latitude_loc
+        else:
+            raise ValueError("Celestial" + AXIS_NOT_FOUND_ERROR +
+                             f"{SUPPORTED_LONGITUDE_NAMES + SUPPORTED_LATITUDE_NAMES}")
+        return self._get_axis_coord(celestial_name, celestial_loc)
+
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         # Get exposure time in seconds.
@@ -337,19 +341,23 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             new_data, new_uncertainty, new_unit = _calculate_exposure_time_correction(
                 self.data, self.uncertainty, self.unit, exposure_time_s, force=force)
         # Return new instance of SpectrogramCube with correction applied/undone.
-
-        return self.__class__(
-            new_data, wcs=self.wcs,
-            extra_coords=convert_extra_coords_dict_to_input_format(self.extra_coords,
-                                                                   self.missing_axes),
-            unit=new_unit, uncertainty=new_uncertainty, meta=self.meta, mask=self.mask,
-            missing_axes=self.missing_axes)
+        result = copy.deepcopy(self)
+        result.data = new_data
+        result.uncertainty = new_uncertainty
+        result.unit = new_unit
+        return result
 
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
+            return self.axis_world_coords(axis_name)[0]
+        elif coord_loc == "extra_coords":
+            return self.axis_world_coords(wcs=self.extra_coords[axis_name])[0]
+
+    def _get_axis_coord_values(self, axis_name, coord_loc):
+        if coord_loc == "wcs":
             return self.axis_world_coords_values(axis_name)[0]
         elif coord_loc == "extra_coords":
-            return self.extra_coords[axis_name]["value"]
+            return self.axis_world_coords_values(wcs=self.extra_coords[axis_name])[0]
 
 
 def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
