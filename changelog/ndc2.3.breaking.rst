@@ -1,0 +1,1 @@
+Remove extra_coords kwarg from `~sunraster.spectrogram.SpectrogramCube` __init__ in accordance with new ndcube 2.0 API.  Extra coords can by added through the ndcube ExtraCoords.add API which is new in ndcube 2.0.

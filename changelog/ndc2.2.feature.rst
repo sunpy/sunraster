@@ -1,0 +1,1 @@
+Create new property `~sunraster.spectrogram.SpectrogramCube.celestial`, on `~sunraster.spectrogram.SpectrogramCube` to return a `~astropy.coordinates.SkyCoord` holding the celestial world coords of the pixels.
