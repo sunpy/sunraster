@@ -202,7 +202,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self.time.isscalar:
                 time_period = self.time
             else:
-                time_period = (str(self.time.min()), str(self.time.max()))
+                times = self.time
+                time_period = Time([times.min(), times.max()]).iso
         except ValueError as err:
             if AXIS_NOT_FOUND_ERROR in err.args[0]:
                 time_period = None
@@ -297,10 +298,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     @property
     def exposure_time(self):
-        if not self._exposure_time_name:
-            raise ValueError("Exposure time" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord_values(self._exposure_time_name, self._exposure_time_loc)
+        exposure_times = None
+        i = 0
+        while exposure_times is None and i < len(SUPPORTED_EXPOSURE_NAMES):
+            exposure_times = self.meta.get(SUPPORTED_EXPOSURE_NAMES[i], None)
+            i += 1
+        return exposure_times
 
     @property
     def lon(self):

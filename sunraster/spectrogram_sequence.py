@@ -53,11 +53,16 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
     @property
     def time(self):
-        return np.concatenate([raster.time for raster in self.data])
+        return Time(np.concatenate([raster.time for raster in self.data]))
 
     @property
     def exposure_time(self):
-        return np.concatenate([raster.exposure_time for raster in self.data])
+        exposure_type = type(self.data[0].exposure_time)
+        exposure_time = np.concatenate([raster.exposure_time for raster in self.data])
+        try:
+            return exposure_type(exposure_time)
+        except Exception:
+            return exposure_time
 
     @property
     def lon(self):
