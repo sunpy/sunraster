@@ -4,11 +4,13 @@ import textwrap
 import astropy.units as u
 import numpy as np
 from astropy.coordinates import SkyCoord
+from astropy.time import Time
 from ndcube import NDCubeSequence
 
-
-from sunraster.spectrogram import SpectrogramABC
-
+from sunraster.spectrogram import (SpectrogramABC, _find_axis_name,
+                                   SUPPORTED_LATITUDE_NAMES, SUPPORTED_LONGITUDE_NAMES,
+                                   SUPPORTED_SPECTRAL_NAMES, SUPPORTED_TIME_NAMES)
+ 
 __all__ = ['SpectrogramSequence', 'RasterSequence']
 
 RASTER_AXIS_NAME = "raster scan"
@@ -120,11 +122,28 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
     def __str__(self):
         data0 = self.data[0]
+        if not (data0._time_name and data0._longitude_name and data0._latitude_name
+                and data0._spectral_name):
+            for i, cube in enumerate(self):
+                self.data[i]._time_name, self.data[i]._time_loc = _find_axis_name(
+                    SUPPORTED_TIME_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._longitude_name, self.data[i]._longitude_loc = _find_axis_name(
+                    SUPPORTED_LONGITUDE_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._latitude_name, self.data[i]._latitude_loc = _find_axis_name(
+                    SUPPORTED_LATITUDE_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._spectral_name, self.data[i]._spectral_loc = _find_axis_name(
+                    SUPPORTED_SPECTRAL_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+        data0 = self.data[0]
         if data0._time_name:
-            start_time = data0.time.value if data0.time.isscalar else data0.time.value.squeeze()[0]
+            start_time = data0.time if data0.time.isscalar else data0.time.squeeze()[0]
             data_1 = self.data[-1]
-            stop_time = data_1.time.value if data_1.time.isscalar else data_1.time.value.squeeze()[-1]
-            time_period = start_time if start_time == stop_time else (start_time, stop_time)
+            stop_time = (data_1.time if data_1.time.isscalar else data_1.time.squeeze()[-1])
+            time_period = (start_time if start_time == stop_time
+                           else Time([start_time.iso, stop_time.iso]))
         else:
             time_period = None
         if data0._longitude_name or data0._latitude_name:
@@ -229,8 +248,16 @@ class RasterSequence(SpectrogramSequence):
                 self._single_scan_instrument_axes_types[self._common_axis] = \
                     self._slit_step_axis_name
             # Spectral axis name.
-            spectral_raster_index = [physical_type == (self.data[0]._spectral_name,)
-                                     for physical_type in self.data[0].array_axis_physical_types]
+            # If spectral name not present in raster cube, try finding it.
+            if not self.data[0]._spectral_name:
+                for i, cube in enumerate(self):
+                    self.data[i]._spectral_name, self.data[i]._spectral_name = _find_axis_name(
+                        SUPPORTED_SPECTRAL_NAMES, cube.wcs.world_axis_physical_types,
+                        cube.extra_coords)
+            spectral_name = self.data[0]._spectral_name
+            array_axis_physical_types = self.data[0].array_axis_physical_types
+            spectral_raster_index = [physical_type == (spectral_name,)
+                                     for physical_type in array_axis_physical_types]
             spectral_raster_index = np.arange(self.data[0].data.ndim)[spectral_raster_index]
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = \

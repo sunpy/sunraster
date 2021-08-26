@@ -20,7 +20,7 @@ UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
                             "been undone since the unit does not include "
                             "inverse time. To undo exposure time correction "
                             "anyway, set 'force' kwarg to True.")
-AXIS_NOT_FOUND_ERROR = " axis not found. If in extra_coords, axis name must be supported: "
+AXIS_NOT_FOUND_ERROR = "axis not found. If in extra_coords, axis name must be supported:"
 
 # Define supported coordinate names for coordinate properties.
 SUPPORTED_LONGITUDE_NAMES = ["custom:pos.helioprojective.lon", "pos.helioprojective.lon",
@@ -198,14 +198,17 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
     def __str__(self):
-        if self._time_name:
+        try:
             if self.time.isscalar:
                 time_period = self.time
             else:
                 time_period = (str(self.time.min()), str(self.time.max()))
-        else:
-            time_period = None
-        if self._longitude_name or self._latitude_name:
+        except ValueError as err:
+            if AXIS_NOT_FOUND_ERROR in err.args[0]:
+                time_period = None
+            else:
+                raise err
+        try:
             sc = self.celestial
             component_names = dict(
                 [(item, key) for key, item in sc.representation_component_names.items()])
@@ -217,16 +220,22 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             else:
                 lon_range = u.Quantity([lon.min(), lon.max()])
                 lat_range = u.Quantity([lat.min(), lat.max()])
-        else:
-            lon_range = None
-            lat_range = None
-        if self._spectral_name:
+        except ValueError as err:
+            if AXIS_NOT_FOUND_ERROR in err.args[0]:
+                lon_range = None
+                lat_range = None
+            else:
+                raise err
+        try:
             if self.spectral_axis.isscalar:
                 spectral_range = self.spectral_axis
             else:
                 spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
-        else:
-            spectral_range = None
+        except ValueError as err:
+            if AXIS_NOT_FOUND_ERROR in err.args[0]:
+                spectral_range = None
+            else:
+                raise err
         return (textwrap.dedent(f"""\
                 {self.__class__.__name__}
                 {"".join(["-"] * len(self.__class__.__name__))}
@@ -269,6 +278,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     @property
     def spectral_axis(self):
         if not self._spectral_name:
+            self._spectral_name, self._spectral_loc = _find_axis_name(
+                SUPPORTED_SPECTRAL_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
+        if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
                              f"{SUPPORTED_SPECTRAL_NAMES}")
         return self._get_axis_coord(self._spectral_name, self._spectral_loc)
@@ -276,8 +288,11 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     @property
     def time(self):
         if not self._time_name:
-            raise ValueError("Time" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_TIME_NAMES}")
+            self._time_name, self._time_loc = _find_axis_name(SUPPORTED_TIME_NAMES,
+                                                              self.wcs.world_axis_physical_types,
+                                                              self.extra_coords)
+            if not self._time_name:
+                raise ValueError(f"Time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_TIME_NAMES}")
         return Time(self._get_axis_coord(self._time_name, self._time_loc))
 
     @property
@@ -305,6 +320,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     @property
     def celestial(self):
+        if not self._longitude_name:
+            self._longitude_name, self._longitude_loc = _find_axis_name(
+                SUPPORTED_LONGITUDE_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
+        if not self._latitude_name:
+            self._latitude_name, self._latitude_loc = _find_axis_name(
+                SUPPORTED_LATITUDE_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
         if self._longitude_name:
             celestial_name = self._longitude_name
             celestial_loc = self._longitude_loc
