@@ -336,8 +336,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             celestial_name = self._latitude_name
             celestial_loc = self._latitude_loc
         else:
-            raise ValueError("Celestial" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_LONGITUDE_NAMES + SUPPORTED_LATITUDE_NAMES}")
+            raise ValueError(
+                f"Celestial {AXIS_NOT_FOUND_ERROR} "
+                f"{np.concatenate([SUPPORTED_LONGITUDE_NAMES, SUPPORTED_LATITUDE_NAMES])}")
         return self._get_axis_coord(celestial_name, celestial_loc)
 
 
