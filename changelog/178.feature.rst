@@ -1,1 +1,0 @@
-Enable SPICE FITS reader to handle multiple files.

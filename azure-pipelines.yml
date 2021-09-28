@@ -3,8 +3,6 @@ variables:
   CI_NAME: Azure Pipelines
   CI_BUILD_ID: $(Build.BuildId)
   CI_BUILD_URL: "https://dev.azure.com/sunpy/sunraster/_build/results?buildId=$(Build.BuildId)"
-  CIBW_BUILD: cp37-* cp38-*
-  CIBW_SKIP: "*-win32 *-manylinux1_i686"
 
 resources:
   repositories:
@@ -89,9 +87,6 @@ stages:
 
           - linux: py38-ndcube14dev
 
-          # - linux: py38-ndcube20dev
-
-
   - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
     - stage: CronTests
       displayName: Cron Tests
@@ -126,9 +121,8 @@ stages:
           ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
             pypi_connection_name : 'PyPI'
           test_extras: 'dev'
-          test_command: 'pytest -p no:warnings --doctest-rst -m "not figure" --pyargs sunpy'
+          test_command: 'pytest -p no:warnings --doctest-rst -m "not figure" --pyargs sunraster'
           submodules: false
           targets:
-            - wheels_cp3[78]-manylinux*x86_64
-            - wheels_cp3[78]-macosx*
+            - wheels_universal
             - sdist
