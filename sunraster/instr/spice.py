@@ -249,7 +249,8 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
                 Detector:\t\t{self.detector}
                 Spectral Window:\t{self.spectral_window}
                 Date:\t\t\t{self.date_reference}
-                OBS ID:\t\t\t{self.observing_mode_id}
+                OBS ID:\t\t\t{self.observing_mode_id_solar_orbiter}
+                SPIOBSID:\t\t\t{self.spice_observation_id}
                 """)
 
     def __repr__(self):
