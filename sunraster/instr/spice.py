@@ -244,13 +244,13 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         return textwrap.dedent(f"""\
                 SPICEMeta
                 ---------
-                Observatory:\t\t{self.observatory}
-                Instrument:\t\t{self.instrument}
-                Detector:\t\t{self.detector}
-                Spectral Window:\t{self.spectral_window}
-                Date:\t\t\t{self.date_reference}
-                OBS ID:\t\t\t{self.observing_mode_id_solar_orbiter}
-                SPIOBSID:\t\t\t{self.spice_observation_id}
+                Observatory:\t\t\t\t{self.observatory}
+                Instrument:\t\t\t\t{self.instrument}
+                Detector:\t\t\t\t{self.detector}
+                Spectral Window:\t\t\t{self.spectral_window}
+                Date:\t\t\t\t\t{self.date_reference}
+                OBS_ID (SOC Observation ID):\t\t{self.observing_mode_id_solar_orbiter}
+                SPIOBSID (SPICE Observation ID):\t{self.spice_observation_id}
                 """)
 
     def __repr__(self):
