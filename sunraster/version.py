@@ -14,7 +14,7 @@ except Exception:
     )
     del warnings
 
-    version = '0.0.0'
+    version = "0.0.0"
 
 
 # We use LooseVersion to define major, minor, micro, but ignore any suffixes.
@@ -37,4 +37,4 @@ major, minor, bugfix = split_version(version)
 
 del split_version  # clean up namespace.
 
-release = 'dev' not in version
+release = "dev" not in version

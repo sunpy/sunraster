@@ -8,48 +8,84 @@ import numpy as np
 from astropy.time import Time
 from ndcube.ndcube import NDCube
 
-__all__ = ['SpectrogramCube']
+__all__ = ["SpectrogramCube"]
 
 
 # Define some custom error messages.
-APPLY_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
-                             "been applied since the unit already includes "
-                             "inverse time. To apply exposure time correction "
-                             "anyway, set 'force' kwarg to True.")
-UNDO_EXPOSURE_TIME_ERROR = ("Exposure time correction has probably already "
-                            "been undone since the unit does not include "
-                            "inverse time. To undo exposure time correction "
-                            "anyway, set 'force' kwarg to True.")
-AXIS_NOT_FOUND_ERROR = "axis not found. If in extra_coords, axis name must be supported:"
+APPLY_EXPOSURE_TIME_ERROR = (
+    "Exposure time correction has probably already "
+    "been applied since the unit already includes "
+    "inverse time. To apply exposure time correction "
+    "anyway, set 'force' kwarg to True."
+)
+UNDO_EXPOSURE_TIME_ERROR = (
+    "Exposure time correction has probably already "
+    "been undone since the unit does not include "
+    "inverse time. To undo exposure time correction "
+    "anyway, set 'force' kwarg to True."
+)
+AXIS_NOT_FOUND_ERROR = (
+    "axis not found. If in extra_coords, axis name must be supported:"
+)
 
 # Define supported coordinate names for coordinate properties.
-SUPPORTED_LONGITUDE_NAMES = ["custom:pos.helioprojective.lon", "pos.helioprojective.lon",
-                             "longitude", "lon"]
-SUPPORTED_LONGITUDE_NAMES += [name.upper() for name in SUPPORTED_LONGITUDE_NAMES] + \
-                             [name.capitalize() for name in SUPPORTED_LONGITUDE_NAMES]
+SUPPORTED_LONGITUDE_NAMES = [
+    "custom:pos.helioprojective.lon",
+    "pos.helioprojective.lon",
+    "longitude",
+    "lon",
+]
+SUPPORTED_LONGITUDE_NAMES += [name.upper() for name in SUPPORTED_LONGITUDE_NAMES] + [
+    name.capitalize() for name in SUPPORTED_LONGITUDE_NAMES
+]
 SUPPORTED_LONGITUDE_NAMES = np.array(SUPPORTED_LONGITUDE_NAMES)
 
-SUPPORTED_LATITUDE_NAMES = ["custom:pos.helioprojective.lat", "pos.helioprojective.lat",
-                            "latitude", "lat"]
-SUPPORTED_LATITUDE_NAMES += [name.upper() for name in SUPPORTED_LATITUDE_NAMES] + \
-                            [name.capitalize() for name in SUPPORTED_LATITUDE_NAMES]
+SUPPORTED_LATITUDE_NAMES = [
+    "custom:pos.helioprojective.lat",
+    "pos.helioprojective.lat",
+    "latitude",
+    "lat",
+]
+SUPPORTED_LATITUDE_NAMES += [name.upper() for name in SUPPORTED_LATITUDE_NAMES] + [
+    name.capitalize() for name in SUPPORTED_LATITUDE_NAMES
+]
 SUPPORTED_LATITUDE_NAMES = np.array(SUPPORTED_LATITUDE_NAMES)
 
-SUPPORTED_SPECTRAL_NAMES = ["em.wl", "em.energy", "em.freq", "wavelength", "energy",
-                            "frequency", "freq", "lambda", "spectral"]
-SUPPORTED_SPECTRAL_NAMES += [name.upper() for name in SUPPORTED_SPECTRAL_NAMES] + \
-                            [name.capitalize() for name in SUPPORTED_SPECTRAL_NAMES]
+SUPPORTED_SPECTRAL_NAMES = [
+    "em.wl",
+    "em.energy",
+    "em.freq",
+    "wavelength",
+    "energy",
+    "frequency",
+    "freq",
+    "lambda",
+    "spectral",
+]
+SUPPORTED_SPECTRAL_NAMES += [name.upper() for name in SUPPORTED_SPECTRAL_NAMES] + [
+    name.capitalize() for name in SUPPORTED_SPECTRAL_NAMES
+]
 SUPPORTED_SPECTRAL_NAMES = np.array(SUPPORTED_SPECTRAL_NAMES)
 
 SUPPORTED_TIME_NAMES = ["time"]
-SUPPORTED_TIME_NAMES += [name.upper() for name in SUPPORTED_TIME_NAMES] + \
-                        [name.capitalize() for name in SUPPORTED_TIME_NAMES]
+SUPPORTED_TIME_NAMES += [name.upper() for name in SUPPORTED_TIME_NAMES] + [
+    name.capitalize() for name in SUPPORTED_TIME_NAMES
+]
 SUPPORTED_TIME_NAMES = np.array(SUPPORTED_TIME_NAMES)
 
-SUPPORTED_EXPOSURE_NAMES = ["exposure time", "exposure_time", "exposure times",
-                            "exposure_times", "exp time", "exp_time", "exp times", "exp_times"]
-SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] + \
-                            [name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES]
+SUPPORTED_EXPOSURE_NAMES = [
+    "exposure time",
+    "exposure_time",
+    "exposure times",
+    "exposure_times",
+    "exp time",
+    "exp_time",
+    "exp times",
+    "exp_times",
+]
+SUPPORTED_EXPOSURE_NAMES += [name.upper() for name in SUPPORTED_EXPOSURE_NAMES] + [
+    name.capitalize() for name in SUPPORTED_EXPOSURE_NAMES
+]
 SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 
 
@@ -169,31 +205,56 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         Default is False.
     """
 
-    def __init__(self, data, wcs, unit=None, uncertainty=None, meta=None,
-                 mask=None, instrument_axes=None, copy=False, **kwargs):
+    def __init__(
+        self,
+        data,
+        wcs,
+        unit=None,
+        uncertainty=None,
+        meta=None,
+        mask=None,
+        instrument_axes=None,
+        copy=False,
+        **kwargs,
+    ):
         # Initialize SpectrogramCube.
-        super().__init__(data, wcs=wcs, uncertainty=uncertainty, mask=mask, meta=meta,
-                         unit=unit, copy=copy, **kwargs)
+        super().__init__(
+            data,
+            wcs=wcs,
+            uncertainty=uncertainty,
+            mask=mask,
+            meta=meta,
+            unit=unit,
+            copy=copy,
+            **kwargs,
+        )
 
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
         world_axis_physical_types = np.array(self.wcs.world_axis_physical_types)
         self._longitude_name, self._longitude_loc = _find_axis_name(
-            SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords
+        )
         self._latitude_name, self._latitude_loc = _find_axis_name(
-            SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords
+        )
         self._spectral_name, self._spectral_loc = _find_axis_name(
-            SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords
+        )
         self._time_name, self._time_loc = _find_axis_name(
-            SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords
+        )
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
-            SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords)
+            SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords
+        )
 
         # Set up instrument axes if set.
         if instrument_axes is None:
             self.instrument_axes = instrument_axes
         elif len(instrument_axes) != data.ndim:
-            raise ValueError("Length of instrument_axes must match number of data axes.")
+            raise ValueError(
+                "Length of instrument_axes must match number of data axes."
+            )
         else:
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
@@ -212,7 +273,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         try:
             sc = self.celestial
             component_names = dict(
-                [(item, key) for key, item in sc.representation_component_names.items()])
+                [(item, key) for key, item in sc.representation_component_names.items()]
+            )
             lon = getattr(sc, component_names["lon"])
             lat = getattr(sc, component_names["lat"])
             if sc.isscalar:
@@ -231,13 +293,16 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self.spectral_axis.isscalar:
                 spectral_range = self.spectral_axis
             else:
-                spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
+                spectral_range = u.Quantity(
+                    [self.spectral_axis.min(), self.spectral_axis.max()]
+                )
         except ValueError as err:
             if AXIS_NOT_FOUND_ERROR in err.args[0]:
                 spectral_range = None
             else:
                 raise err
-        return (textwrap.dedent(f"""\
+        return textwrap.dedent(
+            f"""\
                 {self.__class__.__name__}
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
@@ -246,7 +311,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
-                Data unit: {self.unit}"""))
+                Data unit: {self.unit}"""
+        )
 
     def __repr__(self):
         return f"{object.__repr__(self)}\n{str(self)}"
@@ -265,8 +331,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 instrument_axes = self.instrument_axes[1:]
             # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
             elif isinstance(item, tuple):
-                instr_item = [isinstance(i, numbers.Integral) for i in item] + \
-                        [False] * (len(self.instrument_axes) - len(item))
+                instr_item = [isinstance(i, numbers.Integral) for i in item] + [
+                    False
+                ] * (len(self.instrument_axes) - len(item))
                 instrument_axes = self.instrument_axes[np.invert(instr_item)]
             else:
                 raise TypeError("Unrecognized slice item. Must be int, slice or tuple.")
@@ -280,18 +347,24 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def spectral_axis(self):
         if not self._spectral_name:
             self._spectral_name, self._spectral_loc = _find_axis_name(
-                SUPPORTED_SPECTRAL_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
+                SUPPORTED_SPECTRAL_NAMES,
+                self.wcs.world_axis_physical_types,
+                self.extra_coords,
+            )
         if not self._spectral_name:
-            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_SPECTRAL_NAMES}")
+            raise ValueError(
+                "Spectral" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_SPECTRAL_NAMES}"
+            )
         return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
     def time(self):
         if not self._time_name:
-            self._time_name, self._time_loc = _find_axis_name(SUPPORTED_TIME_NAMES,
-                                                              self.wcs.world_axis_physical_types,
-                                                              self.extra_coords)
+            self._time_name, self._time_loc = _find_axis_name(
+                SUPPORTED_TIME_NAMES,
+                self.wcs.world_axis_physical_types,
+                self.extra_coords,
+            )
             if not self._time_name:
                 raise ValueError(f"Time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_TIME_NAMES}")
         return Time(self._get_axis_coord(self._time_name, self._time_loc))
@@ -309,26 +382,34 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def lon(self):
         warnings.warn("'.lon' is deprecated.  Please use '.celestial'.")
         if not self._longitude_name:
-            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_LONGITUDE_NAMES}")
+            raise ValueError(
+                "Longitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LONGITUDE_NAMES}"
+            )
         return self._get_axis_coord_values(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
         warnings.warn("'.lat' is deprecated.  Please use '.celestial'.")
         if not self._latitude_name:
-            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR +
-                             f"{SUPPORTED_LATITUDE_NAMES}")
+            raise ValueError(
+                "Latitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LATITUDE_NAMES}"
+            )
         return self._get_axis_coord_values(self._latitude_name, self._latitude_loc)
 
     @property
     def celestial(self):
         if not self._longitude_name:
             self._longitude_name, self._longitude_loc = _find_axis_name(
-                SUPPORTED_LONGITUDE_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
+                SUPPORTED_LONGITUDE_NAMES,
+                self.wcs.world_axis_physical_types,
+                self.extra_coords,
+            )
         if not self._latitude_name:
             self._latitude_name, self._latitude_loc = _find_axis_name(
-                SUPPORTED_LATITUDE_NAMES, self.wcs.world_axis_physical_types, self.extra_coords)
+                SUPPORTED_LATITUDE_NAMES,
+                self.wcs.world_axis_physical_types,
+                self.extra_coords,
+            )
         if self._longitude_name:
             celestial_name = self._longitude_name
             celestial_loc = self._longitude_loc
@@ -338,9 +419,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         else:
             raise ValueError(
                 f"Celestial {AXIS_NOT_FOUND_ERROR} "
-                f"{np.concatenate([SUPPORTED_LONGITUDE_NAMES, SUPPORTED_LATITUDE_NAMES])}")
+                f"{np.concatenate([SUPPORTED_LONGITUDE_NAMES, SUPPORTED_LATITUDE_NAMES])}"
+            )
         return self._get_axis_coord(celestial_name, celestial_loc)
-
 
     def apply_exposure_time_correction(self, undo=False, force=False):
         # Get exposure time in seconds.
@@ -352,8 +433,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self._exposure_time_loc == "extra_coords":
                 exposure_axis = self.extra_coords[self._exposure_time_name]["axis"]
             else:
-                exposure_axis = get_axis_number_from_axis_name(self._exposure_time_name,
-                                                               self.world_axis_physical_types)
+                exposure_axis = get_axis_number_from_axis_name(
+                    self._exposure_time_name, self.world_axis_physical_types
+                )
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
@@ -361,10 +443,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data, new_uncertainty, new_unit = _uncalculate_exposure_time_correction(
-                self.data, self.uncertainty, self.unit, exposure_time_s, force=force)
+                self.data, self.uncertainty, self.unit, exposure_time_s, force=force
+            )
         else:
             new_data, new_uncertainty, new_unit = _calculate_exposure_time_correction(
-                self.data, self.uncertainty, self.unit, exposure_time_s, force=force)
+                self.data, self.uncertainty, self.unit, exposure_time_s, force=force
+            )
         # Return new instance of SpectrogramCube with correction applied/undone.
         result = copy.deepcopy(self)
         result.data = new_data
@@ -415,7 +499,9 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     if axis_name:
         loc = "wcs"
     elif extra_coords:  # If axis name not in WCS, check extra_coords.
-        axis_name = _find_name_in_array(supported_names, np.array(list(extra_coords.keys())))
+        axis_name = _find_name_in_array(
+            supported_names, np.array(list(extra_coords.keys()))
+        )
         if axis_name:
             loc = "extra_coords"
     return axis_name, loc
@@ -428,7 +514,9 @@ def _find_name_in_array(supported_names, names_array):
         return names_array[name_index]
 
 
-def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
+def _calculate_exposure_time_correction(
+    data, uncertainty, unit, exposure_time, force=False
+):
     """
     Applies exposure time correction to data and uncertainty arrays.
 
@@ -470,16 +558,21 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
         # regardless of the unit.
         new_data = data / exposure_time
         if uncertainty:
-            uncertainty_unit = uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
-            new_uncertainty = uncertainty.__class__(uncertainty.array / exposure_time,
-                                                    unit=uncertainty_unit)
+            uncertainty_unit = (
+                uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
+            )
+            new_uncertainty = uncertainty.__class__(
+                uncertainty.array / exposure_time, unit=uncertainty_unit
+            )
         else:
             new_uncertainty = uncertainty
         new_unit = unit / u.s
     return new_data, new_uncertainty, new_unit
 
 
-def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
+def _uncalculate_exposure_time_correction(
+    data, uncertainty, unit, exposure_time, force=False
+):
     """
     Removes exposure time correction from data and uncertainty arrays.
 
@@ -521,9 +614,12 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
         # regardless of the unit.
         new_data = data * exposure_time
         if uncertainty:
-            uncertainty_unit = uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
-            new_uncertainty = uncertainty.__class__(uncertainty.array * exposure_time,
-                                                    unit=uncertainty_unit)
+            uncertainty_unit = (
+                uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
+            )
+            new_uncertainty = uncertainty.__class__(
+                uncertainty.array * exposure_time, unit=uncertainty_unit
+            )
         else:
             new_uncertainty = uncertainty
         new_unit = unit * u.s
