@@ -1,7 +1,7 @@
 import abc
 import numbers
 import textwrap
-import warnings
+from copy import deepcopy
 
 import astropy.units as u
 import numpy as np
@@ -110,18 +110,6 @@ class SpectrogramABC(abc.ABC):
         """
 
     @abc.abstractproperty
-    def lon(self):
-        """
-        Return the longitude coordinates for each pixel.
-        """
-
-    @abc.abstractproperty
-    def lat(self):
-        """
-        Return the latitude coordinates for each pixel.
-        """
-
-    @abc.abstractproperty
     def celestial(self):
         """
         Return the celestial coordinates for each pixel.
@@ -143,7 +131,6 @@ class SpectrogramABC(abc.ABC):
             If False, exposure time correction is applied.
             If True, exposure time correction is undone.
             Default=False
-
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
@@ -168,34 +155,27 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-
     wcs: `ndcube.wcs.wcs.WCS`
         The WCS object containing the axes' information
-
-    extra_coords : iterable of `tuple`, each with three entries, optional
-        (`str`, `int`, `astropy.units.quantity` or array-like)
-        Gives the name, axis of data, and values of coordinates of a data axis not
-        included in the WCS object.
-
     unit : `astropy.unit.Unit` or `str`, optional
         Unit for the dataset. Strings that can be converted to a Unit are allowed.
-
-    meta : dict-like object, optional
-        Additional meta information about the dataset.
-
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
         that defines what kind of uncertainty is stored, for example "std"
         for standard deviation or "var" for variance. A metaclass defining
-        such an interface is NDUncertainty - but isn’t mandatory. If the uncertainty
+        such an interface is NDUncertainty - but isn't mandatory. If the uncertainty
         has no such attribute the uncertainty is stored as UnknownUncertainty.
         Defaults to None.
-
+    meta : dict-like object, optional
+        Additional meta information about the dataset.
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
         that valid data points are marked by False and invalid ones with True.
         Defaults to None.
-
+    instrument_axes : list, optional
+        This is the relationship between the array axes and the instrument,
+        i.e. repeat raster axis, slit position, position along slit, and spectral.
+        These are needed because they cannot be inferred simply from the physical types.
     copy : `bool`, optional
         Indicates whether to save the arguments as copy. True copies every attribute
         before saving it while False tries to save every parameter as reference.
@@ -226,7 +206,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             copy=copy,
             **kwargs,
         )
-
         # Determine labels and location of each key real world coordinate.
         self_extra_coords = self.extra_coords
         world_axis_physical_types = np.array(self.wcs.world_axis_physical_types)
@@ -245,7 +224,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
             SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords
         )
-
         # Set up instrument axes if set.
         if instrument_axes is None:
             self.instrument_axes = instrument_axes
@@ -274,6 +252,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if sc.isscalar:
                 lon_range = lon
                 lat_range = lat
+            elif sc.size == 0:
+                lon_range = None
+                lat_range = None
             else:
                 lon_range = u.Quantity([lon.min(), lon.max()])
                 lat_range = u.Quantity([lat.min(), lat.max()])
@@ -332,7 +313,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             # If slicing causes cube to be a scalar, set instrument_axes to None.
             if len(instrument_axes) == 0:
                 instrument_axes = None
-            result.instrument_axes = instrument_axes
+        result.instrument_axes = instrument_axes
+        # TODO: Remove for ndcube 2.1
+        result.meta = self.meta
         return result
 
     @property
@@ -361,26 +344,15 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     @property
     def exposure_time(self):
-        exposure_times = None
-        i = 0
-        while exposure_times is None and i < len(SUPPORTED_EXPOSURE_NAMES):
-            exposure_times = self.meta.get(SUPPORTED_EXPOSURE_NAMES[i], None)
-            i += 1
-        return exposure_times
-
-    @property
-    def lon(self):
-        warnings.warn("'.lon' is deprecated.  Please use '.celestial'.")
-        if not self._longitude_name:
-            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LONGITUDE_NAMES}")
-        return self._get_axis_coord_values(self._longitude_name, self._longitude_loc)
-
-    @property
-    def lat(self):
-        warnings.warn("'.lat' is deprecated.  Please use '.celestial'.")
-        if not self._latitude_name:
-            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LATITUDE_NAMES}")
-        return self._get_axis_coord_values(self._latitude_name, self._latitude_loc)
+        if not self._exposure_time_name:
+            self._exposure_time_name, self._exposure_time_name_loc = _find_axis_name(
+                SUPPORTED_EXPOSURE_NAMES,
+                self.wcs.world_axis_physical_types,
+                self.extra_coords,
+            )
+            if not self._exposure_time_name:
+                raise ValueError(f"Exposure time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_EXPOSURE_NAMES}")
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_name_loc)
 
     @property
     def celestial(self):
@@ -415,11 +387,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # If exposure time is not scalar, change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         if not np.isscalar(exposure_time_s):
-            # Get data axis of exposure time.
-            if self._exposure_time_loc == "extra_coords":
-                exposure_axis = self.extra_coords[self._exposure_time_name]["axis"]
-            else:
-                exposure_axis = get_axis_number_from_axis_name(self._exposure_time_name, self.world_axis_physical_types)
+            exposure_axis = self._get_axis_index(self._exposure_time_name, self._exposure_time_name_loc)
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
@@ -434,17 +402,22 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 self.data, self.uncertainty, self.unit, exposure_time_s, force=force
             )
         # Return new instance of SpectrogramCube with correction applied/undone.
-        result = copy.deepcopy(self)
-        result.data = new_data
-        result.uncertainty = new_uncertainty
-        result.unit = new_unit
-        return result
+        new_cube = deepcopy(self)
+        new_cube._data = new_data
+        new_cube._uncertainty = new_uncertainty
+        new_cube._extra_coords = self.extra_coords
+        new_cube._unit = new_unit
+        return new_cube
 
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
             return self.axis_world_coords(axis_name)[0]
         elif coord_loc == "extra_coords":
             return self.axis_world_coords(wcs=self.extra_coords[axis_name])[0]
+
+    def _get_axis_index(self, axis_name, coord_loc):
+        # TODO: Implement this.
+        return 0
 
     def _get_axis_coord_values(self, axis_name, coord_loc):
         if coord_loc == "wcs":
@@ -461,10 +434,8 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     ----------
     supported_names: 1D `numpy.ndarray`
         The names for the axis supported by `SpectrogramCube`.
-
     world_axis_physical_types: 1D `numpy.ndarray`
         Output of SpectrogramCube.world_axis_physical_types converted to an array.
-
     extra_coords: `dict` or `None`
         Output of SpectrogramCube.extra_coords
 
@@ -472,7 +443,6 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     -------
     axis_name: `str`
         The coordinate name of the axis.
-
     loc: `str`
         The location where the coordinate is stored: "wcs" or "extra_coords".
     """
@@ -494,6 +464,7 @@ def _find_name_in_array(supported_names, names_array):
     if name_index.sum() > 0:
         name_index = int(np.arange(len(names_array))[name_index])
         return names_array[name_index]
+    return None
 
 
 def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
@@ -504,13 +475,10 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
     ----------
     data: `numpy.ndarray`
         Data array to be converted.
-
     uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in data.
-
     old_unit: `astropy.unit.Unit`
         Unit of data arrays.
-
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
 
@@ -518,10 +486,8 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
     -------
     new_data: `numpy.ndarray`
         Data array with exposure time corrected for.
-
     new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in new_data.
-
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """
@@ -554,13 +520,10 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
     ----------
     data: `numpy.ndarray`
         Data array to be converted.
-
     uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in data.
-
     old_unit: `astropy.unit.Unit`
         Unit of data arrays.
-
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
 
@@ -568,10 +531,8 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
     -------
     new_data: `numpy.ndarray`
         Data array with exposure time corrected for.
-
     new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in new_data.
-
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """

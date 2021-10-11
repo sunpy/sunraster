@@ -6,10 +6,11 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
-from ndcube import Meta, NDCollection
+from ndcube import NDCollection
 from sunpy.coordinates import Helioprojective
 
 from sunraster import RasterSequence, SpectrogramCube
+from sunraster.extern.meta import Meta
 from sunraster.meta import SlitSpectrographMetaABC
 
 __all__ = ["read_iris_spectrograph_level2_fits"]

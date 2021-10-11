@@ -14,8 +14,6 @@ from sunraster.instr.spice import SPICEMeta, read_spice_l2_fits
 from sunraster.tests import test_data_dir
 
 READ_SPICE_L2_FITS_RETURN_TYPE = NDCollection
-
-
 SPECTRAL_WINDOW = ("WINDOW0_74.73", "Extension name")
 DETECTOR = ("SW", "Detector array name")
 INSTRUMENT = ("SPICE", "Instrument name")

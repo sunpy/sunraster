@@ -1,0 +1,1 @@
+Removed ``lon`` and ``lat`` properties from all objects in sunraster.
