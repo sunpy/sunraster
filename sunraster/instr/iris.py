@@ -18,19 +18,13 @@ __all__ = ["read_iris_spectrograph_level2_fits"]
 DETECTOR_GAIN = {"NUV": 18.0, "FUV": 6.0}
 DETECTOR_YIELD = {"NUV": 1.0, "FUV": 1.5}
 DN_UNIT = {
-    "NUV": u.def_unit(
-        "DN_IRIS_NUV", DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"] * u.photon
-    ),
-    "FUV": u.def_unit(
-        "DN_IRIS_FUV", DETECTOR_GAIN["FUV"] / DETECTOR_YIELD["FUV"] * u.photon
-    ),
+    "NUV": u.def_unit("DN_IRIS_NUV", DETECTOR_GAIN["NUV"] / DETECTOR_YIELD["NUV"] * u.photon),
+    "FUV": u.def_unit("DN_IRIS_FUV", DETECTOR_GAIN["FUV"] / DETECTOR_YIELD["FUV"] * u.photon),
 }
 READOUT_NOISE = {"NUV": 1.2 * DN_UNIT["NUV"], "FUV": 3.1 * DN_UNIT["FUV"]}
 
 
-def read_iris_spectrograph_level2_fits(
-    filenames, spectral_windows=None, uncertainty=True, memmap=False
-):
+def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncertainty=True, memmap=False):
     """
     Reads IRIS level 2 spectrograph FITS from an OBS into an IRISSpectrograph
     instance.
@@ -56,10 +50,7 @@ def read_iris_spectrograph_level2_fits(
         if f == 0:
             # Collecting the window observations.
             windows_in_obs = np.array(
-                [
-                    hdulist[0].header["TDESC{0}".format(i)]
-                    for i in range(1, hdulist[0].header["NWIN"] + 1)
-                ]
+                [hdulist[0].header["TDESC{0}".format(i)] for i in range(1, hdulist[0].header["NWIN"] + 1)]
             )
             # If spectral_window is not set then get every window.
             # Else take the appropriate windows
@@ -72,24 +63,16 @@ def read_iris_spectrograph_level2_fits(
                 else:
                     spectral_windows_req = spectral_windows
                 spectral_windows_req = np.asarray(spectral_windows_req, dtype="U")
-                window_is_in_obs = np.asarray(
-                    [window in windows_in_obs for window in spectral_windows_req]
-                )
+                window_is_in_obs = np.asarray([window in windows_in_obs for window in spectral_windows_req])
                 if not all(window_is_in_obs):
                     missing_windows = window_is_in_obs == False
                     raise ValueError(
-                        "Spectral windows {0} not in file {1}".format(
-                            spectral_windows[missing_windows], filenames[0]
-                        )
+                        "Spectral windows {0} not in file {1}".format(spectral_windows[missing_windows], filenames[0])
                     )
-                window_fits_indices = (
-                    np.nonzero(np.in1d(windows_in_obs, spectral_windows))[0] + 1
-                )
+                window_fits_indices = np.nonzero(np.in1d(windows_in_obs, spectral_windows))[0] + 1
             # Create a empty list for every spectral window and each
             # spectral window is a key for the dictionary.
-            data_dict = dict(
-                [(window_name, list()) for window_name in spectral_windows_req]
-            )
+            data_dict = dict([(window_name, list()) for window_name in spectral_windows_req])
         # Extract axis-aligned metadata.
         times = Time(hdulist[0].header["STARTOBS"]) + TimeDelta(
             hdulist[-2].data[:, hdulist[-2].header["TIME"]], format="sec"
@@ -139,9 +122,7 @@ def read_iris_spectrograph_level2_fits(
                 out_uncertainty = (
                     u.Quantity(
                         np.sqrt(
-                            (hdulist[window_fits_indices[i]].data * DN_unit)
-                            .to(u.photon)
-                            .value
+                            (hdulist[window_fits_indices[i]].data * DN_unit).to(u.photon).value
                             + readout_noise.to(u.photon).value ** 2
                         ),
                         unit=u.photon,
@@ -165,8 +146,7 @@ def read_iris_spectrograph_level2_fits(
         hdulist.close()
     # Construct dictionary of SpectrogramSequences for spectral windows
     window_data_pairs = [
-        (window_name, RasterSequence(data_dict[window_name], common_axis=0))
-        for window_name in spectral_windows_req
+        (window_name, RasterSequence(data_dict[window_name], common_axis=0)) for window_name in spectral_windows_req
     ]
     # Initialize an NDCollection object.
     return NDCollection(window_data_pairs, aligned_axes=(0, 1, 2))
@@ -175,12 +155,8 @@ def read_iris_spectrograph_level2_fits(
 class IRISSGMeta(Meta, metaclass=SlitSpectrographMetaABC):
     def __init__(self, header, spectral_window, **kwargs):
         super().__init__(header, **kwargs)
-        spectral_windows = np.array(
-            [self["TDESC{0}".format(i)] for i in range(1, self["NWIN"] + 1)]
-        )
-        window_mask = np.array(
-            [spectral_window in window for window in spectral_windows]
-        )
+        spectral_windows = np.array([self["TDESC{0}".format(i)] for i in range(1, self["NWIN"] + 1)])
+        window_mask = np.array([spectral_window in window for window in spectral_windows])
         if window_mask.sum() < 1:
             raise ValueError(
                 "Spectral window not found. "

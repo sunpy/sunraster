@@ -75,10 +75,7 @@ EXTRA_COORDS1 = [
     (
         "time",
         0,
-        (
-            Time("2017-01-01")
-            + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")
-        ),
+        (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
     ("exposure time", 0, EXPOSURE_TIME),
 ]
@@ -153,9 +150,7 @@ spectrogram_instrument_axes = SpectrogramCube(
 
 
 def test_spectral_axis():
-    assert all(
-        spectrogram_DN0.spectral_axis == spectrogram_DN0.axis_world_coords("em.wl")
-    )
+    assert all(spectrogram_DN0.spectral_axis == spectrogram_DN0.axis_world_coords("em.wl"))
 
 
 def test_spectral_axis_error():
@@ -215,16 +210,12 @@ def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
 
 def test_calculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._calculate_exposure_time_correction(
-            SOURCE_DATA_DN, None, u.s, EXTRA_COORDS0[1][2]
-        )
+        sunraster.spectrogram._calculate_exposure_time_correction(SOURCE_DATA_DN, None, u.s, EXTRA_COORDS0[1][2])
 
 
 def test_uncalculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._uncalculate_exposure_time_correction(
-            SOURCE_DATA_DN, None, u.ct, EXTRA_COORDS0[1][2]
-        )
+        sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct, EXTRA_COORDS0[1][2])
 
 
 @pytest.mark.parametrize(

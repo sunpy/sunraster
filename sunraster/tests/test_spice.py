@@ -103,18 +103,10 @@ def spice_rasdb_filename(tmp_path):
     filename = "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
     with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(
-            fits.PrimaryHDU(np.random.rand(1, 48, 832, 30), header=hdulist[0].header)
-        )
-        new_hdulist.append(
-            fits.ImageHDU(np.random.rand(1, 48, 832, 30), header=hdulist[1].header)
-        )
-        new_hdulist.append(
-            fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[2].header)
-        )
-        new_hdulist.append(
-            fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[3].header)
-        )
+        new_hdulist.append(fits.PrimaryHDU(np.random.rand(1, 48, 832, 30), header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 48, 832, 30), header=hdulist[1].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[2].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[3].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
         if not os.path.exists(tmp_spice_path):
@@ -134,12 +126,8 @@ def spice_sns_filename(tmp_path):
     filename = "solo_L2_spice-n-sit_20200620T235901_V01_16777431-000.fits"
     with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(
-            fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[0].header)
-        )
-        new_hdulist.append(
-            fits.ImageHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[1].header)
-        )
+        new_hdulist.append(fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[1].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
         if not os.path.exists(tmp_spice_path):
@@ -186,10 +174,7 @@ def test_meta_spice_observation_id(spice_meta):
 
 
 def test_meta_observer_radial_velocity(spice_meta):
-    assert (
-        spice_meta.observer_radial_velocity
-        == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
-    )
+    assert spice_meta.observer_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
 
 
 def test_meta_distance_to_sun(spice_meta):
@@ -316,9 +301,7 @@ def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_filena
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all(
-        [window.dimensions[0].value == len(filenames) for window in result.values()]
-    )
+    assert all([window.dimensions[0].value == len(filenames) for window in result.values()])
     assert all([isinstance(window, RasterSequence) for window in result.values()])
 
 
@@ -328,9 +311,7 @@ def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename)
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert result.aligned_axes is None
     assert len(result) == 1
-    assert all(
-        window.dimensions[0].value == len(filenames) for window in result.values()
-    )
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
     assert all(isinstance(window, RasterSequence) for window in result.values())
 
 
@@ -340,9 +321,7 @@ def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all(
-        window.dimensions[0].value == len(filenames) for window in result.values()
-    )
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
@@ -352,15 +331,11 @@ def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert all(window[0].meta.contains_dumbbell for window in result.values())
     assert set(result.aligned_axes.values()) == {tuple(range(4))}
-    assert all(
-        window.dimensions[0].value == len(filenames) for window in result.values()
-    )
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
-def test_read_spice_l2_fits_incompatible_files(
-    spice_rasdb_filename, spice_sns_filename
-):
+def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
     with pytest.raises(ValueError):
         filenames = [spice_rasdb_filename, spice_sns_filename]
         read_spice_l2_fits(filenames)

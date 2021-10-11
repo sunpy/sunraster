@@ -24,9 +24,7 @@ UNDO_EXPOSURE_TIME_ERROR = (
     "inverse time. To undo exposure time correction "
     "anyway, set 'force' kwarg to True."
 )
-AXIS_NOT_FOUND_ERROR = (
-    "axis not found. If in extra_coords, axis name must be supported:"
-)
+AXIS_NOT_FOUND_ERROR = "axis not found. If in extra_coords, axis name must be supported:"
 
 # Define supported coordinate names for coordinate properties.
 SUPPORTED_LONGITUDE_NAMES = [
@@ -252,9 +250,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         if instrument_axes is None:
             self.instrument_axes = instrument_axes
         elif len(instrument_axes) != data.ndim:
-            raise ValueError(
-                "Length of instrument_axes must match number of data axes."
-            )
+            raise ValueError("Length of instrument_axes must match number of data axes.")
         else:
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
@@ -272,9 +268,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 raise err
         try:
             sc = self.celestial
-            component_names = dict(
-                [(item, key) for key, item in sc.representation_component_names.items()]
-            )
+            component_names = dict([(item, key) for key, item in sc.representation_component_names.items()])
             lon = getattr(sc, component_names["lon"])
             lat = getattr(sc, component_names["lat"])
             if sc.isscalar:
@@ -293,9 +287,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self.spectral_axis.isscalar:
                 spectral_range = self.spectral_axis
             else:
-                spectral_range = u.Quantity(
-                    [self.spectral_axis.min(), self.spectral_axis.max()]
-                )
+                spectral_range = u.Quantity([self.spectral_axis.min(), self.spectral_axis.max()])
         except ValueError as err:
             if AXIS_NOT_FOUND_ERROR in err.args[0]:
                 spectral_range = None
@@ -331,9 +323,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 instrument_axes = self.instrument_axes[1:]
             # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
             elif isinstance(item, tuple):
-                instr_item = [isinstance(i, numbers.Integral) for i in item] + [
-                    False
-                ] * (len(self.instrument_axes) - len(item))
+                instr_item = [isinstance(i, numbers.Integral) for i in item] + [False] * (
+                    len(self.instrument_axes) - len(item)
+                )
                 instrument_axes = self.instrument_axes[np.invert(instr_item)]
             else:
                 raise TypeError("Unrecognized slice item. Must be int, slice or tuple.")
@@ -352,9 +344,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 self.extra_coords,
             )
         if not self._spectral_name:
-            raise ValueError(
-                "Spectral" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_SPECTRAL_NAMES}"
-            )
+            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_SPECTRAL_NAMES}")
         return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
@@ -382,18 +372,14 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def lon(self):
         warnings.warn("'.lon' is deprecated.  Please use '.celestial'.")
         if not self._longitude_name:
-            raise ValueError(
-                "Longitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LONGITUDE_NAMES}"
-            )
+            raise ValueError("Longitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LONGITUDE_NAMES}")
         return self._get_axis_coord_values(self._longitude_name, self._longitude_loc)
 
     @property
     def lat(self):
         warnings.warn("'.lat' is deprecated.  Please use '.celestial'.")
         if not self._latitude_name:
-            raise ValueError(
-                "Latitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LATITUDE_NAMES}"
-            )
+            raise ValueError("Latitude" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_LATITUDE_NAMES}")
         return self._get_axis_coord_values(self._latitude_name, self._latitude_loc)
 
     @property
@@ -433,9 +419,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if self._exposure_time_loc == "extra_coords":
                 exposure_axis = self.extra_coords[self._exposure_time_name]["axis"]
             else:
-                exposure_axis = get_axis_number_from_axis_name(
-                    self._exposure_time_name, self.world_axis_physical_types
-                )
+                exposure_axis = get_axis_number_from_axis_name(self._exposure_time_name, self.world_axis_physical_types)
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
@@ -499,9 +483,7 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
     if axis_name:
         loc = "wcs"
     elif extra_coords:  # If axis name not in WCS, check extra_coords.
-        axis_name = _find_name_in_array(
-            supported_names, np.array(list(extra_coords.keys()))
-        )
+        axis_name = _find_name_in_array(supported_names, np.array(list(extra_coords.keys())))
         if axis_name:
             loc = "extra_coords"
     return axis_name, loc
@@ -514,9 +496,7 @@ def _find_name_in_array(supported_names, names_array):
         return names_array[name_index]
 
 
-def _calculate_exposure_time_correction(
-    data, uncertainty, unit, exposure_time, force=False
-):
+def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
     """
     Applies exposure time correction to data and uncertainty arrays.
 
@@ -558,21 +538,15 @@ def _calculate_exposure_time_correction(
         # regardless of the unit.
         new_data = data / exposure_time
         if uncertainty:
-            uncertainty_unit = (
-                uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
-            )
-            new_uncertainty = uncertainty.__class__(
-                uncertainty.array / exposure_time, unit=uncertainty_unit
-            )
+            uncertainty_unit = uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
+            new_uncertainty = uncertainty.__class__(uncertainty.array / exposure_time, unit=uncertainty_unit)
         else:
             new_uncertainty = uncertainty
         new_unit = unit / u.s
     return new_data, new_uncertainty, new_unit
 
 
-def _uncalculate_exposure_time_correction(
-    data, uncertainty, unit, exposure_time, force=False
-):
+def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time, force=False):
     """
     Removes exposure time correction from data and uncertainty arrays.
 
@@ -614,12 +588,8 @@ def _uncalculate_exposure_time_correction(
         # regardless of the unit.
         new_data = data * exposure_time
         if uncertainty:
-            uncertainty_unit = (
-                uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
-            )
-            new_uncertainty = uncertainty.__class__(
-                uncertainty.array * exposure_time, unit=uncertainty_unit
-            )
+            uncertainty_unit = uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
+            new_uncertainty = uncertainty.__class__(uncertainty.array * exposure_time, unit=uncertainty_unit)
         else:
             new_uncertainty = uncertainty
         new_unit = unit * u.s

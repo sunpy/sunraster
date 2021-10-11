@@ -99,8 +99,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         else:
             sequence_class = SpectrogramSequence
         window_sequences = [
-            (key, sequence_class([v[0] for v in value], common_axis=-1))
-            for key, value in cube_lists.items()
+            (key, sequence_class([v[0] for v in value], common_axis=-1)) for key, value in cube_lists.items()
         ]
     else:
         # If only one file being read, leave data in SpectrogramCube objects.
@@ -111,17 +110,10 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         # same spectral window, e.g. because they are dumbbell windows.
         first_sequence = window_sequences[0][1]
         first_spectral_window = first_sequence[0].meta.spectral_window
-        if all(
-            [
-                window[1][0].meta.spectral_window == first_spectral_window
-                for window in window_sequences
-            ]
-        ):
+        if all([window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences]):
             aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
-            aligned_axes = np.where(
-                np.asarray(first_sequence.world_axis_physical_types) != "em.wl"
-            )[0]
+            aligned_axes = np.where(np.asarray(first_sequence.world_axis_physical_types) != "em.wl")[0]
             aligned_axes = tuple([int(i) for i in aligned_axes])
     else:
         aligned_axes = None
@@ -184,36 +176,23 @@ def _read_single_spice_l2_fits(
     window_cubes = []
     dumbbell_label = "DUMBBELL"
     with fits.open(filename, memmap=memmap) as hdulist:
-        if (
-            isinstance(spice_id, numbers.Integral)
-            and hdulist[0].header["SPIOBSID"] != spice_id
-        ):
+        if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
             raise ValueError(
-                f"{INCORRECT_OBSID_MESSAGE}  "
-                f"Expected {spice_id}.  Got {hdulist[0].header['SPIOBSID']}."
+                f"{INCORRECT_OBSID_MESSAGE}  " f"Expected {spice_id}.  Got {hdulist[0].header['SPIOBSID']}."
             )
         # Derive names of windows to be read.
         if windows is None:
             if read_dumbbells:
-                windows = [
-                    hdu.header["EXTNAME"]
-                    for hdu in hdulist
-                    if dumbbell_label in hdu.header["EXTNAME"]
-                ]
+                windows = [hdu.header["EXTNAME"] for hdu in hdulist if dumbbell_label in hdu.header["EXTNAME"]]
             else:
                 windows = [
                     hdu.header["EXTNAME"]
                     for hdu in hdulist
-                    if (
-                        hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS"
-                        and dumbbell_label not in hdu.header["EXTNAME"]
-                    )
+                    if (hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS" and dumbbell_label not in hdu.header["EXTNAME"])
                 ]
         dumbbells_requested = [dumbbell_label in window for window in windows]
         if any(dumbbells_requested) and not all(dumbbells_requested):
-            raise ValueError(
-                "Cannot read dumbbell and other window types simultaneously."
-            )
+            raise ValueError("Cannot read dumbbell and other window types simultaneously.")
         # Retrieve window names from FITS file.
         for i, hdu in enumerate(hdulist):
             if hdu.header["EXTNAME"] in windows:
@@ -229,9 +208,7 @@ def _read_single_spice_l2_fits(
                 # Define WCS from new header
                 wcs = WCS(new_header)
                 # Define exposure times from metadata.
-                exp_times = TimeDelta(
-                    np.repeat(meta.get("XPOSURE"), hdu.data.shape[-1]), format="sec"
-                )
+                exp_times = TimeDelta(np.repeat(meta.get("XPOSURE"), hdu.data.shape[-1]), format="sec")
                 # Define data cube.
                 data = hdu.data
                 spectrogram = SpectrogramCube(
@@ -313,15 +290,11 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
             spectral_window = spectral_window.replace("DUMBBELL", dummy_txt)
             spectral_window = spectral_window.replace("UPPER", dummy_txt)
             spectral_window = spectral_window.replace("LOWER", dummy_txt)
-            spectral_window = joiner.join(
-                list(filter((dummy_txt).__ne__, spectral_window.split(joiner)))
-            )
+            spectral_window = joiner.join(list(filter((dummy_txt).__ne__, spectral_window.split(joiner))))
         # Remove other redundant text from window name.
         redundant_txt = "WINDOW"
         if redundant_txt in spectral_window:
-            spectral_window = joiner.join(
-                [comp for comp in spectral_window.split(joiner) if "WINDOW" not in comp]
-            )
+            spectral_window = joiner.join([comp for comp in spectral_window.split(joiner) if "WINDOW" not in comp])
         return spectral_window
 
     @property
@@ -380,12 +353,8 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         lon_key = "HGLN_OBS"
         lat_key = "HGLT_OBS"
         kwargs = {
-            "lon": u.Quantity(self.get(lon_key), unit=self._get_unit(lon_key)).to_value(
-                lon_unit
-            ),
-            "lat": u.Quantity(self.get(lat_key), unit=self._get_unit(lat_key)).to_value(
-                lat_unit
-            ),
+            "lon": u.Quantity(self.get(lon_key), unit=self._get_unit(lon_key)).to_value(lon_unit),
+            "lat": u.Quantity(self.get(lat_key), unit=self._get_unit(lat_key)).to_value(lat_unit),
             "radius": self.distance_to_sun.to_value(radius_unit),
             "unit": (lon_unit, lat_unit, radius_unit),
             "frame": HeliographicStonyhurst,

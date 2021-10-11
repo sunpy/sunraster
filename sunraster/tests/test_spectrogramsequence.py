@@ -90,10 +90,7 @@ EXTRA_COORDS1 = [
     (
         "time",
         0,
-        (
-            Time("2017-01-01")
-            + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")
-        ),
+        (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
     ("exposure time", 0, EXPOSURE_TIME),
 ]
@@ -102,8 +99,7 @@ extra_coords20 = [
     (
         "time",
         2,
-        Time("2017-01-01")
-        + TimeDelta(np.arange(SOURCE_DATA_DN.shape[2]), format="sec"),
+        Time("2017-01-01") + TimeDelta(np.arange(SOURCE_DATA_DN.shape[2]), format="sec"),
     ),
     (
         "exposure time",
@@ -134,31 +130,15 @@ extra_coords21 = [
 meta_seq = {"a": 0}
 
 # Define RasterSequences in various units.
-spectrogram_DN0 = SpectrogramCube(
-    SOURCE_DATA_DN, WCS0, EXTRA_COORDS0, u.ct, SOURCE_UNCERTAINTY_DN
-)
-spectrogram_DN1 = SpectrogramCube(
-    SOURCE_DATA_DN, WCS0, EXTRA_COORDS1, u.ct, SOURCE_UNCERTAINTY_DN
-)
-sequence_DN = RasterSequence(
-    [spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0
-)
-sequence_DN0 = RasterSequence(
-    [spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0
-)
-sequence_DN1 = RasterSequence(
-    [spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=1
-)
+spectrogram_DN0 = SpectrogramCube(SOURCE_DATA_DN, WCS0, EXTRA_COORDS0, u.ct, SOURCE_UNCERTAINTY_DN)
+spectrogram_DN1 = SpectrogramCube(SOURCE_DATA_DN, WCS0, EXTRA_COORDS1, u.ct, SOURCE_UNCERTAINTY_DN)
+sequence_DN = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0)
+sequence_DN0 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=0)
+sequence_DN1 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=1)
 
-spectrogram_DN20 = SpectrogramCube(
-    SOURCE_DATA_DN, wcs2, extra_coords20, u.ct, SOURCE_UNCERTAINTY_DN
-)
-spectrogram_DN21 = SpectrogramCube(
-    SOURCE_DATA_DN, wcs2, extra_coords21, u.ct, SOURCE_UNCERTAINTY_DN
-)
-sequence_DN2 = RasterSequence(
-    [spectrogram_DN20, spectrogram_DN21], meta=meta_seq, common_axis=2
-)
+spectrogram_DN20 = SpectrogramCube(SOURCE_DATA_DN, wcs2, extra_coords20, u.ct, SOURCE_UNCERTAINTY_DN)
+spectrogram_DN21 = SpectrogramCube(SOURCE_DATA_DN, wcs2, extra_coords21, u.ct, SOURCE_UNCERTAINTY_DN)
+sequence_DN2 = RasterSequence([spectrogram_DN20, spectrogram_DN21], meta=meta_seq, common_axis=2)
 
 spectrogram_DN_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME,
@@ -174,9 +154,7 @@ spectrogram_DN_per_s1 = SpectrogramCube(
     u.ct / u.s,
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
 )
-sequence_DN_per_s = RasterSequence(
-    [spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0
-)
+sequence_DN_per_s = RasterSequence([spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0)
 
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
@@ -212,17 +190,11 @@ spectrogram_DN_s1 = SpectrogramCube(
     u.ct * u.s,
     SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
 )
-sequence_DN_s = RasterSequence(
-    [spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq, common_axis=0
-)
+sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq, common_axis=0)
 
 # Define raster sequence with no spectral axes.
-raster_no_wave0 = SpectrogramCube(
-    SOURCE_DATA_DN[:, :, 0], wcs_no_wave, EXTRA_COORDS0, u.ct
-)
-raster_no_wave1 = SpectrogramCube(
-    SOURCE_DATA_DN[:, :, 0], wcs_no_wave, EXTRA_COORDS0, u.ct
-)
+raster_no_wave0 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, EXTRA_COORDS0, u.ct)
+raster_no_wave1 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, EXTRA_COORDS0, u.ct)
 sequence_DN_no_wave = RasterSequence([raster_no_wave0, raster_no_wave1], 0)
 
 # Define raster sequence with missing slit axes.
@@ -277,9 +249,7 @@ def test_lat():
     ],
 )
 def test_apply_exposure_time_correction(input_sequence, undo, force, expected_sequence):
-    output_sequence = input_sequence.apply_exposure_time_correction(
-        undo, copy=True, force=force
-    )
+    output_sequence = input_sequence.apply_exposure_time_correction(undo, copy=True, force=force)
     assert_cubesequences_equal(output_sequence, expected_sequence)
 
 
