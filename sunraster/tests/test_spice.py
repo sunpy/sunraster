@@ -3,48 +3,52 @@ import os.path
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.io import fits
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
 from astropy.time import Time
 from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
-from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
-from sunraster.instr.spice import read_spice_l2_fits, SPICEMeta
+from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
+from sunraster.instr.spice import SPICEMeta, read_spice_l2_fits
 from sunraster.tests import test_data_dir
 
 READ_SPICE_L2_FITS_RETURN_TYPE = NDCollection
 
 
-SPECTRAL_WINDOW = ('WINDOW0_74.73', 'Extension name')
-DETECTOR = ('SW', 'Detector array name')
-INSTRUMENT = ('SPICE', 'Instrument name')
-OBSERVATORY = ('Solar Orbiter', 'Observatory Name')
-PROCESSING_LEVEL = ('L2', 'Data processing level')
-RSUN_METERS = (695700000.0, '[m]      Assumed  photospheric Solar radius')
-RSUN_ANGULAR = (1764.0728936, '[arcsec] Apparent photospheric Solar radius')
-OBSERVING_MODE_ID = (10, '')
-OBSERVATORY_RADIAL_VELOCITY = (-7036.06122832, '[m/s] Radial velocity of S/C away from the Sun')
-DISTANCE_TO_SUN = (81342963151.0, '[m]  S/C distance from Sun')
-DATE_REFERENCE = ('2020-06-02T07:47:58.017', '[UTC] Equals DATE-BEG')
-DATE_START = ('2020-06-02T07:47:58.017', '[UTC] Beginning of data acquisition')
-DATE_END = ('2020-06-02T07:47:58.117', '[UTC] End of data acquisition')
-HGLN_OBS = (35.8382263864, '[deg] S/C Heliographic longitude')
-HGLT_OBS = (4.83881036748, '[deg] S/C Heliographic latitude (B0 angle)')
-SPICE_OBSERVING_MODE_ID = (12583744, 'SPICE Observation ID')
-DARKMAP = (0, 'If set, a dark map was subtracted on-board')
-BLACKLEV = (0, 'If set, a bias frame was subtracted on-board')
-WINDOW_TYPE = ('Full Detector Narrow-slit', 'Description of window type')
-WINDOW_TABLE_ID = (255, 'Index in on-board window data table (0-255)')
-SLIT_ID = (2, 'Slit ID (0-3)')
-SLIT_WIDTH = (4, '[arcsec] Slit width')
-DUMBBELL = (0, '0/1/2: not a dumbbell/lower dumbbel/upper dumbb')
-SOLAR_B0 = (4.83881036748, '[deg] Tilt angle of Solar North toward S/C')
-SOLAR_P0 = (1.49702480927, '[deg] S/C Celestial North to Solar North angle')
-SOLAR_EP = (-6.14143491727, '[deg] S/C Ecliptic  North to Solar North angle')
-CARRINGTON_ROTATION_NUMBER = (2231, 'Carrington rotation number')
-DATE_START_EARTH = ('2020-06-02T07:51:52.799', '[UTC] DATE-BEG + EAR_TDEL')
-DATE_START_SUN = ('2020-06-02T07:43:26.686', '[UTC] DATE-BEG - SUN_TIME')
+SPECTRAL_WINDOW = ("WINDOW0_74.73", "Extension name")
+DETECTOR = ("SW", "Detector array name")
+INSTRUMENT = ("SPICE", "Instrument name")
+OBSERVATORY = ("Solar Orbiter", "Observatory Name")
+PROCESSING_LEVEL = ("L2", "Data processing level")
+RSUN_METERS = (695700000.0, "[m]      Assumed  photospheric Solar radius")
+RSUN_ANGULAR = (1764.0728936, "[arcsec] Apparent photospheric Solar radius")
+OBSERVING_MODE_ID = (10, "")
+OBSERVATORY_RADIAL_VELOCITY = (
+    -7036.06122832,
+    "[m/s] Radial velocity of S/C away from the Sun",
+)
+DISTANCE_TO_SUN = (81342963151.0, "[m]  S/C distance from Sun")
+DATE_REFERENCE = ("2020-06-02T07:47:58.017", "[UTC] Equals DATE-BEG")
+DATE_START = ("2020-06-02T07:47:58.017", "[UTC] Beginning of data acquisition")
+DATE_END = ("2020-06-02T07:47:58.117", "[UTC] End of data acquisition")
+HGLN_OBS = (35.8382263864, "[deg] S/C Heliographic longitude")
+HGLT_OBS = (4.83881036748, "[deg] S/C Heliographic latitude (B0 angle)")
+SPICE_OBSERVING_MODE_ID = (12583744, "SPICE Observation ID")
+DARKMAP = (0, "If set, a dark map was subtracted on-board")
+BLACKLEV = (0, "If set, a bias frame was subtracted on-board")
+WINDOW_TYPE = ("Full Detector Narrow-slit", "Description of window type")
+WINDOW_TABLE_ID = (255, "Index in on-board window data table (0-255)")
+SLIT_ID = (2, "Slit ID (0-3)")
+SLIT_WIDTH = (4, "[arcsec] Slit width")
+DUMBBELL = (0, "0/1/2: not a dumbbell/lower dumbbel/upper dumbb")
+SOLAR_B0 = (4.83881036748, "[deg] Tilt angle of Solar North toward S/C")
+SOLAR_P0 = (1.49702480927, "[deg] S/C Celestial North to Solar North angle")
+SOLAR_EP = (-6.14143491727, "[deg] S/C Ecliptic  North to Solar North angle")
+CARRINGTON_ROTATION_NUMBER = (2231, "Carrington rotation number")
+DATE_START_EARTH = ("2020-06-02T07:51:52.799", "[UTC] DATE-BEG + EAR_TDEL")
+DATE_START_SUN = ("2020-06-02T07:43:26.686", "[UTC] DATE-BEG - SUN_TIME")
+
 
 @pytest.fixture
 def spice_fits_header():
@@ -83,8 +87,10 @@ def spice_fits_header():
 
 @pytest.fixture
 def spice_meta(spice_fits_header):
-    return SPICEMeta(spice_fits_header,
-                     comments=zip(spice_fits_header.keys(), spice_fits_header.comments))
+    return SPICEMeta(
+        spice_fits_header,
+        comments=zip(spice_fits_header.keys(), spice_fits_header.comments),
+    )
 
 
 @pytest.fixture
@@ -97,14 +103,18 @@ def spice_rasdb_filename(tmp_path):
     filename = "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
     with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(fits.PrimaryHDU(np.random.rand(1, 48, 832, 30),
-                                           header=hdulist[0].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 48, 832, 30),
-                                         header=hdulist[1].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30),
-                                         header=hdulist[2].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30),
-                                         header=hdulist[3].header))
+        new_hdulist.append(
+            fits.PrimaryHDU(np.random.rand(1, 48, 832, 30), header=hdulist[0].header)
+        )
+        new_hdulist.append(
+            fits.ImageHDU(np.random.rand(1, 48, 832, 30), header=hdulist[1].header)
+        )
+        new_hdulist.append(
+            fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[2].header)
+        )
+        new_hdulist.append(
+            fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[3].header)
+        )
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
         if not os.path.exists(tmp_spice_path):
@@ -124,10 +134,12 @@ def spice_sns_filename(tmp_path):
     filename = "solo_L2_spice-n-sit_20200620T235901_V01_16777431-000.fits"
     with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1),
-                                           header=hdulist[0].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(32, 48, 1024, 1),
-                                         header=hdulist[1].header))
+        new_hdulist.append(
+            fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[0].header)
+        )
+        new_hdulist.append(
+            fits.ImageHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[1].header)
+        )
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
         if not os.path.exists(tmp_spice_path):
@@ -174,7 +186,10 @@ def test_meta_spice_observation_id(spice_meta):
 
 
 def test_meta_observer_radial_velocity(spice_meta):
-    assert spice_meta.observer_radial_velocity == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
+    assert (
+        spice_meta.observer_radial_velocity
+        == OBSERVATORY_RADIAL_VELOCITY[0] * u.m / u.s
+    )
 
 
 def test_meta_distance_to_sun(spice_meta):
@@ -196,8 +211,13 @@ def test_meta_date_end(spice_meta):
 def test_meta_observer_location(spice_meta):
     obstime = _construct_expected_time(DATE_REFERENCE)
     observer_location = SkyCoord(
-            lon=HGLN_OBS[0], lat=HGLT_OBS[0], radius=DISTANCE_TO_SUN[0],
-            unit=(u.deg, u.deg, u.m), obstime=obstime, frame=HeliographicStonyhurst)
+        lon=HGLN_OBS[0],
+        lat=HGLT_OBS[0],
+        radius=DISTANCE_TO_SUN[0],
+        unit=(u.deg, u.deg, u.m),
+        obstime=obstime,
+        frame=HeliographicStonyhurst,
+    )
     assert spice_meta.observer_location.lon == observer_location.lon
     assert spice_meta.observer_location.lat == observer_location.lat
     assert spice_meta.observer_location.radius == observer_location.radius
@@ -296,7 +316,9 @@ def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_filena
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all([window.dimensions[0].value == len(filenames) for window in result.values()])
+    assert all(
+        [window.dimensions[0].value == len(filenames) for window in result.values()]
+    )
     assert all([isinstance(window, RasterSequence) for window in result.values()])
 
 
@@ -306,7 +328,9 @@ def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename)
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert result.aligned_axes is None
     assert len(result) == 1
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(
+        window.dimensions[0].value == len(filenames) for window in result.values()
+    )
     assert all(isinstance(window, RasterSequence) for window in result.values())
 
 
@@ -316,7 +340,9 @@ def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(
+        window.dimensions[0].value == len(filenames) for window in result.values()
+    )
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
@@ -326,11 +352,15 @@ def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert all(window[0].meta.contains_dumbbell for window in result.values())
     assert set(result.aligned_axes.values()) == {tuple(range(4))}
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(
+        window.dimensions[0].value == len(filenames) for window in result.values()
+    )
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
 
 
-def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
+def test_read_spice_l2_fits_incompatible_files(
+    spice_rasdb_filename, spice_sns_filename
+):
     with pytest.raises(ValueError):
         filenames = [spice_rasdb_filename, spice_sns_filename]
-        result = read_spice_l2_fits(filenames)
+        read_spice_l2_fits(filenames)
