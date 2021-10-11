@@ -1,13 +1,16 @@
 import numbers
 import textwrap
 
+import astropy.units as u
 import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
 from ndcube import NDCubeSequence
 
-import astropy.units as u
-
-from sunraster.spectrogram import SpectrogramABC
-
+from sunraster.spectrogram import (SpectrogramABC, _find_axis_name,
+                                   SUPPORTED_LATITUDE_NAMES, SUPPORTED_LONGITUDE_NAMES,
+                                   SUPPORTED_SPECTRAL_NAMES, SUPPORTED_TIME_NAMES)
+ 
 __all__ = ['SpectrogramSequence', 'RasterSequence']
 
 RASTER_AXIS_NAME = "raster scan"
@@ -50,11 +53,16 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
     @property
     def time(self):
-        return np.concatenate([raster.time for raster in self.data])
+        return Time(np.concatenate([raster.time for raster in self.data]))
 
     @property
     def exposure_time(self):
-        return np.concatenate([raster.exposure_time for raster in self.data])
+        exposure_type = type(self.data[0].exposure_time)
+        exposure_time = np.concatenate([raster.exposure_time for raster in self.data])
+        try:
+            return exposure_type(exposure_time)
+        except Exception:
+            return exposure_time
 
     @property
     def lon(self):
@@ -63,6 +71,14 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     @property
     def lat(self):
         return u.Quantity([raster.lat for raster in self.data])
+
+    @property
+    def celestial(self):
+        sc = SkyCoord([raster.celestial for raster in self.data])
+        sc_shape = list(sc.shape)
+        sc_shape.insert(0, len(self.data))
+        sc_shape[1] = int(sc_shape[1] / sc_shape[0])
+        return sc.reshape(sc_shape)
 
     def apply_exposure_time_correction(self, undo=False, copy=False, force=False):
         """
@@ -111,26 +127,48 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
     def __str__(self):
         data0 = self.data[0]
+        if not (data0._time_name and data0._longitude_name and data0._latitude_name
+                and data0._spectral_name):
+            for i, cube in enumerate(self):
+                self.data[i]._time_name, self.data[i]._time_loc = _find_axis_name(
+                    SUPPORTED_TIME_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._longitude_name, self.data[i]._longitude_loc = _find_axis_name(
+                    SUPPORTED_LONGITUDE_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._latitude_name, self.data[i]._latitude_loc = _find_axis_name(
+                    SUPPORTED_LATITUDE_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+                self.data[i]._spectral_name, self.data[i]._spectral_loc = _find_axis_name(
+                    SUPPORTED_SPECTRAL_NAMES, cube.wcs.world_axis_physical_types,
+                    cube.extra_coords)
+        data0 = self.data[0]
         if data0._time_name:
-            start_time = data0.time.value if data0.time.isscalar else data0.time.value.squeeze()[0]
+            start_time = data0.time if data0.time.isscalar else data0.time.squeeze()[0]
             data_1 = self.data[-1]
-            stop_time = data_1.time.value if data_1.time.isscalar else data_1.time.value.squeeze()[-1]
-            time_period = start_time if start_time == stop_time else (start_time, stop_time)
+            stop_time = (data_1.time if data_1.time.isscalar else data_1.time.squeeze()[-1])
+            time_period = (start_time if start_time == stop_time
+                           else Time([start_time.iso, stop_time.iso]))
         else:
             time_period = None
-        if data0._longitude_name:
-            lons = self.lon
-            lon_min = lons.min()
-            lon_max = lons.max()
-            lon_range = lon_min if lon_min == lon_max else u.Quantity([lon_min, lon_max])
+        if data0._longitude_name or data0._latitude_name:
+            sc = self.celestial
+            component_names = dict(
+                [(item, key) for key, item in sc.representation_component_names.items()])
+            lon = getattr(sc, component_names["lon"])
+            lat = getattr(sc, component_names["lat"])
+            if sc.isscalar:
+                lon_range = lon
+                lat_range = lat
+            else:
+                lon_range = u.Quantity([lon.min(), lon.max()])
+                lat_range = u.Quantity([lat.min(), lat.max()])
+                if lon_range[0] == lon_range[1]:
+                    lon_range = lon_range[0]
+                if lat_range[0] == lat_range[1]:
+                    lat_range = lat_range[0]
         else:
             lon_range = None
-        if data0._latitude_name:
-            lats = self.lat
-            lat_min = lats.min()
-            lat_max = lats.max()
-            lat_range = lat_min if lat_min == lat_max else u.Quantity([lat_min, lat_max])
-        else:
             lat_range = None
         if data0._spectral_name:
             spectral_vals = self.spectral_axis
@@ -188,10 +226,22 @@ class RasterSequence(SpectrogramSequence):
     SnS_dimensions = SpectrogramSequence.cube_like_dimensions
     raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
     SnS_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
-    raster_axis_extra_coords = SpectrogramSequence.sequence_axis_extra_coords
-    SnS_axis_extra_coords = SpectrogramSequence.common_axis_extra_coords
+    raster_axis_coords = SpectrogramSequence.sequence_axis_coords
+    SnS_axis_coords = SpectrogramSequence.common_axis_coords
     plot_as_raster = SpectrogramSequence.plot
     plot_as_SnS = SpectrogramSequence.plot_as_cube
+
+    @property
+    def raster_axis_extra_coords(self):
+        warnings.warn(
+            "'.raster_axis_extra_coords is deprecated. Please use '.raster_axis_coords'.")
+        return self.raster_axis_coords
+
+    @property
+    def SnS_axis_extra_coords(self):
+        warnings.warn(
+            "'.SnS_axis_extra_coords is deprecated. Please use '.SnS_axis_coords'.")
+        return self.SnS_axis_coords
 
     def _set_single_scan_instrument_axes_types(self):
         if len(self.data) < 1:
@@ -203,8 +253,16 @@ class RasterSequence(SpectrogramSequence):
                 self._single_scan_instrument_axes_types[self._common_axis] = \
                     self._slit_step_axis_name
             # Spectral axis name.
-            spectral_raster_index = [physical_type == (self.data[0]._spectral_name,)
-                                     for physical_type in self.data[0].array_axis_physical_types]
+            # If spectral name not present in raster cube, try finding it.
+            if not self.data[0]._spectral_name:
+                for i, cube in enumerate(self):
+                    self.data[i]._spectral_name, self.data[i]._spectral_name = _find_axis_name(
+                        SUPPORTED_SPECTRAL_NAMES, cube.wcs.world_axis_physical_types,
+                        cube.extra_coords)
+            spectral_name = self.data[0]._spectral_name
+            array_axis_physical_types = self.data[0].array_axis_physical_types
+            spectral_raster_index = [physical_type == (spectral_name,)
+                                     for physical_type in array_axis_physical_types]
             spectral_raster_index = np.arange(self.data[0].data.ndim)[spectral_raster_index]
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = \

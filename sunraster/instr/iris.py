@@ -1,14 +1,17 @@
 import copy
-
-from astropy.wcs import WCS
-import numpy as np
-from ndcube import NDCollection
+import textwrap
 
 import astropy.units as u
+import numpy as np
+from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time, TimeDelta
+from astropy.wcs import WCS
+from ndcube import Meta, NDCollection
+from sunpy.coordinates import Helioprojective
 
 from sunraster import RasterSequence, SpectrogramCube
+from sunraster.meta import SlitSpectrographMetaABC
 
 __all__ = ['read_iris_spectrograph_level2_fits']
 
@@ -52,8 +55,6 @@ def read_iris_spectrograph_level2_fits(
         hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
         hdulist.verify('fix')
         if f == 0:
-            # Determine number of raster positions in a scan
-            int(hdulist[0].header["NRASTERP"])
             # Collecting the window observations.
             windows_in_obs = np.array([hdulist[0].header["TDESC{0}".format(i)]
                                        for i in range(1, hdulist[0].header["NWIN"] + 1)])
@@ -76,87 +77,37 @@ def read_iris_spectrograph_level2_fits(
                         spectral_windows[missing_windows], filenames[0]))
                 window_fits_indices = np.nonzero(np.in1d(windows_in_obs,
                                                          spectral_windows))[0] + 1
-            # Generate top level meta dictionary from first file
-            # main header.
-            top_meta = {"TELESCOP": hdulist[0].header["TELESCOP"],
-                        "INSTRUME": hdulist[0].header["INSTRUME"],
-                        "DATA_LEV": hdulist[0].header["DATA_LEV"],
-                        "OBSID": hdulist[0].header["OBSID"],
-                        "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                        "STARTOBS": Time(hdulist[0].header["STARTOBS"]),
-                        "ENDOBS": Time(hdulist[0].header["ENDOBS"]),
-                        "SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
-                        "AECNOBS": int(hdulist[0].header["AECNOBS"]),
-                        "FOVX": hdulist[0].header["FOVX"] * u.arcsec,
-                        "FOVY": hdulist[0].header["FOVY"] * u.arcsec,
-                        "SUMSPTRN": hdulist[0].header["SUMSPTRN"],
-                        "SUMSPTRF": hdulist[0].header["SUMSPTRF"],
-                        "SUMSPAT": hdulist[0].header["SUMSPAT"],
-                        "NEXPOBS": hdulist[0].header["NEXPOBS"],
-                        "NRASTERP": hdulist[0].header["NRASTERP"],
-                        "KEYWDDOC": hdulist[0].header["KEYWDDOC"]}
-            # Initialize meta dictionary for each spectral_window
-            window_metas = {}
-            for i, window_name in enumerate(spectral_windows_req):
-                if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
-                    spectral_summing = hdulist[0].header["SUMSPTRF"]
-                else:
-                    spectral_summing = hdulist[0].header["SUMSPTRN"]
-                window_metas[window_name] = {
-                    "detector type":
-                        hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
-                    "spectral window":
-                        hdulist[0].header["TDESC{0}".format(window_fits_indices[i])],
-                    "brightest wavelength":
-                        hdulist[0].header["TWAVE{0}".format(window_fits_indices[i])],
-                    "min wavelength":
-                        hdulist[0].header["TWMIN{0}".format(window_fits_indices[i])],
-                    "max wavelength":
-                        hdulist[0].header["TWMAX{0}".format(window_fits_indices[i])],
-                    "SAT_ROT": hdulist[0].header["SAT_ROT"],
-                    "spatial summing": hdulist[0].header["SUMSPAT"],
-                    "spectral summing": spectral_summing
-                }
             # Create a empty list for every spectral window and each
             # spectral window is a key for the dictionary.
             data_dict = dict([(window_name, list())
                               for window_name in spectral_windows_req])
-        # Determine extra coords for this raster.
+        # Extract axis-aligned metadata.
         times = (Time(hdulist[0].header["STARTOBS"]) +
                  TimeDelta(hdulist[-2].data[:, hdulist[-2].header["TIME"]], format='sec'))
-        np.arange(int(hdulist[0].header["NRASTERP"]))
-        pztx = hdulist[-2].data[:, hdulist[-2].header["PZTX"]] * u.arcsec
-        pzty = hdulist[-2].data[:, hdulist[-2].header["PZTY"]] * u.arcsec
-        xcenix = hdulist[-2].data[:, hdulist[-2].header["XCENIX"]] * u.arcsec
-        ycenix = hdulist[-2].data[:, hdulist[-2].header["YCENIX"]] * u.arcsec
+        fov_center = SkyCoord(Tx=hdulist[-2].data[:, hdulist[-2].header["XCENIX"]],
+                              Ty=hdulist[-2].data[:, hdulist[-2].header["YCENIX"]],
+                              unit=u.arcsec, frame=Helioprojective)
         obs_vrix = hdulist[-2].data[:, hdulist[-2].header["OBS_VRIX"]] * u.m / u.s
         ophaseix = hdulist[-2].data[:, hdulist[-2].header["OPHASEIX"]]
         exposure_times_fuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEF"]] * u.s
         exposure_times_nuv = hdulist[-2].data[:, hdulist[-2].header["EXPTIMEN"]] * u.s
-        # If OBS is raster, include raster positions.  Otherwise don't.
-        if top_meta["NRASTERP"] > 1:
-            general_extra_coords = [("time", 0, times),
-                                    ("raster position", 0, np.arange(top_meta["NRASTERP"])),
-                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
-                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
-                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
-        else:
-            general_extra_coords = [("time", 0, times),
-                                    ("pztx", 0, pztx), ("pzty", 0, pzty),
-                                    ("xcenix", 0, xcenix), ("ycenix", 0, ycenix),
-                                    ("obs_vrix", 0, obs_vrix), ("ophaseix", 0, ophaseix)]
         for i, window_name in enumerate(spectral_windows_req):
+            # Define metadata object for window.
+            meta = IRISSGMeta(hdulist[0].header, window_name,
+                              data_shape=hdulist[window_fits_indices[i]].data.shape)
             # Determine values of properties dependent on detector type.
-            if "FUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+            if "FUV" in meta.detector:
                 exposure_times = exposure_times_fuv
                 DN_unit = DN_UNIT["FUV"]
                 readout_noise = READOUT_NOISE["FUV"]
-            elif "NUV" in hdulist[0].header["TDET{0}".format(window_fits_indices[i])]:
+            else:
                 exposure_times = exposure_times_nuv
                 DN_unit = DN_UNIT["NUV"]
                 readout_noise = READOUT_NOISE["NUV"]
-            else:
-                raise ValueError("Detector type in FITS header not recognized.")
+            meta.add("exposure time", exposure_times, None, 0)
+            meta.add("exposure FOV center", fov_center, None, 0)
+            meta.add("observer radial velocity", obs_vrix, None, 0)
+            meta.add("orbital phase", ophaseix, None, 0)
             # Derive WCS, data and mask for NDCube from file.
             # Sit-and-stare have a CDELT of 0 which causes issues in astropy WCS.
             # In this case, set CDELT to a tiny non-zero number.
@@ -167,36 +118,6 @@ def read_iris_spectrograph_level2_fits(
                 data_mask = hdulist[window_fits_indices[i]].data == -200.
             else:
                 data_mask = None
-            # Derive extra coords for this spectral window.
-            window_extra_coords = copy.deepcopy(general_extra_coords)
-            window_extra_coords.append(("exposure time", 0, exposure_times))
-            # Collect metadata relevant to single files.
-            try:
-                date_obs = Time(hdulist[0].header["DATE_OBS"])
-            except ValueError:
-                date_obs = None
-            try:
-                date_end = Time(hdulist[0].header["DATE_END"])
-            except ValueError:
-                date_end = None
-            single_file_meta = {"SAT_ROT": hdulist[0].header["SAT_ROT"] * u.deg,
-                                "DATE_OBS": date_obs,
-                                "DATE_END": date_end,
-                                "HLZ": bool(int(hdulist[0].header["HLZ"])),
-                                "SAA": bool(int(hdulist[0].header["SAA"])),
-                                "DSUN_OBS": hdulist[0].header["DSUN_OBS"] * u.m,
-                                "IAECEVFL": hdulist[0].header["IAECEVFL"],
-                                "IAECFLAG": hdulist[0].header["IAECFLAG"],
-                                "IAECFLFL": hdulist[0].header["IAECFLFL"],
-                                "KEYWDDOC": hdulist[0].header["KEYWDDOC"],
-                                "detector type":
-                                hdulist[0].header["TDET{0}".format(window_fits_indices[i])],
-                                "spectral window": window_name,
-                                "OBSID": hdulist[0].header["OBSID"],
-                                "OBS_DESC": hdulist[0].header["OBS_DESC"],
-                                "STARTOBS": Time(hdulist[0].header["STARTOBS"]),
-                                "ENDOBS": Time(hdulist[0].header["ENDOBS"])
-                                }
             # Derive uncertainty of data
             if uncertainty:
                 out_uncertainty = u.Quantity(
@@ -206,14 +127,185 @@ def read_iris_spectrograph_level2_fits(
             else:
                 out_uncertainty = None
             # Appending NDCube instance to the corresponding window key in dictionary's list.
-            data_dict[window_name].append(
-                SpectrogramCube(hdulist[window_fits_indices[i]].data, wcs=wcs_,
-                                uncertainty=out_uncertainty, unit=DN_unit, meta=single_file_meta,
-                                extra_coords=window_extra_coords, mask=data_mask))
+            cube = SpectrogramCube(hdulist[window_fits_indices[i]].data, wcs=wcs_,
+                                   uncertainty=out_uncertainty, unit=DN_unit,
+                                   meta=meta, mask=data_mask)
+            cube.extra_coords.add("time", 0, times, physical_types="time")
+            data_dict[window_name].append(cube)
         hdulist.close()
     # Construct dictionary of SpectrogramSequences for spectral windows
-    window_data_pairs = [(window_name, RasterSequence(data_dict[window_name], common_axis=0,
-                                                      meta=window_metas[window_name]))
+    window_data_pairs = [(window_name, RasterSequence(data_dict[window_name], common_axis=0))
                          for window_name in spectral_windows_req]
     # Initialize an NDCollection object.
-    return NDCollection(window_data_pairs, aligned_axes=(0, 1, 2), meta=top_meta)
+    return NDCollection(window_data_pairs, aligned_axes=(0, 1, 2))
+
+
+class IRISSGMeta(Meta, metaclass=SlitSpectrographMetaABC):
+    def __init__(self, header, spectral_window, **kwargs):
+        super().__init__(header, **kwargs)
+        spectral_windows = np.array([self["TDESC{0}".format(i)]
+                                     for i in range(1, self["NWIN"] + 1)])
+        window_mask = np.array([spectral_window in window for window in spectral_windows])
+        if window_mask.sum() < 1:
+            raise ValueError("Spectral window not found. "
+                             f"Input spectral window: {spectral_window}; "
+                             f"Spectral windows in header: {spectral_windows}")
+        elif window_mask.sum() > 1:
+            raise ValueError(
+                "Spectral window must be unique. "
+                f"Input spectral window: {spectral_window}; "
+                f"Ambiguous spectral windows in header: {spectral_windows[window_mask]}")
+        self._iwin = np.arange(len(spectral_windows))[window_mask][0] + 1
+
+    def __str__(self):
+        return textwrap.dedent(f"""\
+                IRISMeta
+                --------
+                Observatory:\t\t{self.observatory}
+                Instrument:\t\t{self.instrument}
+                Detector:\t\t{self.detector}
+                Spectral Window:\t{self.spectral_window}
+                Spectral Range:\t\t{self.spectral_range}
+                Date:\t\t\t{self.date_reference}
+                OBS ID:\t\t\t{self.observing_mode_id}
+                OBS Description:\t{self.observing_mode_description}
+                """)
+
+    def __repr__(self):
+        return f"{object.__repr__(self)}\n{str(self)}"
+
+    # ---------- IRIS-specific convenience methods ----------
+    def _construct_time(self, key):
+        val = self.get(key, None)
+        if val is not None:
+            val = Time(val, format="fits", scale="utc")
+        return val
+
+    # ---------- Inherited ABC properties ----------
+    @property
+    def spectral_window(self):
+        return self.get(f"TDESC{self._iwin}")
+
+    @property
+    def detector(self):
+        return self.get(f"TDET{self._iwin}")
+
+    @property
+    def instrument(self):
+        return self.get("INSTRUME")
+
+    @property
+    def observatory(self):
+        return self.get("TELESCOP")
+
+    @property
+    def processing_level(self):
+        return self.get("DATA_LEV")
+
+    @property
+    def distance_to_sun(self):
+        return self.get("DSUN_OBS") * u.m
+
+    @property
+    def date_reference(self):
+        return self._construct_time("DATE_OBS")
+
+    @property
+    def date_start(self):
+        return self.date_reference
+
+    @property
+    def date_end(self):
+        return self._construct_time("DATE_END")
+
+    @property
+    def observing_mode_id(self):
+        return int(self.get("OBSID"))
+
+    # ---------- IRIS-specific metadata properties ----------
+
+    @property
+    def observing_mode_description(self):
+        return self.get("OBS_DESC")
+
+    @property
+    def observing_campaign_start(self):
+        """Start time of observing campaign"""
+        return self._construct_time("STARTOBS")
+
+    @property
+    def observing_campaign_end(self):
+        """End time of observing mode"""
+        return self._construct_time("ENDOBS")
+
+    @property
+    def observation_includes_SAA(self):
+        """Whether IRIS passed through SAA during observations."""
+        return bool(self.get("SAA"))
+
+    @property
+    def satellite_rotation(self):
+        """Satellite roll from solar north"""
+        return self.get("SAT_ROT") * u.deg
+
+    @property
+    def exposure_control_triggers_in_observation(self):
+        """Number of times automatic exposure control triggered during observing campaign."""
+        return self.get("AECNOBS")
+
+    @property
+    def exposure_control_triggers_in_raster(self):
+        """Number of times automatic exposure control was triggered during this raster."""
+        return self.get("AECNRAS")
+
+    @property
+    def number_raster_positions(self):
+        """ Number of positions in raster."""
+        self.get("NRASTERP")
+
+    @property
+    def spectral_range(self):
+        """The spectral range of the spectral window."""
+        return [self.get(f"TWMIN{self._iwin}"), self.get(f"TWMAX{self._iwin}")] * u.AA
+
+    @property
+    def raster_FOV_width_y(self):
+        """Width of the field of view of the raster in the Y (slit) direction."""
+        return self.get("FOVY") * u.arcsec
+
+    @property
+    def raster_FOV_width_x(self):
+        """Width of the field of view of the raster in the X (rastering) direction."""
+        return self.get("FOVX") * u.arcsec
+
+    @property
+    def FOV_center(self):
+        """Location of the center of the field of view."""
+        return SkyCoord(Tx=self.get("XCEN"), Ty=self.get("YCEN"), unit=u.arcsec,
+                        frame=Helioprojective)
+
+    @property
+    def automatic_exposure_control_enabled(self):
+        return bool(self.get("IAECFLAG"))
+
+    @property
+    def tracking_mode_enabled(self):
+        return bool(self.get("TR_MODE"))
+
+    @property
+    def observatory_at_high_latitude(self):
+        """Whether IRIS passed through high Earth latitude during observations."""
+        return bool(self.get("HLZ"))
+
+    @property
+    def spatial_summing_factor(self):
+        """Number of pixels summed together in the spatial (Y/slit) direction."""
+        return self.get("SUMSPAT")
+
+    @property
+    def spectral_summing_factor(self):
+        """Number of pixels summed together in the spectral direction."""
+        if "fuv" in self.detector.lower():
+            return self.get("SUMSPTRF")
+        else:
+            return self.get("SUMSPTRN")

@@ -9,9 +9,9 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
 from sunpy.coordinates import HeliographicStonyhurst
-from ndcube import NDCollection
+from ndcube import NDCollection, Meta
 
-from sunraster.meta import Meta, SlitSpectrographMetaABC
+from sunraster.meta import SlitSpectrographMetaABC
 from sunraster import SpectrogramCube, SpectrogramSequence, RasterSequence
 
 
