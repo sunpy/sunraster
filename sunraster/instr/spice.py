@@ -21,7 +21,8 @@ INCORRECT_OBSID_MESSAGE = "File has incorrect SPIOBSID."
 
 
 def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=False):
-    """Read SPICE level 2 FITS file.
+    """
+    Read SPICE level 2 FITS file.
 
     Parameters
     ----------
@@ -136,7 +137,8 @@ def _read_single_spice_l2_fits(
     output=None,
     spice_id=None,
 ):
-    """Read SPICE level 2 FITS file(s).
+    """
+    Read SPICE level 2 FITS file(s).
 
     Parameters
     ----------
@@ -402,27 +404,38 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
 
     @property
     def solar_B0(self):
-        """Tilt angle of solar north toward spacecraft."""
+        """
+        Tilt angle of solar north toward spacecraft.
+        """
         return self._construct_quantity("SOLAR_B0")
 
     @property
     def solar_P0(self):
-        """Angle from spacecraft celestial north to solar north."""
+        """
+        Angle from spacecraft celestial north to solar north.
+        """
         return self._construct_quantity("SOLAR_P0")
 
     @property
     def solar_ep(self):
-        """Angle from spacecraft ecliptic north to solar north angle."""
+        """
+        Angle from spacecraft ecliptic north to solar north angle.
+        """
         return self._construct_quantity("SOLAR_EP")
 
     @property
     def carrington_rotation(self):
-        """Carrington Rotation number of observation."""
+        """
+        Carrington Rotation number of observation.
+        """
         return self.get("CAR_ROT")
 
     @property
     def date_start_earth(self):
-        """Time at which photons reaching SPICE at start time would have reach Earth."""
+        """
+        Time at which photons reaching SPICE at start time would have reach
+        Earth.
+        """
         return self._construct_time("DATE_EAR")
 
     @property
@@ -430,6 +443,7 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         """
         Time at which photons reaching SPICE at start time would have left Sun.
 
-        The Sun is defined as the center of the Sun assuming photon was not impeded.
+        The Sun is defined as the center of the Sun assuming photon was
+        not impeded.
         """
         return self._construct_time("DATE_SUN")

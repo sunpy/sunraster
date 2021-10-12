@@ -234,7 +234,9 @@ def test_instrument_axes_slicing(item, expected):
 
 
 def test_ndcube_components_after_slicing():
-    """Tests all cube components are correctly propagated by slicing."""
+    """
+    Tests all cube components are correctly propagated by slicing.
+    """
     # Slice test object
     item = tuple([slice(0, 1)] * 3)
     sliced_cube = spectrogram_instrument_axes[item]

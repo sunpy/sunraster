@@ -18,15 +18,20 @@ class MetaABC(abc.ABCMeta):
 
     @abc.abstractproperty
     def processing_level(self):
-        """The level to which the data has been processed."""
+        """
+        The level to which the data has been processed.
+        """
 
     @abc.abstractproperty
     def observer_location(self):
-        """Coordinate of observatory location based on header info."""
+        """
+        Coordinate of observatory location based on header info.
+        """
 
     @abc.abstractproperty
     def date_reference(self):
-        """The base time from which time axis values are measured.
+        """
+        The base time from which time axis values are measured.
 
         Often the same or very similar to date_start.
         """
@@ -41,21 +46,29 @@ class MetaABC(abc.ABCMeta):
 
     @abc.abstractproperty
     def version(self):
-        """The data version."""
+        """
+        The data version.
+        """
 
 
 class RemoteSensorMetaABC(MetaABC):
     @abc.abstractproperty
     def rsun_meters(self):
-        """Solar radius in units of length."""
+        """
+        Solar radius in units of length.
+        """
 
     @abc.abstractproperty
     def rsun_angular(self):
-        """Solar radius in angular units as seen from observatory."""
+        """
+        Solar radius in angular units as seen from observatory.
+        """
 
     @abc.abstractproperty
     def distance_to_sun(self):
-        """Distance to Sun center from observatory."""
+        """
+        Distance to Sun center from observatory.
+        """
 
 
 class SlitSpectrographMetaABC(RemoteSensorMetaABC):
@@ -65,11 +78,17 @@ class SlitSpectrographMetaABC(RemoteSensorMetaABC):
 
     @abc.abstractproperty
     def observing_mode_id(self):
-        """Unique identifier for the observing mode. Often referred to as OBS ID."""
+        """
+        Unique identifier for the observing mode.
+
+        Often referred to as OBS ID.
+        """
 
     @abc.abstractproperty
     def observer_radial_velocity(self):
-        """Velocity of observatory in direction of source."""
+        """
+        Velocity of observatory in direction of source.
+        """
 
 
 class Meta(dict):

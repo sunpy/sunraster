@@ -96,7 +96,8 @@ def spice_meta(spice_fits_header):
 @pytest.fixture
 def spice_rasdb_filename(tmp_path):
     """
-    Inserts data into a raster SPICE FITS file with dumbbells and returns new filename.
+    Inserts data into a raster SPICE FITS file with dumbbells and returns new
+    filename.
 
     A new FITS file is saved in a tmp file path.
     """

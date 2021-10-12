@@ -246,57 +246,82 @@ class IRISSGMeta(Meta, metaclass=SlitSpectrographMetaABC):
 
     @property
     def observing_campaign_start(self):
-        """Start time of observing campaign"""
+        """
+        Start time of observing campaign.
+        """
         return self._construct_time("STARTOBS")
 
     @property
     def observing_campaign_end(self):
-        """End time of observing mode"""
+        """
+        End time of observing mode.
+        """
         return self._construct_time("ENDOBS")
 
     @property
     def observation_includes_SAA(self):
-        """Whether IRIS passed through SAA during observations."""
+        """
+        Whether IRIS passed through SAA during observations.
+        """
         return bool(self.get("SAA"))
 
     @property
     def satellite_rotation(self):
-        """Satellite roll from solar north"""
+        """
+        Satellite roll from solar north.
+        """
         return self.get("SAT_ROT") * u.deg
 
     @property
     def exposure_control_triggers_in_observation(self):
-        """Number of times automatic exposure control triggered during observing campaign."""
+        """
+        Number of times automatic exposure control triggered during observing
+        campaign.
+        """
         return self.get("AECNOBS")
 
     @property
     def exposure_control_triggers_in_raster(self):
-        """Number of times automatic exposure control was triggered during this raster."""
+        """
+        Number of times automatic exposure control was triggered during this
+        raster.
+        """
         return self.get("AECNRAS")
 
     @property
     def number_raster_positions(self):
-        """Number of positions in raster."""
+        """
+        Number of positions in raster.
+        """
         self.get("NRASTERP")
 
     @property
     def spectral_range(self):
-        """The spectral range of the spectral window."""
+        """
+        The spectral range of the spectral window.
+        """
         return [self.get(f"TWMIN{self._iwin}"), self.get(f"TWMAX{self._iwin}")] * u.AA
 
     @property
     def raster_FOV_width_y(self):
-        """Width of the field of view of the raster in the Y (slit) direction."""
+        """
+        Width of the field of view of the raster in the Y (slit) direction.
+        """
         return self.get("FOVY") * u.arcsec
 
     @property
     def raster_FOV_width_x(self):
-        """Width of the field of view of the raster in the X (rastering) direction."""
+        """
+        Width of the field of view of the raster in the X (rastering)
+        direction.
+        """
         return self.get("FOVX") * u.arcsec
 
     @property
     def FOV_center(self):
-        """Location of the center of the field of view."""
+        """
+        Location of the center of the field of view.
+        """
         return SkyCoord(
             Tx=self.get("XCEN"),
             Ty=self.get("YCEN"),
@@ -314,17 +339,23 @@ class IRISSGMeta(Meta, metaclass=SlitSpectrographMetaABC):
 
     @property
     def observatory_at_high_latitude(self):
-        """Whether IRIS passed through high Earth latitude during observations."""
+        """
+        Whether IRIS passed through high Earth latitude during observations.
+        """
         return bool(self.get("HLZ"))
 
     @property
     def spatial_summing_factor(self):
-        """Number of pixels summed together in the spatial (Y/slit) direction."""
+        """
+        Number of pixels summed together in the spatial (Y/slit) direction.
+        """
         return self.get("SUMSPAT")
 
     @property
     def spectral_summing_factor(self):
-        """Number of pixels summed together in the spectral direction."""
+        """
+        Number of pixels summed together in the spectral direction.
+        """
         if "fuv" in self.detector.lower():
             return self.get("SUMSPTRF")
         else:
