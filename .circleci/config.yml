@@ -11,7 +11,7 @@ skip-check: &skip-check
   command: bash .circleci/early_exit.sh
 
 merge-check: &merge-check
-  name: Check if we need to merge upstream master
+  name: Check if we need to merge upstream main
   command: |
     if [[ -n "${CIRCLE_PR_NUMBER}" ]]; then
       git fetch origin --tags

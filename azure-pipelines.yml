@@ -48,13 +48,11 @@ stages:
         coverage: codecov
         toxdeps: tox-pypi-filter
         posargs: -n=4
-
         envs:
           - linux: codestyle
             name: style_check
             pytest: false
             libraries: {}
-
           - linux: py38
 
   - stage: SecondPhaseTests
@@ -71,21 +69,14 @@ stages:
         libraries:
           apt:
             - graphviz
-
         envs:
           - macos: py37
-
           - windows: py39
-
           - linux: build_docs
             posargs: " "
             pytest: false
-
           - linux: py38-online
-
           - linux: py37-oldestdeps
-
-          - linux: py38-ndcube14dev
 
   - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
     - stage: CronTests
@@ -99,19 +90,17 @@ stages:
           coverage: codecov
           toxdeps: tox-pypi-filter
           posargs: -n=4
-
           libraries:
             yum:
               - openssl-devel
               - freetype-devel
               - libpng-devel
               - hdf5-devel
-
           envs:
             - linux: py38-devdeps
 
-  # On branches which aren't master, and not Pull Requests, build the wheels but only upload them on tags
-  - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.SourceBranchName'], 'master'), eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual'))) }}:
+  # On branches which aren't main, and not Pull Requests, build the wheels but only upload them on tags
+  - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.SourceBranchName'], 'main'), eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual'))) }}:
     - stage: Release
       dependsOn: SecondPhaseTests
       jobs:
