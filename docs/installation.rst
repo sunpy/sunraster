@@ -128,7 +128,7 @@ To make sure you have the latest updates, regularly do
 
 .. code-block:: console
 
-  git pull origin master
+  git pull origin main
 
 Development Dependencies Install
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -201,13 +201,13 @@ directory in which you want your repos to live, type:
   git clone https://github.com/sunpy/sunraster.git sunraster-git
 
 If you already have these repos cloned, make sure they are up-to-date
-but by pulling the latest version of the master branches. For example,
+but by pulling the latest version of the main branches. For example,
 for ``sunpy``, do:
 
 .. code-block:: console
 
   cd ~/github_repos/sunpy-git
-  git pull origin master
+  git pull origin main
 
 assuming that ``origin`` is the remote pointing to the main ``sunpy``
 repo, i.e. https://github.com/sunpy/sunpy.git. The same should be done

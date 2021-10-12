@@ -562,7 +562,7 @@ Solving this problem is the purpose of the `~sunraster.RasterSequence` class.
 It inherits from `~sunraster.SpectrogramSequence` but enables users to label
 one of the axes as the slit-step axis.
 This in turn facilitates a new set of APIs which allows users to interact with their data
-in sit-and-stare (SnS) or rastering mode seemlessly and interchangeably
+in sit-and-stare (sns) or rastering mode seemlessly and interchangeably
 without having to reformat their data.
 
 Initialization
@@ -641,7 +641,7 @@ Dimensions
 
 `~sunraster.RasterSequence` provides a version of the
 `~sunraster.SpectrogramSequence.array_axis_physical_axis_types` property for
-both raster and SnS representations.
+both raster and sns representations.
 
 .. code-block:: python
 
@@ -651,7 +651,7 @@ both raster and SnS representations.
    ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
    ('em.wl',)]
 
-  >>> my_rasters.SnS_array_axis_physical_types
+  >>> my_rasters.sns_array_axis_physical_types
   [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
    ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
    ('em.wl',)]
@@ -661,7 +661,7 @@ For those familiar with `~ndcube.NDCubeSequence`, these are simply aliases for t
 `~ndcube.NDCubeSequence.array_axis_physical_axis_types` and
 `~ndcube.NDCubeSequence.cube_like_world_axis_physical_axis_types`, respectively.
 
-The length of each axis can also be displayed in either the raster or SnS representation.
+The length of each axis can also be displayed in either the raster or sns representation.
 
 .. code-block:: python
 
@@ -680,7 +680,7 @@ To see the length of the axes as though the data is in sit-and-stare mode, simpl
 
 .. code-block:: python
 
-  >>> my_rasters.SnS_dimensions
+  >>> my_rasters.sns_dimensions
   <Quantity [9., 4., 5.] pix>
 
 Note that scan number and slit-step axes have been combined into the 0th position.
@@ -699,23 +699,23 @@ coordinate values for each pixel along each axis.
 `sunraster.RasterSequence.lon`, `sunraster.RasterSequence.lat`,
 and `sunraster.RasterSequence.spectral` return their values in the raster
 representation while `sunraster.RasterSequence.time` and
-`sunraster.RasterSequence.exposure_time` return their values in the SnS
+`sunraster.RasterSequence.exposure_time` return their values in the sns
 representation.
 
-SnS Axis Extra Coordinates
+sns Axis Extra Coordinates
 **************************
 
 As well as `~sunraster.RasterSequence.time` and
 `~sunraster.RasterSequence.exposure_time`, some
 `sunraster.SpectrogramCube.extra_coords` may contain other coordinates
 that are aligned with the slit step axis.
-The `sunraster.RasterSequence.SnS_axis_extra_coords` property enables users
+The `sunraster.RasterSequence.sns_axis_coords` property enables users
 to access these coordinates at the `~sunraster.RasterSequence` level in the
 form of an abbreviated ``extra_coords`` dictionary.
 Just like `~sunraster.RasterSequence.time` and `sunraster.RasterSequence.exposure_time`,
 the coordinates are concatenated so they mimic the sit-and-stare-like dimensionality
-returned in the 0th element of `sunraster.RasterSequence.SnS_dimensions`.
-`sunraster.RasterSequence.SnS_axis_extra_coords` is equivalent to
+returned in the 0th element of `sunraster.RasterSequence.sns_dimensions`.
+`sunraster.RasterSequence.sns_axis_coords` is equivalent to
 `ndcube.NDCubeSequence.common_axis_extra_coords`.
 To see examples of how to use this property, see the
 `NDCubeSequence Common Axis Extra Coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#common-axis-extra-coordinates>`_.
@@ -723,17 +723,17 @@ To see examples of how to use this property, see the
 Raster Axis Extra Coordinates
 *****************************
 
-Analgous to `~sunraster.RasterSequence.SnS_axis_extra_coords`, it is also
+Analgous to `~sunraster.RasterSequence.sns_axis_coords`, it is also
 possible to access the extra coordinates that are not assigned to any
 `~sunraster.SpectrogramCube` data axis via the
-`~sunraster.RasterSequence.raster_axis_extra_coords` property.
-Whereas `~sunraster.RasterSequence.SnS_axis_extra_coords` returns all the
+`~sunraster.RasterSequence.raster_axis_coords` property.
+Whereas `~sunraster.RasterSequence.sns_axis_coords` returns all the
 extra coords with an ``'axis'`` value equal to the time/slit step axis,
 `~sunraster.RasterSequence.scan_axis_extra_coords` returns all extra coords
 with an ``'axis'`` value of ``None``.
 Another way of thinking about an ``extra_coord`` with and axis value of ``None``,
 is that these coordinates correspond to the raster scan number axis.
-Hence the property’s name.
+Hence the property's name.
 
 Slicing
 ^^^^^^^
@@ -742,7 +742,7 @@ Slicing
 the raster and sit-and-stare representations.
 It also enables them to slice the data in either representation as well.
 This is done via the `~sunraster.RasterSequence.slice_as_raster` and
-`~sunraster.RasterSequence.slice_as_SnS` properties.
+`~sunraster.RasterSequence.slice_as_sns` properties.
 As with `~sunraster.SpectrogramCube` and `~sunraster.SpectrogramSequence`,
 these slicing properties ensure that not only the data is sliced,
 but also all relevant supporting metadata including uncertainties, mask,
@@ -762,22 +762,22 @@ We can see the result of slicing using the ``dimensions`` properties.
   (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
   >>> print(my_rasters_roi.raster_dimensions) # See how slicing has changed dimensionality.
   (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
-  >>> my_rasters_roi.SnS_dimensions  # Dimensionality can still be represented in SnS form.
+  >>> my_rasters_roi.sns_dimensions  # Dimensionality can still be represented in sns form.
   <Quantity [4., 2., 3.] pix>
 
 To slice in the sit-and-stare representation, do the following:
 
 .. code-block:: python
 
-  >>> my_rasters_roi = my_rasters.slice_as_SnS[1:7, 1:3, 1:4]
+  >>> my_rasters_roi = my_rasters.slice_as_sns[1:7, 1:3, 1:4]
 
 Let's check the effect of the slicing once again.
 
 .. code-block:: python
 
-  >>> print(my_rasters.SnS_dimensions)  # Check dimensionality before slicing.
+  >>> print(my_rasters.sns_dimensions)  # Check dimensionality before slicing.
   [9. 4. 5.] pix
-  >>> print(my_rasters_roi.SnS_dimensions)  # See how slicing has changed dimensionality.
+  >>> print(my_rasters_roi.sns_dimensions)  # See how slicing has changed dimensionality.
   [6. 2. 3.] pix
   >>> print(my_rasters_roi.raster_dimensions)  # Dimensionality can still be represented in raster form.
   (<Quantity 3. pix>, <Quantity [2., 3., 1.] pix>, <Quantity 2. pix>, <Quantity 3. pix>)
@@ -785,7 +785,7 @@ Let's check the effect of the slicing once again.
 Notice that after slicing the data can still be inspected and interpreted in
 the raster or sit-and-stare format, irrespective of which slicing
 representation was used.
-Also notice that the ``my_sequence.slice_as_SnS[1:7, 1:3, 1:4]`` command led to
+Also notice that the ``my_sequence.slice_as_sns[1:7, 1:3, 1:4]`` command led to
 different `~sunraster.SpectrogramCube` objects to have different lengths along the
 slit step axis.
 This can be seen from the fact that the slit step axis entry in the
@@ -806,7 +806,7 @@ However, the raster and sit-and-stare representations are still valid.
   >>> slit_pixel_rasters = my_rasters.slice_as_raster[:, :, 2]
   >>> print(slit_pixel_rasters.raster_dimensions)
   (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 5. pix>)
-  >>> print(slit_pixel_rasters.SnS_dimensions)
+  >>> print(slit_pixel_rasters.sns_dimensions)
   [9. 5.] pix
 
 This demonstrates that the difference between the raster and sit-and-stare
@@ -838,14 +838,14 @@ To visualize in the sit-and-stare representation, do:
 
 .. code-block:: python
 
-  >>> my_rasters.plot_as_SnS() # doctest: +SKIP
+  >>> my_rasters.plot_as_sns() # doctest: +SKIP
 
 These methods produce different types of visualizations including line plots,
 2-D images and 1- and 2-D animations.
 Which is displayed depends on the dimensionality of the `~sunraster.RasterSequence`
 and the inputs of the user.
 `~sunraster.RasterSequence.plot_as_raster` and
-`~sunraster.RasterSequence.plot_as_SnS` are in fact simply aliases for the
+`~sunraster.RasterSequence.plot_as_sns` are in fact simply aliases for the
 ``ndcube.NDCubeSequence.plot`` and ``ndcube.NDCubeSequence.plot_as_cube`` methods,
 respectively.
 For learn more about how these routines work and the optional inputs that
