@@ -136,14 +136,14 @@ class Meta(dict):
             The name/label of the metadata.
 
         value:
-            The value of the metadata.  If axes input is not None, this must have the
+            The value of the metadata. If axes input is not None, this must have the
             same length/shape as those axes as defined by self.shape.
 
         comment: `str` or `None`
             Any comment associated with this metadata. Set to None if no comment desired.
 
         axis: `int`, iterable of `int`, or `None`
-            The axis/axes with which the metadata is linked.  If not associated with any
+            The axis/axes with which the metadata is linked. If not associated with any
             axis, set this to None.
 
         overwrite: `bool` (optional)

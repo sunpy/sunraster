@@ -122,7 +122,7 @@ class SpectrogramABC(abc.ABC):
         adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
+        already include inverse time. This can be overridden so that correction
         is applied (undone) regardless of unit by setting force=True.
 
         Parameters
@@ -134,7 +134,7 @@ class SpectrogramABC(abc.ABC):
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
+            If True, correction is applied (undone) regardless of unit. Unit is still
             adjusted accordingly.
 
         Returns
@@ -244,6 +244,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 time_period = None
             else:
                 raise err
+        except TypeError:
+            # TODO: Fix issue with time axis and dt being a NaN.
+            # It errors on the isscaler call.
+            time_period = None
+        except Exception as err:
+            raise Exception from err
         try:
             sc = self.celestial
             component_names = dict([(item, key) for key, item in sc.representation_component_names.items()])
@@ -414,6 +420,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             return self.axis_world_coords(axis_name)[0]
         elif coord_loc == "extra_coords":
             return self.axis_world_coords(wcs=self.extra_coords[axis_name])[0]
+        elif coord_loc == "global_coords":
+            return self.global_coords[axis_name]
+        else:
+            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
     def _get_axis_index(self, axis_name, coord_loc):
         # TODO: Implement this.
@@ -424,6 +434,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             return self.axis_world_coords_values(axis_name)[0]
         elif coord_loc == "extra_coords":
             return self.axis_world_coords_values(wcs=self.extra_coords[axis_name])[0]
+        elif coord_loc == "global_coords":
+            return self.global_coords[axis_name]
+        else:
+            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
 
 def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):

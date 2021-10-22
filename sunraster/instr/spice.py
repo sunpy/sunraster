@@ -33,7 +33,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         The names of the windows to read.
         All windows must of the same type: dumbbell and regular.
         Default=None implies all narrow-slit or dumbbell windows read out
-        depending on value of read_dumbells kwarg.  See below.
+        depending on value of read_dumbells kwarg. See below.
     memmap: `bool`
         If True, FITS file is reading with memory mapping.
     read_dumbbells: `bool`
@@ -112,8 +112,11 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         if all([window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences]):
             aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
-            (aligned_axes,) = np.where(np.asarray(first_sequence.array_axis_physical_types, dtype=object) != "em.wl")
-            aligned_axes = tuple([int(i) for i in aligned_axes])
+            aligned_axes = []
+            for axis in first_sequence.array_axis_physical_types:
+                if axis != ("em.wl",):
+                    aligned_axes.append(first_sequence.array_axis_physical_types.index(axis))
+            aligned_axes = tuple(aligned_axes)
     else:
         aligned_axes = None
     return NDCollection(window_sequences, aligned_axes=aligned_axes)
@@ -146,7 +149,7 @@ def _read_single_spice_l2_fits(
         The names of the windows to read.
         All windows must of the same type: dumbbell and regular.
         Default=None implies all narrow-slit or dumbbell windows read out
-        depending on value of read_dumbells kwarg.  See below.
+        depending on value of read_dumbells kwarg. See below.
     memmap: `bool`
         If True, FITS file is reading with memory mapping.
     read_dumbbells: `bool`
@@ -172,7 +175,7 @@ def _read_single_spice_l2_fits(
     dumbbell_label = "DUMBBELL"
     with fits.open(filename, memmap=memmap) as hdulist:
         if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
-            raise ValueError(f"{INCORRECT_OBSID_MESSAGE} Expected {spice_id}.  Got {hdulist[0].header['SPIOBSID']}.")
+            raise ValueError(f"{INCORRECT_OBSID_MESSAGE} Expected {spice_id}. Got {hdulist[0].header['SPIOBSID']}.")
         # Derive names of windows to be read.
         if windows is None:
             if read_dumbbells:

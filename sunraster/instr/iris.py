@@ -15,7 +15,7 @@ from sunraster.meta import SlitSpectrographMetaABC
 
 __all__ = ["read_iris_spectrograph_level2_fits"]
 
-# Define some properties of IRIS detectors.  Source: IRIS instrument paper.
+# Define some properties of IRIS detectors. Source: IRIS instrument paper.
 DETECTOR_GAIN = {"NUV": 18.0, "FUV": 6.0}
 DETECTOR_YIELD = {"NUV": 1.0, "FUV": 1.5}
 DN_UNIT = {
@@ -33,10 +33,10 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
     Parameters
     ----------
     filenames: `list` of `str` or `str`
-        Filename of filenames to be read.  They must all be associated with the same
+        Filename of filenames to be read. They must all be associated with the same
         OBS number.
     spectral_windows: iterable of `str` or `str`
-        Spectral windows to extract from files.  Default=None, implies, extract all
+        Spectral windows to extract from files. Default=None, implies, extract all
         spectral windows.
 
     Returns

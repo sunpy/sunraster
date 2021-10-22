@@ -180,6 +180,7 @@ spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
 )
 spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
+spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS0[1])
 sequence_DN_per_s_per_s = RasterSequence(
     [spectrogram_DN_per_s_per_s0, spectrogram_DN_per_s_per_s1],
     meta=meta_seq,

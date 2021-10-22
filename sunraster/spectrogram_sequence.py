@@ -81,7 +81,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
+        already include inverse time. This can be overridden so that correction
         is applied (undone) regardless of unit by setting force=True.
 
         Parameters
@@ -97,12 +97,12 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
+            If True, correction is applied (undone) regardless of unit. Unit is still
             adjusted accordingly.
 
         Returns
         -------
-        result: `None` or `SpectrogramSequence`
+        `None` or `SpectrogramSequence`
             If copy=False, the original SpectrogramSequence is modified with the
             exposure time correction applied (undone).
             If copy=True, a new SpectrogramSequence is returned with the correction
