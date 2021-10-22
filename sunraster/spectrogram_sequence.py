@@ -250,7 +250,7 @@ class RasterSequence(SpectrogramSequence):
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = self._spectral_axis_name
             # Slit axis name.
-            w = self._single_scan_instrument_axes_types == None  # NOQA
+            w = self._single_scan_instrument_axes_types == None
             if w.sum() > 1:
                 raise ValueError("WCS or common_axis not consistent.")
             self._single_scan_instrument_axes_types[w] = self._slit_axis_name

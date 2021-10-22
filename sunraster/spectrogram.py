@@ -321,7 +321,11 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 instrument_axes = None
         result.instrument_axes = instrument_axes
         # TODO: Remove for ndcube 2.1
-        result.meta = self.meta
+        # Slice metadata if possible.
+        try:
+            result.meta = self.meta[item]
+        except Exception:
+            pass
         return result
 
     @property
