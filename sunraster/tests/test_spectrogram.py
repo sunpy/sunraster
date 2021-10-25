@@ -66,7 +66,6 @@ SINGLES_EXPOSURE_TIME = 2.0
 EXPOSURE_TIME = u.Quantity(np.zeros(TIME_DIM_LEN) + SINGLES_EXPOSURE_TIME, unit=u.s)
 EXTRA_COORDS0 = [
     ("time", 0, Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN), format="sec")),
-    ("exposure time", 0, EXPOSURE_TIME),
 ]
 EXTRA_COORDS1 = [
     (
@@ -74,7 +73,6 @@ EXTRA_COORDS1 = [
         0,
         (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
-    ("exposure time", 0, EXPOSURE_TIME),
 ]
 
 spectrogram_DN0 = SpectrogramCube(
@@ -82,65 +80,65 @@ spectrogram_DN0 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN0.extra_coords.add(*EXTRA_COORDS0[0])
-spectrogram_DN0.extra_coords.add(*EXTRA_COORDS0[1])
 spectrogram_DN_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
-spectrogram_DN_per_s0.extra_coords.add(*EXTRA_COORDS0[1])
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct / u.s / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_per_s_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
-spectrogram_DN_per_s_per_s0.extra_coords.add(*EXTRA_COORDS0[1])
 spectrogram_DN_s0 = SpectrogramCube(
     SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct * u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_s0.extra_coords.add(*EXTRA_COORDS0[0])
-spectrogram_DN_s0.extra_coords.add(*EXTRA_COORDS0[1])
 spectrogram_DN1 = SpectrogramCube(
     SOURCE_DATA_DN,
     wcs=WCS0,
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN1.extra_coords.add(*EXTRA_COORDS1[0])
-spectrogram_DN1.extra_coords.add(*EXTRA_COORDS1[1])
 spectrogram_DN_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
-spectrogram_DN_per_s1.extra_coords.add(*EXTRA_COORDS1[1])
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     SOURCE_DATA_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct / u.s / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
-spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS1[1])
 spectrogram_DN_s1 = SpectrogramCube(
     SOURCE_DATA_DN * SINGLES_EXPOSURE_TIME,
     wcs=WCS0,
     unit=u.ct * u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_DN_s1.extra_coords.add(*EXTRA_COORDS1[0])
-spectrogram_DN_s1.extra_coords.add(*EXTRA_COORDS1[1])
 spectrogram_NO_COORDS = SpectrogramCube(SOURCE_DATA_DN, WCS_NO_COORDS)
 spectrogram_instrument_axes = SpectrogramCube(
     SOURCE_DATA_DN,
@@ -149,9 +147,9 @@ spectrogram_instrument_axes = SpectrogramCube(
     uncertainty=SOURCE_UNCERTAINTY_DN,
     mask=MASK,
     instrument_axes=("a", "b", "c"),
+    meta={"exposure time": EXPOSURE_TIME},
 )
 spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[0])
-spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[1])
 
 
 def test_str():
@@ -260,5 +258,7 @@ def test_ndcube_components_after_slicing():
     )
     expected_cube.extra_coords.add(*ec0)
     expected_cube.extra_coords.add(*ec1)
+    # We had a bug in the repr
+    assert str(sliced_cube)
     assert str(expected_cube)
     assert_cubes_equal(sliced_cube, expected_cube)

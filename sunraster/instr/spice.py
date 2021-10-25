@@ -12,8 +12,7 @@ from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
-from sunraster.extern.meta import Meta
-from sunraster.meta import SlitSpectrographMetaABC
+from sunraster.meta import Meta, SlitSpectrographMetaABC
 
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
@@ -196,6 +195,7 @@ def _read_single_spice_l2_fits(
                 meta = SPICEMeta(
                     hdu.header,
                     comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
+                    data_shape=(len(list(hdu.header.keys())),),
                 )
                 # Rename WCS time axis to time.
                 meta.update([("CTYPE4", "TIME")])
@@ -215,7 +215,7 @@ def _read_single_spice_l2_fits(
                     meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"),
                 )
-                spectrogram.extra_coords.add("exposure time", -1, exp_times)
+                spectrogram.meta["exposure time"] = exp_times
                 window_name = meta.get("EXTNAME")
                 if output is None:
                     window_cubes.append((window_name, spectrogram))

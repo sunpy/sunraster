@@ -4,9 +4,12 @@ import textwrap
 from copy import deepcopy
 
 import astropy.units as u
+import ndcube.utils.wcs as nuw
 import numpy as np
 from astropy.time import Time
 from ndcube.ndcube import NDCube
+
+from sunraster.meta import Meta
 
 __all__ = ["SpectrogramCube"]
 
@@ -210,19 +213,34 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         self_extra_coords = self.extra_coords
         world_axis_physical_types = np.array(self.wcs.world_axis_physical_types)
         self._longitude_name, self._longitude_loc = _find_axis_name(
-            SUPPORTED_LONGITUDE_NAMES, world_axis_physical_types, self_extra_coords
+            SUPPORTED_LONGITUDE_NAMES,
+            world_axis_physical_types,
+            self_extra_coords,
+            self.meta,
         )
         self._latitude_name, self._latitude_loc = _find_axis_name(
-            SUPPORTED_LATITUDE_NAMES, world_axis_physical_types, self_extra_coords
+            SUPPORTED_LATITUDE_NAMES,
+            world_axis_physical_types,
+            self_extra_coords,
+            self.meta,
         )
         self._spectral_name, self._spectral_loc = _find_axis_name(
-            SUPPORTED_SPECTRAL_NAMES, world_axis_physical_types, self_extra_coords
+            SUPPORTED_SPECTRAL_NAMES,
+            world_axis_physical_types,
+            self_extra_coords,
+            self.meta,
         )
         self._time_name, self._time_loc = _find_axis_name(
-            SUPPORTED_TIME_NAMES, world_axis_physical_types, self_extra_coords
+            SUPPORTED_TIME_NAMES,
+            world_axis_physical_types,
+            self_extra_coords,
+            self.meta,
         )
         self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
-            SUPPORTED_EXPOSURE_NAMES, world_axis_physical_types, self_extra_coords
+            SUPPORTED_EXPOSURE_NAMES,
+            world_axis_physical_types,
+            self_extra_coords,
+            self.meta,
         )
         # Set up instrument axes if set.
         if instrument_axes is None:
@@ -231,6 +249,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             raise ValueError("Length of instrument_axes must match number of data axes.")
         else:
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
+        # TODO: Remove after ndcube 2.1
+        if not isinstance(self.meta, Meta):
+            self.meta = Meta(self.meta, data_shape=(len(self.meta.keys()),))
 
     def __str__(self):
         try:
@@ -244,10 +265,13 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 time_period = None
             else:
                 raise err
-        except TypeError:
+        except TypeError as err:
             # TODO: Fix issue with time axis and dt being a NaN.
             # It errors on the isscaler call.
-            time_period = None
+            if "Unsupported operand type(s) for ufunc add: 'Time,Quantity'" in err.args[0]:
+                time_period = None
+            else:
+                raise err
         except Exception as err:
             raise Exception from err
         try:
@@ -324,7 +348,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # Slice metadata if possible.
         try:
             result.meta = self.meta[item]
-        except Exception:
+        except TypeError as err:
+            if "unhashable type" not in err.args[0]:
+                raise err
+        except (KeyError, IndexError):
             pass
         return result
 
@@ -335,6 +362,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 SUPPORTED_SPECTRAL_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
+                self.meta,
             )
         if not self._spectral_name:
             raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_SPECTRAL_NAMES}")
@@ -347,6 +375,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 SUPPORTED_TIME_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
+                self.meta,
             )
             if not self._time_name:
                 raise ValueError(f"Time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_TIME_NAMES}")
@@ -354,11 +383,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     @property
     def exposure_time(self):
-        if not self._exposure_time_name:
+        if not self._exposure_time_name or not hasattr(self, "_exposure_time_name_loc"):
             self._exposure_time_name, self._exposure_time_name_loc = _find_axis_name(
                 SUPPORTED_EXPOSURE_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
+                self.meta,
             )
             if not self._exposure_time_name:
                 raise ValueError(f"Exposure time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_EXPOSURE_NAMES}")
@@ -371,12 +401,14 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 SUPPORTED_LONGITUDE_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
+                self.meta,
             )
         if not self._latitude_name:
             self._latitude_name, self._latitude_loc = _find_axis_name(
                 SUPPORTED_LATITUDE_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
+                self.meta,
             )
         if self._longitude_name:
             celestial_name = self._longitude_name
@@ -397,7 +429,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # If exposure time is not scalar, change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         if not np.isscalar(exposure_time_s):
-            exposure_axis = self._get_axis_index(self._exposure_time_name, self._exposure_time_name_loc)
+            exposure_axis = self._get_axis_coord_index(self._spectral_name, self._spectral_loc)
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
@@ -426,12 +458,20 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             return self.axis_world_coords(wcs=self.extra_coords[axis_name])[0]
         elif coord_loc == "global_coords":
             return self.global_coords[axis_name]
+        elif coord_loc == "meta":
+            return self.meta[axis_name]
         else:
             raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
-    def _get_axis_index(self, axis_name, coord_loc):
-        # TODO: Implement this.
-        return 0
+    def _get_axis_coord_index(self, axis_name, coord_loc):
+        if coord_loc == "wcs":
+            coord_pix_axes = nuw.physical_type_to_pixel_axes(axis_name, self.wcs)
+            coord_array_axes = nuw.convert_between_array_and_pixel_axes(coord_pix_axes, len(self.dimensions))
+            return coord_array_axes.tolist()[0]
+        elif coord_loc == "extra_coords":
+            return self.extra_coords[axis_name].mapping[0]
+        else:
+            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
     def _get_axis_coord_values(self, axis_name, coord_loc):
         if coord_loc == "wcs":
@@ -444,7 +484,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
 
-def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
+def _find_axis_name(supported_names, world_axis_physical_types, extra_coords, meta):
     """
     Finds name of a SpectrogramCube axis type from WCS and extra coords.
 
@@ -456,6 +496,8 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
         Output of SpectrogramCube.world_axis_physical_types converted to an array.
     extra_coords: `dict` or `None`
         Output of SpectrogramCube.extra_coords
+    meta: `dict` or `None`
+        Output of SpectrogramCube.meta
 
     Returns
     -------
@@ -474,6 +516,10 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords):
         axis_name = _find_name_in_array(supported_names, np.array(list(extra_coords.keys())))
         if axis_name:
             loc = "extra_coords"
+    if axis_name is None and meta:  # If axis name not in WCS, check meta.
+        axis_name = _find_name_in_array(supported_names, np.array(list(meta.keys())))
+        if axis_name:
+            loc = "meta"
     return axis_name, loc
 
 

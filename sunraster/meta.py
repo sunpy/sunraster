@@ -1,6 +1,8 @@
 import abc
 
-__all__ = ["RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
+from sunraster.extern.meta import Meta
+
+__all__ = ["Meta", "RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
 
 class MetaABC(abc.ABCMeta):

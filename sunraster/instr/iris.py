@@ -10,8 +10,7 @@ from ndcube import NDCollection
 from sunpy.coordinates import Helioprojective
 
 from sunraster import RasterSequence, SpectrogramCube
-from sunraster.extern.meta import Meta
-from sunraster.meta import SlitSpectrographMetaABC
+from sunraster.meta import Meta, SlitSpectrographMetaABC
 
 __all__ = ["read_iris_spectrograph_level2_fits"]
 

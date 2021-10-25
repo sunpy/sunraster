@@ -124,21 +124,25 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
                     SUPPORTED_TIME_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._longitude_name, self.data[i]._longitude_loc,) = _find_axis_name(
                     SUPPORTED_LONGITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._latitude_name, self.data[i]._latitude_loc,) = _find_axis_name(
                     SUPPORTED_LATITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._spectral_name, self.data[i]._spectral_loc,) = _find_axis_name(
                     SUPPORTED_SPECTRAL_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
         data0 = self.data[0]
         if data0._time_name:
@@ -242,6 +246,7 @@ class RasterSequence(SpectrogramSequence):
                         SUPPORTED_SPECTRAL_NAMES,
                         cube.wcs.world_axis_physical_types,
                         cube.extra_coords,
+                        cube.meta,
                     )
             spectral_name = self.data[0]._spectral_name
             array_axis_physical_types = self.data[0].array_axis_physical_types
@@ -252,7 +257,9 @@ class RasterSequence(SpectrogramSequence):
             # Slit axis name.
             w = self._single_scan_instrument_axes_types == None
             if w.sum() > 1:
-                raise ValueError("WCS or common_axis not consistent.")
+                raise ValueError(
+                    "Unable to parse the WCS or common_axis to work out either or both the slit-step axis nor the spectral (aka the slit) axis."
+                )
             self._single_scan_instrument_axes_types[w] = self._slit_axis_name
             # Remove any instrument axes types whose axes are missing.
             self._single_scan_instrument_axes_types.astype(str)
