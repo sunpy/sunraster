@@ -184,7 +184,7 @@ def test_time_error():
 
 
 def test_exposure_time():
-    assert all(spectrogram_DN0.exposure_time == EXTRA_COORDS0[1][2])
+    assert all(spectrogram_DN0.exposure_time == EXPOSURE_TIME)
 
 
 def test_exposure_time_error():
@@ -208,12 +208,12 @@ def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
 
 def test_calculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._calculate_exposure_time_correction(SOURCE_DATA_DN, None, u.s, EXTRA_COORDS0[1][2])
+        sunraster.spectrogram._calculate_exposure_time_correction(SOURCE_DATA_DN, None, u.s, EXPOSURE_TIME)
 
 
 def test_uncalculate_exposure_time_correction_error():
     with pytest.raises(ValueError):
-        sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct, EXTRA_COORDS0[1][2])
+        sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct, EXPOSURE_TIME)
 
 
 @pytest.mark.parametrize(
@@ -244,8 +244,6 @@ def test_ndcube_components_after_slicing():
     ec_axis = 0
     ec0 = list(extra_coords[0])
     ec0[-1] = ec0[-1][item[ec_axis]]
-    ec1 = list(extra_coords[1])
-    ec1[-1] = ec1[-1][item[ec_axis]]
     wcs = spectrogram_instrument_axes.wcs[item]
     expected_cube = SpectrogramCube(
         data=data,
@@ -257,7 +255,6 @@ def test_ndcube_components_after_slicing():
         instrument_axes=spectrogram_instrument_axes.instrument_axes,
     )
     expected_cube.extra_coords.add(*ec0)
-    expected_cube.extra_coords.add(*ec1)
     # We had a bug in the repr
     assert str(sliced_cube)
     assert str(expected_cube)
