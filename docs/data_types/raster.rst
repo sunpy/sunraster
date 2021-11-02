@@ -4,12 +4,16 @@ RasterSequence
 --------------
 
 Slit spectrographs are often used to produce rasters.
-(In fact, it is from this data product that ``sunraster`` derives its name.)
+In fact, it is from this data product that ``sunraster`` derives its name.
+
 A raster is produced by scanning the slit in discrete steps perpendicular to its long axis, recording an exposure at each position.
 Thus a spectral image over a region is built up over time despite the slit spectrograph's necessarily narrow horizontal field of view.
-Another motivation can be to perform fast repeat raster scans in order to improve the chances of catching an event with the slit, e.g. a solar flare.
+Another motivation can be to perform fast repeat raster scans in order to improve the chances of catching an event with the slit, e.g., a solar flare.
 In a raster, the slit-step axis is convolved with time.
+
 Depending on the type of analysis being performed, users may want to think of their data as if it were in raster mode/4D (``scan number``, ``slit step``, ``position along slit``, ``wavelength``) or sit-and-stare mode/3D (``time``, ``position along slit``, ``spectral``).
+
+
 In order to access the data in the way they want, scientists may often have two copies, a 3D version and a 4D version.
 However, this means scientists have to keep track of two data structures which is memory intensive both for the scientist and the computer and increases the chances mistakes in analysis.
 
@@ -44,9 +48,9 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> # Define a mask with all pixel unmasked, i.e. mask values = False
     >>> mask = np.zeros(data.shape, dtype=bool)
     >>> # Define some RasterSequence metadata.
-    >>> seq_meta = {"description": "This is a RasterSequence."}
+    >>> seq_meta = {"description": "This is a RasterSequence.", "exposure time" : exposure_times}
 
-    >>> # Define uncertaines for data, 2*data and data/2.
+    >>> # Define uncertainties for data, 2*data and data/2.
     >>> uncertainties = StdDevUncertainty(np.sqrt(data))
     >>> uncertainties2 = StdDevUncertainty(np.sqrt(data * 2))
     >>> uncertainties05 = StdDevUncertainty(np.sqrt(data * 0.5))
@@ -58,7 +62,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> # Create 1st raster
     >>> timestamps0 = Time([datetime(2000, 1, 1) + timedelta(minutes=i)
     ...                     for i in range(axis_length)], format='datetime', scale='utc')
-    >>> extra_coords_input0 = [("time", 0, timestamps0), ("exposure time", 0, exposure_times)]
+    >>> extra_coords_input0 = [("time", 0, timestamps0)]
     >>> raster0 = SpectrogramCube(data, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                           meta=seq_meta, unit=u.ct)
     >>> [raster0.extra_coords.add(*extra) for extra in extra_coords_input0]
@@ -66,7 +70,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> # Create 2nd raster
     >>> timestamps1 = Time([timestamps0[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
-    >>> extra_coords_input1 = [("time", 0, timestamps1), ("exposure time", 0, exposure_times)]
+    >>> extra_coords_input1 = [("time", 0, timestamps1)]
     >>> raster1 = SpectrogramCube(data*2, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                  meta=seq_meta, unit=u.ct)
     >>> [raster1.extra_coords.add(*extra) for extra in extra_coords_input1]
@@ -74,7 +78,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> # Create 3rd raster
     >>> timestamps2 = Time([timestamps1[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
-    >>> extra_coords_input2 = [("time", 0, timestamps2), ("exposure time", 0, exposure_times)]
+    >>> extra_coords_input2 = [("time", 0, timestamps2)]
     >>> raster2 = SpectrogramCube(data*0.5, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                  meta=seq_meta, unit=u.ct)
     >>> [raster2.extra_coords.add(*extra) for extra in extra_coords_input2]
@@ -132,13 +136,13 @@ From this we can see that we have 9 (3x3) spectrograms or times in our `~sunrast
 Coordinates
 ^^^^^^^^^^^
 
-Coordinate Properties
+Coordinate properties
 *********************
 
 `~sunraster.RasterSequence` provides the same convenience properties as `~sunraster.SpectrogramSequence` to retrieve the real world coordinate values for each pixel along each axis.
-`sunraster.RasterSequence.lon`, `sunraster.RasterSequence.lat`, and `sunraster.RasterSequence.spectral` return their values in the raster representation while `sunraster.RasterSequence.time` and `sunraster.RasterSequence.exposure_time` return their values in the sns representation.
+`sunraster.RasterSequence.celestial`, and `sunraster.RasterSequence.spectral` return their values in the raster representation while `sunraster.RasterSequence.time` and `sunraster.RasterSequence.exposure_time` return their values in the sns representation.
 
-sns Axis Extra Coordinates
+sns axis extra coordinates
 **************************
 
 As well as `~sunraster.RasterSequence.time` and `~sunraster.RasterSequence.exposure_time`, some `sunraster.SpectrogramCube.extra_coords` may contain other coordinates that are aligned with the slit step axis.
@@ -147,10 +151,10 @@ Just like `~sunraster.RasterSequence.time` and `sunraster.RasterSequence.exposur
 `sunraster.RasterSequence.sns_axis_coords` is equivalent to `ndcube.NDCubeSequence.common_axis_extra_coords`.
 To see examples of how to use this property, see the `NDCubeSequence Common Axis Extra Coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcubesequence.html#common-axis-extra-coordinates>`__.
 
-Raster Axis Extra Coordinates
+Raster axis extra coordinates
 *****************************
 
-Analgous to `~sunraster.RasterSequence.sns_axis_coords`, it is also possible to access the extra coordinates that are not assigned to any `~sunraster.SpectrogramCube` data axis via the `~sunraster.RasterSequence.raster_axis_coords` property.
+Analogous to `~sunraster.RasterSequence.sns_axis_coords`, it is also possible to access the extra coordinates that are not assigned to any `~sunraster.SpectrogramCube` data axis via the `~sunraster.RasterSequence.raster_axis_coords` property.
 Whereas `~sunraster.RasterSequence.sns_axis_coords` returns all the extra coords with an ``'axis'`` value equal to the time/slit step axis, `~sunraster.RasterSequence.scan_axis_extra_coords` returns all extra coords with an ``'axis'`` value of ``None``.
 Another way of thinking about an ``extra_coord`` with and axis value of ``None``, is that these coordinates correspond to the raster scan number axis.
 Hence the property's name.
@@ -161,8 +165,7 @@ Slicing
 `~sunraster.RasterSequence` not only enables users to inspect their data in the raster and sit-and-stare representations.
 It also enables them to slice the data in either representation as well.
 This is done via the `~sunraster.RasterSequence.slice_as_raster` and `~sunraster.RasterSequence.slice_as_sns` properties.
-As with `~sunraster.SpectrogramCube` and `~sunraster.SpectrogramSequence`, these slicing properties ensure that not only the data is sliced, but also all relevant supporting metadata including uncertainties, mask,
-WCS object, extra_coords, etc.
+As with `~sunraster.SpectrogramCube` and `~sunraster.SpectrogramSequence`, these slicing properties ensure that not only the data is sliced, but also all relevant supporting metadata including uncertainties, mask, WCS object, extra_coords, etc.
 
 To slice a `~sunraster.RasterSequence` using the raster representation, do:
 
@@ -203,7 +206,7 @@ Also notice that the ``my_sequence.slice_as_sns[1:7, 1:3, 1:4]`` command led to 
 This can be seen from the fact that the slit step axis entry in the output of ``my_sequence_roi.raster_dimensions`` has a length greater than 1.
 Each element represents the length of each `~sunraster.SpectrogramCube` in the `~sunraster.SpectrogramSequence` along that axis.
 
-As with `~sunraster.SpectrogramSequence`, slicing can reduce a `~sunraster.RasterSequence`'s dimensionality.
+As with `~sunraster.SpectrogramSequence`, slicing can reduce a `~sunraster.RasterSequence` dimensionality.
 As in the :ref:`sequence_slicing` section, let's slice out the 2nd pixel along the slit.
 This reduces the number of dimensions in the raster representation to 3 (``raster scan``, ``slit step``, ``spectral``) and to 2 in the sit-and-stare representation (``time``, ``spectral``).
 However, the raster and sit-and-stare representations are still valid.
@@ -224,8 +227,7 @@ Plotting
 ^^^^^^^^
 
 To quickly and easily visualize slit spectrograph data, `~sunraster.RasterSequence` supplies simple-to-use, yet powerful plotting APIs.
-They are intended to be a useful quicklook tool and not a replacement for high quality plots or animations, e.g. for
-publications.
+They are intended to be a useful quicklook tool and not a replacement for high quality plots or animations, e.g. for publications.
 As with slicing, there are two plot methods for plotting in each of the raster and sit-and-stare representations.
 
 To visualize in the raster representation, simply call the following:

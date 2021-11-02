@@ -3,22 +3,22 @@
 
 SpectrogramCube
 ---------------
+
 The fundamental data class of the ``sunraster`` package is `~sunraster.SpectrogramCube`.
 It is designed to handle data representing one or more spectrograms of solar regions.
 `~sunraster.SpectrogramCube` stores its data as an array whose transformations between pixel and real world coordinates are described by a single ``astropy`` WCS (World Coordinate System) object.
-(For data that is described by multiple WCS objects, see the :ref:`sequence` :ref:`raster_sequence` sections below.)
+(For data that is described by multiple WCS objects, see the :ref:`sequence` :ref:`raster_sequence` sections.)
 
 `~sunraster.SpectrogramCube` is subclassed from `ndcube.NDCube` and so inherits the same attributes and methods.
 It also inherits much of the same slicing, coordinate transformation and visualization API and provides some additional convenience properties relevant to spectrogram data.
 
 Initialization
 ^^^^^^^^^^^^^^
+
 To initialize a basic `~sunraster.SpectrogramCube` object, all you need is an array containing the data and an `astropy.wcs.WCS` object describing the transformation from array-element (or pixel) space to real world coordinates.
 
-Let's create a 3D `numpy.ndarray` representing a series of spectrograms.
-Let the array shape be (3, 4, 5) and let every value be 1.
-Let the first axis represent time (and/or space if the spectrogram slit is rastering across a solar region).
-
+Let's create a 3D `numpy.ndarray` representing a series of spectrograms, it will have a shape of (3, 4, 5) and let every value be 1.
+The first axis will represent time (and/or space if the spectrogram slit is rastering across a solar region).
 Let the second represent the position along a dispersing slit, and the third represent the spectral axis.
 Although a WCS object can often be easily created by feeding a FITS header into the `astropy.wcs.WCS` class, we will create one manually here to be explicit.
 Note that due to (confusing) convention, the order of the axes in the WCS object is reversed relative to the data array.
@@ -50,12 +50,13 @@ Now that we have a data array and a corresponding WCS object, we can create a `~
 
 The data array is stored in the ``my_spectrograms.data`` attribute while the WCS object is stored in the ``my_spectrograms.wcs`` attribute.
 However, when manipulating/slicing the data is it better to slice the object as a whole as all relevant data and metadata is sliced simultaneously.
-(See section on :ref:`spectrogram_slicing`.)
+See section on :ref:`spectrogram_slicing`.
 
 Thanks to the fact that `~sunraster.SpectrogramCube` is subclassed from `~ndcube.NDCube`, you can also supply additional data to the instance.
-These include: metadata (``dict`` or dict-like) located in `sunraster.SpectrogramCube.meta`; a data mask (boolean ``numpy.ndarray``) located in ``sunraster.SpectrogramCube.mask`` for marking reliable and unreliable pixels; a unit (``astropy.units.Unit`` or unit `str`) located at ``sunraster.SpectrogramCube.unit``; and an uncertainty array (`numpy.ndarray`) located in `~sunraster.SpectrogramCube.uncertainty` describing the uncertainty of each data array value.
+These include: metadata (`dict` or dict-like) located in `sunraster.SpectrogramCube.meta`; a data mask (boolean `numpy.ndarray`) located in ``sunraster.SpectrogramCube.mask`` for marking reliable and unreliable pixels; a unit (``astropy.units.Unit`` or unit `str`) located at ``sunraster.SpectrogramCube.unit``; and an uncertainty array (`numpy.ndarray`) located in `~sunraster.SpectrogramCube.uncertainty` describing the uncertainty of each data array value.
 It is advised that you use one of astropy's uncertainty classes to describe your uncertainty.
-However, this is not required by `~sunraster.SpectrogramCube`. A simple array will still work but will cause a warning to be raised.
+However, this is not required by `~sunraster.SpectrogramCube`.
+A simple array will still work but will cause a warning to be raised.
 Here is an example of how to instantiate these attributes.
 
 .. code-block:: python
@@ -77,7 +78,7 @@ WCS Coordinates
 ***************
 
 The primary location for coordinate information in a `~sunraster.SpectrogramCube` instance is its WCS.
-The coordinate values for each axis and pixel can be accessed via the `~sunraster.SpectrogramCube.axis_world_coords`, `~sunraster.SpectrogramCube.pixel_to_world` and `~sunraster.SpectrogramCube.world_to_pixel` methods inherited from ``ndcube.NDCube``.
+The coordinate values for each axis and pixel can be accessed via the `~sunraster.SpectrogramCube.axis_world_coords`, `~sunraster.SpectrogramCube.pixel_to_world` and `~sunraster.SpectrogramCube.world_to_pixel` methods inherited from `ndcube.NDCube`.
 To learn how to use these coordinate transformation methods, see the `NDCube coordinate transformations documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#coordinate-transformations>`__.
 
 Extra Coordinates
@@ -86,10 +87,10 @@ Extra Coordinates
 `~sunraster.SpectrogramCube` can also store array-based real world coordinates that aren't described by the WCS object.
 These can be accessed via the ``sunraster.SpectrogramCube.extra_coords`` property, also inherited from `~ndcube.NDCube`.
 `~sunraster.SpectrogramCube.extra_coords` is particularly useful if the temporal axis is convolved with space, as is the case for raster scans.
-Therefore, if the WCS object only supplies (lat, lon) for the x-axis, the stimestamp of each exposure can be attached separately, e.g. as an ``astropy.time.Time`` object. `~sunraster.SpectrogramCube.extra_coords` is not restricted to timestamps.
+Therefore, if the WCS object only supplies (lat, lon) for the x-axis, the timestamp of each exposure can be attached separately, e.g. as an ``astropy.time.Time`` object. `~sunraster.SpectrogramCube.extra_coords` is not restricted to timestamps.
 The user can supply any additional coordinate as an ``astropy.units.Quantity`` or other array-like.
 Metadata that has a relationship with an axis but isn't strictly a coordinate can also be stored, e.g. the exposure time of each image.
-(See :ref:`cube_exposure_time_correction` for more on `~sunraster.SpectrogramCube`'s handling of exposure times.)
+See :ref:`cube_exposure_time_correction` for more on `~sunraster.SpectrogramCube` handling of exposure times.
 To learn how to attach extra coordinates to a `~sunraster.SpectrogramCube` instance and how to access them once attached, see the `NDCube extra coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#extra-coordinates>`__.
 
 Coordinate Properties
@@ -121,7 +122,7 @@ The `~sunraster.SpectrogramCube.dimensions` and `~sunraster.SpectrogramCube.arra
     ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
     ('em.wl',)]
 
-`~sunraster.SpectrogramCube.dimensions` returns a `~astropy.units.Quantity` giving the length of each dimension in pixel units while `~sunraster.SpectrogramCube.array_axis_physical_types` returns an list of tuples where each tuple contains the types of physical properties sassociated with each array axis.
+`~sunraster.SpectrogramCube.dimensions` returns a `~astropy.units.Quantity` giving the length of each dimension in pixel units while `~sunraster.SpectrogramCube.array_axis_physical_types` returns an list of tuples where each tuple contains the types of physical properties associated with each array axis.
 Since more than one physical type be associated with an array axis because they are dependent, e.g. latitude/longitude, or because of the rastering nature of the instrument, e.g. latitude/longitude and time, the length of each tuple can be greater than one.
 The axis names are in accordance with the International Virtual Observatory Alliance (IVOA) `UCD1+ controlled vocabulary <http://www.ivoa.net/documents/REC/UCD/UCDlist-20070402.html>`__.
 
