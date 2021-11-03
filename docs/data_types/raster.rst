@@ -49,6 +49,8 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> mask = np.zeros(data.shape, dtype=bool)
     >>> # Define some RasterSequence metadata.
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
+    >>> scan_meta = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    ...                  data_shape=data.shape)
     >>> seq_meta = {"description": "This is a RasterSequence.", "exposure time" : exposure_times}
 
     >>> # Define uncertainties for data, 2*data and data/2.
@@ -62,25 +64,25 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     ...                     for i in range(axis_length)], format='datetime', scale='utc')
     >>> extra_coords_input0 = [("time", 0, timestamps0)]
     >>> raster0 = SpectrogramCube(data, input_wcs, uncertainty=uncertainties, mask=mask,
-    ...                           meta=seq_meta, unit=u.ct)
-    >>> [raster0.extra_coords.add(*extra) for extra in extra_coords_input0]
-    [None]
+    ...                           meta=scan_meta, unit=u.ct)
+    >>> for extra in extra_coords_input0:
+    ...     raster0.extra_coords.add(*extra)
     >>> # Create 2nd raster
     >>> timestamps1 = Time([timestamps0[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
     >>> extra_coords_input1 = [("time", 0, timestamps1)]
     >>> raster1 = SpectrogramCube(data*2, input_wcs, uncertainty=uncertainties, mask=mask,
-    ...                  meta=seq_meta, unit=u.ct)
-    >>> [raster1.extra_coords.add(*extra) for extra in extra_coords_input1]
-    [None]
+    ...                  meta=scan_meta, unit=u.ct)
+    >>> for extra in extra_coords_input1:
+    ...     raster1.extra_coords.add(*extra)
     >>> # Create 3rd raster
     >>> timestamps2 = Time([timestamps1[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
     >>> extra_coords_input2 = [("time", 0, timestamps2)]
     >>> raster2 = SpectrogramCube(data*0.5, input_wcs, uncertainty=uncertainties, mask=mask,
-    ...                  meta=seq_meta, unit=u.ct)
-    >>> [raster2.extra_coords.add(*extra) for extra in extra_coords_input2]
-    [None]
+    ...                  meta=scan_meta, unit=u.ct)
+    >>> for extra in extra_coords_input2:
+    ...     raster2.extra_coords.add(*extra)
 
 The last thing we need to do before creating our `~sunraster.RasterSequence` is to identity the slit-step of the `~sunraster.SpectrogramCube`.
 In the above ``raster`` instances both the 0th and 1st axes correspond to spatial dimensions.
@@ -152,10 +154,8 @@ To see examples of how to use this property, see the `NDCubeSequence Common Axis
 Raster axis extra coordinates
 *****************************
 
-Analogous to `~sunraster.RasterSequence.sns_axis_coords`, it is also possible to access the extra coordinates that are not assigned to any `~sunraster.SpectrogramCube` data axis via the `~sunraster.RasterSequence.raster_axis_coords` property.
-Whereas `~sunraster.RasterSequence.sns_axis_coords` returns all the extra coords with an ``'axis'`` value equal to the time/slit step axis, `~sunraster.RasterSequence.scan_axis_extra_coords` returns all extra coords with an ``'axis'`` value of ``None``.
-Another way of thinking about an ``extra_coord`` with and axis value of ``None``, is that these coordinates correspond to the raster scan number axis.
-Hence the property's name.
+Analogous to `~sunraster.RasterSequence.sns_axis_coords`, it is also possible to access the coordinates that are not assigned to any `~sunraster.SpectrogramCube` data axis via the `~sunraster.RasterSequence.raster_axis_coords` property.
+This property is equivalent to `ndcube.NDCubeSequence.sequence_axis_coords and can be used to return coordinates along the repeat raster scan axis.
 
 Slicing
 ^^^^^^^

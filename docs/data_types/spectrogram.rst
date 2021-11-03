@@ -67,9 +67,7 @@ Here is an example of how to instantiate these attributes.
     >>> uncertainties = StdDevUncertainty(np.sqrt(data))
     >>> # Create a mask where all pixels are unmasked, i.e. all mask values are False.
     >>> mask = np.zeros_like(data, dtype=bool)
-    >>> meta = {"Description": "This is example SpectrogramCube metadata."}
-    >>> my_spectrograms = SpectrogramCube(data, input_wcs, uncertainty=uncertainties,
-    ...                                   mask=mask, meta=meta)
+    >>> my_spectrograms = SpectrogramCube(data, input_wcs, uncertainty=uncertainties, mask=mask)
 
 Coordinates
 ^^^^^^^^^^^
@@ -88,24 +86,21 @@ Extra Coordinates
 These can be accessed via the ``sunraster.SpectrogramCube.extra_coords`` property, also inherited from `~ndcube.NDCube`.
 `~sunraster.SpectrogramCube.extra_coords` is particularly useful if the temporal axis is convolved with space, as is the case for raster scans.
 Therefore, if the WCS object only supplies (lat, lon) for the x-axis, the timestamp of each exposure can be attached separately, e.g. as an ``astropy.time.Time`` object. `~sunraster.SpectrogramCube.extra_coords` is not restricted to timestamps.
-The user can supply any additional coordinate as an ``astropy.units.Quantity`` or other array-like.
-Metadata that has a relationship with an axis but isn't strictly a coordinate can also be stored, e.g. the exposure time of each image.
-See :ref:`cube_exposure_time_correction` for more on `~sunraster.SpectrogramCube` handling of exposure times.
 To learn how to attach extra coordinates to a `~sunraster.SpectrogramCube` instance and how to access them once attached, see the `NDCube extra coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#extra-coordinates>`__.
 
 Coordinate Properties
 *********************
 
-For convenience, `~sunraster.SpectrogramCube` provides shortcuts to the four primary coordinates that define spectrogram data.
-These are `sunraster.SpectrogramCube.lon`, `sunraster.SpectrogramCube.lat`, `sunraster.SpectrogramCube.spectral`, and `sunraster.SpectrogramCube.time` which return the relevant coordinate values of each pixel.
-Note that both `sunraster.SpectrogramCube.lon` and `sunraster.SpectrogramCube.lat` return 2-D data because longitude and latitude are couple dimensions.
+For convenience, `~sunraster.SpectrogramCube` provides shortcuts to the three primary coordinate types that define spectrogram data.
+These are `sunraster.SpectrogramCube.celestial`, `sunraster.SpectrogramCube.spectral`, and `sunraster.SpectrogramCube.time` which return the relevant coordinates of each pixel.
+Note that `sunraster.SpectrogramCube.celestial` returns a `~astropy.coordinates.SkyCoord` object which contains the values of the two spatial dimensions, i.e. longitude and latitude.
 These properties inspect the WCS and extra coords objects and locate where and how the relevant coordinate information is stored.
 This is possible only if the coordinate name is supported by ``sunraster``.
 To see these supported names, see ``sunraster.SpectrogramCube.SUPPORTED_LONGITUDE_NAMES``, ``sunraster.spectrogram.SUPPORTED_LATITUDE_NAMES``, ``sunraster.spectrogram.SUPPORTED_SPECTRAL_NAMES``, and ``sunraster.spectrogram.SUPPORTED_TIME_NAMES``.
 If the coordinate name cannot be found, these properties will raise an error.
 If you think additional coordinate names should be supported, please let us know by `raising an issue on our GitHub repo. <https://github.com/sunpy/sunraster/issues>`__.
 
-In addition to the four primary coordinates, there is also a convenience for the exposure time, ``sunraster.SpectrogramCube.exposure_time``.
+In addition to the three primary coordinate types, there is also a convenience for the exposure time, ``sunraster.SpectrogramCube.exposure_time``.
 The supported exposure time coordinate names can be found under ``sunraster.spectrogram.SUPPORTED_EXPOSURE_NAMES``.
 
 Dimensions
@@ -141,7 +136,7 @@ See the `NDCube slicing documentation <https://docs.sunpy.org/projects/ndcube/en
 Plotting
 ^^^^^^^^
 
-To quickly and easily visualize spectrograms, `~sunraster.SpectrogramCube` inherits a simple-to-use, syet powerful plotting method from `~ndcube.NDCube`.
+To quickly and easily visualize spectrograms, `~sunraster.SpectrogramCube` inherits a simple-to-use, yet powerful plotting method from `~ndcube.NDCube`.
 It is intended to be a useful quicklook tool and not a replacement for high quality plots or animations, e.g. for publications.
 The plot method can be called very simply.
 
@@ -163,7 +158,7 @@ This is important both for converting between instrumental and physical units, e
 
 `~sunraster.SpectrogramCube` provides a simple API for performing this correction: `~sunraster.SpectrogramCube.apply_exposure_time_correction`.
 It requires that the exposure time is stored in the ``.meta`` attribute of the `~sunraster.SpectromCube` as a `~astropy.units.Quantity`.
-The ``.meta`` attribute must be an instance of `~sunraster.extern.meta.Meta`.
+The ``.meta`` attribute must be an instance of `~sunraster.meta.Meta`.
 Let's recreate our spectrogram object again, but this time with exposure times of 0.5 seconds stored as an extra coordinate and a data unit of counts.
 
 .. code-block:: python
