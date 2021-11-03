@@ -48,6 +48,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> # Define a mask with all pixel unmasked, i.e. mask values = False
     >>> mask = np.zeros(data.shape, dtype=bool)
     >>> # Define some RasterSequence metadata.
+    >>> exposure_times = np.ones(data.shape[0])/2 * u.s
     >>> seq_meta = {"description": "This is a RasterSequence.", "exposure time" : exposure_times}
 
     >>> # Define uncertainties for data, 2*data and data/2.
@@ -55,18 +56,15 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> uncertainties2 = StdDevUncertainty(np.sqrt(data * 2))
     >>> uncertainties05 = StdDevUncertainty(np.sqrt(data * 0.5))
 
-    >>> # Define exposure times.
-    >>> exposure_times = np.ones(data.shape[0])/2 * u.s
-    >>> axis_length = int(data.shape[0])
-
     >>> # Create 1st raster
+    >>> axis_length = int(data.shape[0])
     >>> timestamps0 = Time([datetime(2000, 1, 1) + timedelta(minutes=i)
     ...                     for i in range(axis_length)], format='datetime', scale='utc')
     >>> extra_coords_input0 = [("time", 0, timestamps0)]
     >>> raster0 = SpectrogramCube(data, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                           meta=seq_meta, unit=u.ct)
     >>> [raster0.extra_coords.add(*extra) for extra in extra_coords_input0]
-    [None, None]
+    [None]
     >>> # Create 2nd raster
     >>> timestamps1 = Time([timestamps0[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
@@ -74,7 +72,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> raster1 = SpectrogramCube(data*2, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                  meta=seq_meta, unit=u.ct)
     >>> [raster1.extra_coords.add(*extra) for extra in extra_coords_input1]
-    [None, None]
+    [None]
     >>> # Create 3rd raster
     >>> timestamps2 = Time([timestamps1[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
@@ -82,7 +80,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> raster2 = SpectrogramCube(data*0.5, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                  meta=seq_meta, unit=u.ct)
     >>> [raster2.extra_coords.add(*extra) for extra in extra_coords_input2]
-    [None, None]
+    [None]
 
 The last thing we need to do before creating our `~sunraster.RasterSequence` is to identity the slit-step of the `~sunraster.SpectrogramCube`.
 In the above ``raster`` instances both the 0th and 1st axes correspond to spatial dimensions.
@@ -102,10 +100,10 @@ Dimensions
 .. code-block:: python
 
     >>> my_rasters.raster_array_axis_physical_types
-    [('meta.obs.sequence',), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time', 'custom:CUSTOM'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
+    [('meta.obs.sequence',), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
 
     >>> my_rasters.sns_array_axis_physical_types
-    [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time', 'custom:CUSTOM'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
+    [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
 
 In the raster case, ``'meta.obs.sequence'`` represents the raster scan number axis.
 For those familiar with `~ndcube.NDCubeSequence`, these are simply aliases for the `~ndcube.NDCubeSequence.array_axis_physical_axis_types` and `~ndcube.NDCubeSequence.cube_like_world_axis_physical_axis_types`, respectively.

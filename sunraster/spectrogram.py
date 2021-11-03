@@ -433,7 +433,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
-            exposure_time_s = exposure_time_s[tuple(item)]
+            # WCS axis and data axis are inversed, so a transpose fixes this?
+            exposure_time_s = exposure_time_s[tuple(item)].T
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data, new_uncertainty, new_unit = _uncalculate_exposure_time_correction(
