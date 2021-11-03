@@ -164,7 +164,7 @@ Let's recreate our spectrogram object again, but this time with exposure times o
 .. code-block:: python
 
     >>> import astropy.units as u
-    >>> from sunraster.extern.meta import Meta
+    >>> from sunraster.meta import Meta
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
     >>> # Create a metadata instance to hold the exposure times.
     >>> # We must also assign the exposure time to the time axis, in this case, the 0th array axis.
@@ -270,6 +270,8 @@ Let's create some using what we learned in the :ref:`spectrogramcube` section an
     >>> # Define exposure times.
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
     >>> axis_length = int(data.shape[0])
+    >>> meta = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    ...             data_shape=data.shape)
 
     >>> # Create 1st cube of spectrograms.
     >>> timestamps0 = Time([datetime(2000, 1, 1) + timedelta(minutes=i)
@@ -277,24 +279,24 @@ Let's create some using what we learned in the :ref:`spectrogramcube` section an
     >>> extra_coords_input0 = [("time", 0, timestamps0), ("exposure time", 0, exposure_times)]
     >>> spectrograms0 = SpectrogramCube(data, input_wcs, uncertainty=uncertainties, mask=mask,
     ...                                 meta=meta, unit=u.ct)
-    >>> [spectrograms0.extra_coords.add(*extra) for extra in extra_coords_input0]
-    [None, None]
+    >>> for extra in extra_coords_input0:
+    ...     spectrograms0.extra_coords.add(*extra)
     >>> # Create 2nd cube of spectrograms.
     >>> timestamps1 = Time([timestamps0[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
     >>> extra_coords_input1 = [("time", 0, timestamps1), ("exposure time", 0, exposure_times)]
     >>> spectrograms1 = SpectrogramCube(data*2, input_wcs, uncertainty=uncertainties2, mask=mask,
     ...                                 meta=meta, unit=u.ct)
-    >>> [spectrograms1.extra_coords.add(*extra) for extra in extra_coords_input1]
-    [None, None]
+    >>> for extra in extra_coords_input1:
+    ...     spectrograms1.extra_coords.add(*extra)
     >>> # Create 3rd cube of spectrograms.
     >>> timestamps2 = Time([timestamps1[-1].to_datetime() + timedelta(minutes=i)
     ...                     for i in range(1, axis_length+1)], format='datetime', scale='utc')
     >>> extra_coords_input2 = [("time", 0, timestamps2), ("exposure time", 0, exposure_times)]
     >>> spectrograms2 = SpectrogramCube(data*0.5, input_wcs, uncertainty=uncertainties05, mask=mask,
     ...                                 meta=meta, unit=u.ct)
-    >>> [spectrograms2.extra_coords.add(*extra) for extra in extra_coords_input2]
-    [None, None]
+    >>> for extra in extra_coords_input2:
+    ...     spectrograms2.extra_coords.add(*extra)
 
 If we choose, we can define some sequence-level metadata in addition to any metadata attached to the individual raster scans:
 
@@ -338,8 +340,8 @@ Coordinates
 Coordinate Properties
 *********************
 
-Just like `~sunraster.SpectrogramCube`, `~sunraster.SpectrogramSequence` provides convenience properties to retrieve the real world coordinate values for each pixel along each axis, namely `sunraster.SpectrogramSequence.lon`, `sunraster.SpectrogramSequence.lat`, `sunraster.SpectrogramSequence.spectral`, `sunraster.SpectrogramSequence.time` and `sunraster.SpectrogramSequence.exposure_time`.
-Since there is no guarantee that `~sunraster.SpectrogramCube`'s WCS transformations are consistent between `~sunraster.SpectrogramCube` s, `sunraster.SpectrogramCube.lon` and `sunraster.SpectrogramCube.lat` return 3-D `~astropy.units.Quantity` instances and `sunraster.SpectrogramCube.spectral` returns a 2-D `~astropy.units.Quantity` where the additional dimension represent the coordinates for different `~sunraster.SpectrogramCube` instances.
+Just like `~sunraster.SpectrogramCube`, `~sunraster.SpectrogramSequence` provides convenience properties to retrieve the real world coordinate values for each pixel along each axis, namely `sunraster.SpectrogramSequence.celestial`, `sunraster.SpectrogramSequence.spectral`, `sunraster.SpectrogramSequence.time` and `sunraster.SpectrogramSequence.exposure_time`.
+Since there is no guarantee that `~sunraster.SpectrogramCube`'s WCS transformations are consistent between `~sunraster.SpectrogramCube` s, `sunraster.SpectrogramCube.celestial` return 3-D `~astropy.coordinates.SkyCoord` instances and `sunraster.SpectrogramCube.spectral` returns a 2-D `~astropy.units.Quantity` where the additional dimension represent the coordinates for different `~sunraster.SpectrogramCube` instances.
 
 .. _sequence_slicing:
 
@@ -347,6 +349,7 @@ Exposure Time Correction
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Analogous to `~sunraster.SpectrogramCube`, `~sunraster.SpectrogramSequence` also provides a `~sunraster.SpectrogramSequence.apply_exposure_time_correction` method. This is simply a wrapper around the `~sunraster.SpectrogramCube` version that saves users from apply or removing the exposure time correction to each `~sunraster.SpectrogramCube` manually. To remind yourself how that method works, see the `~sunraster.SpectrogramCube` :ref:`cube_exposure_time_correction` section.
+Note that for this method to work, the exposure time values must be stored in the ``.meta`` attribute of the relevant constituent `~sunraster.SpectrogramCube` objects.
 
 Slicing
 ^^^^^^^
