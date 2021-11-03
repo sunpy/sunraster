@@ -37,6 +37,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> from datetime import datetime, timedelta
     >>> from astropy.time import Time
     >>> from sunraster import SpectrogramCube
+    >>> from sunraster.meta import Meta
 
     >>> # Define primary data array and WCS object.
     >>> data = np.ones((3, 4, 5))
