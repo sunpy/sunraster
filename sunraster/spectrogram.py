@@ -383,8 +383,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
 
     @property
     def exposure_time(self):
-        if not self._exposure_time_name or not hasattr(self, "_exposure_time_name_loc"):
-            self._exposure_time_name, self._exposure_time_name_loc = _find_axis_name(
+        if not self._exposure_time_name or not hasattr(self, "_exposure_time_loc"):
+            self._exposure_time_name, self._exposure_time_loc = _find_axis_name(
                 SUPPORTED_EXPOSURE_NAMES,
                 self.wcs.world_axis_physical_types,
                 self.extra_coords,
@@ -392,7 +392,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             )
             if not self._exposure_time_name:
                 raise ValueError(f"Exposure time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_EXPOSURE_NAMES}")
-        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_name_loc)
+        return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
     def celestial(self):
@@ -429,12 +429,12 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # If exposure time is not scalar, change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         if not np.isscalar(exposure_time_s):
-            exposure_axis = self._get_axis_coord_index(self._spectral_name, self._spectral_loc)
+            exposure_axis, = self._get_axis_coord_index(self._exposure_time_name, self._exposure_time_loc)
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
             # WCS axis and data axis are inversed, so a transpose fixes this?
-            exposure_time_s = exposure_time_s[tuple(item)].T
+            exposure_time_s = exposure_time_s[tuple(item)]
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:
             new_data, new_uncertainty, new_unit = _uncalculate_exposure_time_correction(
@@ -471,6 +471,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             return coord_array_axes.tolist()[0]
         elif coord_loc == "extra_coords":
             return self.extra_coords[axis_name].mapping[0]
+        elif coord_loc == "meta":
+            return self.meta.axes[axis_name]
         else:
             raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
@@ -495,9 +497,9 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords, me
         The names for the axis supported by `SpectrogramCube`.
     world_axis_physical_types: 1D `numpy.ndarray`
         Output of SpectrogramCube.world_axis_physical_types converted to an array.
-    extra_coords: `dict` or `None`
+    extra_coords: `ndcube.ExtraCoords` or `None`
         Output of SpectrogramCube.extra_coords
-    meta: `dict` or `None`
+    meta: Meta or `None`
         Output of SpectrogramCube.meta
 
     Returns

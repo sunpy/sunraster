@@ -162,23 +162,25 @@ An important step in analyzing any form of photon-based observations is normaliz
 This is important both for converting between instrumental and physical units, e.g. DN to energy, and comparing spectral features between exposure, e.g. line intensity.
 
 `~sunraster.SpectrogramCube` provides a simple API for performing this correction: `~sunraster.SpectrogramCube.apply_exposure_time_correction`.
-It requires that the exposure time is stored the WCS or as a `~astropy.units.Quantity` in the `~sunraster.SpectrogramCube.extra_coords` property.
+It requires that the exposure time is stored in the ``.meta`` attribute of the `~sunraster.SpectromCube` as a `~astropy.units.Quantity`.
+The ``.meta`` attribute must be an instance of `~sunraster.extern.meta.Meta`.
 Let's recreate our spectrogram object again, but this time with exposure times of 0.5 seconds stored as an extra coordinate and a data unit of counts.
 
 .. code-block:: python
 
     >>> import astropy.units as u
+    >>> from sunraster.extern.meta import Meta
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
-    >>> extra_coords_input = [("exposure time", 0, exposure_times)]
+    >>> # Create a metadata instance to hold the exposure times.
+    >>> # We must also assign the exposure time to the time axis, in this case, the 0th array axis.
+    >>> metadata = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    ...                 data_shape=data.shape)
     >>> my_spectrograms = SpectrogramCube(data, input_wcs, uncertainty=uncertainties,
-    ...                                   mask=mask, meta=meta, unit=u.ct)
-    >>> [my_spectrograms.extra_coords.add(*extra) for extra in extra_coords_input]
-    [None]
+    ...                                   mask=mask, meta=metadata, unit=u.ct)
 
-Note that the API for supplying extra coordinates is an iterable of tuples of the form (``str``, ``int``, `~astropy.units.Quantity` or array-like).
-The 0th entry gives the name of the coordinate, the 1st entry gives the data axis to which the extra coordinate corresponds, and the 2nd entry gives the value of that coordinate at each pixel along the axis.
-Also note that the coordinate array must be the same length as its corresponding data axis.
-See the `NDCube extra coordinates documentation <https://docs.sunpy.org/projects/ndcube/en/stable/ndcube.html#extra-coordinates>`__ for more.
+Note that the API for supplying metadata allows us to supply an additional `dict` designating which axes the metadata corresponds.
+We must also supply the shape of the data array with which the metadata is associated to enable it to be preserved through slicing operations.
+Also note that the metadata array must be the same shape as its corresponding data axes.
 
 Applying the exposure time correction is now simple.
 

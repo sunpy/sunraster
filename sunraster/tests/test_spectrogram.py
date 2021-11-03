@@ -7,6 +7,7 @@ from ndcube.tests.helpers import assert_cubes_equal
 
 import sunraster.spectrogram
 from sunraster import SpectrogramCube
+from sunraster.extern.meta import Meta
 
 # Define a sample wcs object
 H0 = {
@@ -74,13 +75,15 @@ EXTRA_COORDS1 = [
         (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
 ]
+meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0},
+                      data_shape=SOURCE_DATA_DN.shape)
 
 spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN,
     wcs=WCS0,
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_per_s0 = SpectrogramCube(
@@ -88,7 +91,7 @@ spectrogram_DN_per_s0 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_per_s_per_s0 = SpectrogramCube(
@@ -96,7 +99,7 @@ spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct / u.s / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_per_s_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_s0 = SpectrogramCube(
@@ -104,7 +107,7 @@ spectrogram_DN_s0 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct * u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN1 = SpectrogramCube(
@@ -112,7 +115,7 @@ spectrogram_DN1 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN1.extra_coords.add(*EXTRA_COORDS1[0])
 spectrogram_DN_per_s1 = SpectrogramCube(
@@ -120,7 +123,7 @@ spectrogram_DN_per_s1 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
@@ -128,7 +131,7 @@ spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct / u.s / u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
 spectrogram_DN_s1 = SpectrogramCube(
@@ -136,7 +139,7 @@ spectrogram_DN_s1 = SpectrogramCube(
     wcs=WCS0,
     unit=u.ct * u.s,
     uncertainty=SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_DN_s1.extra_coords.add(*EXTRA_COORDS1[0])
 spectrogram_NO_COORDS = SpectrogramCube(SOURCE_DATA_DN, WCS_NO_COORDS)
@@ -147,7 +150,7 @@ spectrogram_instrument_axes = SpectrogramCube(
     uncertainty=SOURCE_UNCERTAINTY_DN,
     mask=MASK,
     instrument_axes=("a", "b", "c"),
-    meta={"exposure time": EXPOSURE_TIME},
+    meta=meta_exposure0
 )
 spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[0])
 
