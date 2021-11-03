@@ -318,7 +318,7 @@ def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
     filenames = [spice_sns_filename] * 2
     result = read_spice_l2_fits(filenames)
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
-    assert set(result.aligned_axes.values()) == {(0, 2, 2)}
+    assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
     assert all(window.dimensions[0].value == len(filenames) for window in result.values())
     assert all(isinstance(window, SpectrogramSequence) for window in result.values())
