@@ -429,7 +429,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         # If exposure time is not scalar, change array's shape so that
         # it can be broadcast with data and uncertainty arrays.
         if not np.isscalar(exposure_time_s):
-            exposure_axis, = self._get_axis_coord_index(self._exposure_time_name, self._exposure_time_loc)
+            (exposure_axis,) = self._get_axis_coord_index(self._exposure_time_name, self._exposure_time_loc)
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)

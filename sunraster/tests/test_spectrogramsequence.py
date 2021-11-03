@@ -119,12 +119,12 @@ extra_coords21 = [
 meta_seq = {
     "a": 0,
 }
-meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0},
-                      data_shape=SOURCE_DATA_DN.shape)
+meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
 meta_exposure2 = Meta(
-    {"exposure time": u.Quantity(np.zeros(SOURCE_DATA_DN.shape[2]) + SINGLES_EXPOSURE_TIME,
-                                 unit=u.s)},
-    axes={"exposure time": 2}, data_shape=SOURCE_DATA_DN.shape)
+    {"exposure time": u.Quantity(np.zeros(SOURCE_DATA_DN.shape[2]) + SINGLES_EXPOSURE_TIME, unit=u.s)},
+    axes={"exposure time": 2},
+    data_shape=SOURCE_DATA_DN.shape,
+)
 
 # Define RasterSequences in various units.
 spectrogram_DN0 = SpectrogramCube(
@@ -148,21 +148,9 @@ sequence_DN0 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq,
 sequence_DN1 = RasterSequence([spectrogram_DN0, spectrogram_DN1], meta=meta_seq, common_axis=1)
 
 
-spectrogram_DN20 = SpectrogramCube(
-    SOURCE_DATA_DN,
-    wcs2,
-    u.ct,
-    SOURCE_UNCERTAINTY_DN,
-    meta=meta_exposure2
-)
+spectrogram_DN20 = SpectrogramCube(SOURCE_DATA_DN, wcs2, u.ct, SOURCE_UNCERTAINTY_DN, meta=meta_exposure2)
 spectrogram_DN20.extra_coords.add(*extra_coords20[0])
-spectrogram_DN21 = SpectrogramCube(
-    SOURCE_DATA_DN,
-    wcs2,
-    u.ct,
-    SOURCE_UNCERTAINTY_DN,
-    meta=meta_exposure2
-)
+spectrogram_DN21 = SpectrogramCube(SOURCE_DATA_DN, wcs2, u.ct, SOURCE_UNCERTAINTY_DN, meta=meta_exposure2)
 spectrogram_DN21.extra_coords.add(*extra_coords21[0])
 sequence_DN2 = RasterSequence([spectrogram_DN20, spectrogram_DN21], meta=meta_seq, common_axis=2)
 
@@ -171,7 +159,7 @@ spectrogram_DN_per_s0 = SpectrogramCube(
     WCS0,
     u.ct / u.s,
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_per_s1 = SpectrogramCube(
@@ -179,7 +167,7 @@ spectrogram_DN_per_s1 = SpectrogramCube(
     WCS0,
     u.ct / u.s,
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
 sequence_DN_per_s = RasterSequence([spectrogram_DN_per_s0, spectrogram_DN_per_s1], meta=meta_seq, common_axis=0)
@@ -188,7 +176,7 @@ spectrogram_DN_per_s_per_s0 = SpectrogramCube(
     WCS0,
     u.ct / u.s / u.s,
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_per_s_per_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_per_s_per_s1 = SpectrogramCube(
@@ -196,7 +184,7 @@ spectrogram_DN_per_s_per_s1 = SpectrogramCube(
     WCS0,
     u.ct / u.s / u.s,
     SOURCE_UNCERTAINTY_DN / SINGLES_EXPOSURE_TIME / SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_per_s_per_s1.extra_coords.add(*EXTRA_COORDS1[0])
 sequence_DN_per_s_per_s = RasterSequence(
@@ -209,7 +197,7 @@ spectrogram_DN_s0 = SpectrogramCube(
     WCS0,
     u.ct * u.s,
     SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_s0.extra_coords.add(*EXTRA_COORDS0[0])
 spectrogram_DN_s1 = SpectrogramCube(
@@ -217,25 +205,15 @@ spectrogram_DN_s1 = SpectrogramCube(
     WCS0,
     u.ct * u.s,
     SOURCE_UNCERTAINTY_DN * SINGLES_EXPOSURE_TIME,
-    meta=meta_exposure0
+    meta=meta_exposure0,
 )
 spectrogram_DN_s1.extra_coords.add(*EXTRA_COORDS1[0])
 sequence_DN_s = RasterSequence([spectrogram_DN_s0, spectrogram_DN_s1], meta=meta_seq, common_axis=0)
 
 # Define raster sequence with no spectral axes.
-raster_no_wave0 = SpectrogramCube(
-    SOURCE_DATA_DN[:, :, 0],
-    wcs_no_wave,
-    u.ct,
-    meta=meta_exposure0
-)
+raster_no_wave0 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, u.ct, meta=meta_exposure0)
 raster_no_wave0.extra_coords.add(*EXTRA_COORDS0[0])
-raster_no_wave1 = SpectrogramCube(
-    SOURCE_DATA_DN[:, :, 0],
-    wcs_no_wave,
-    u.ct,
-    meta=meta_exposure0
-)
+raster_no_wave1 = SpectrogramCube(SOURCE_DATA_DN[:, :, 0], wcs_no_wave, u.ct, meta=meta_exposure0)
 raster_no_wave1.extra_coords.add(*EXTRA_COORDS0[0])
 sequence_DN_no_wave = RasterSequence([raster_no_wave0, raster_no_wave1], 0)
 
