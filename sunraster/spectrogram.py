@@ -251,7 +251,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
         # TODO: Remove after ndcube 2.1
         if not isinstance(self.meta, Meta):
-            self.meta = Meta(self.meta, data_shape=(len(self.meta.keys()),))
+            self.meta = Meta(self.meta, data_shape=self.data.shape)
 
     def __str__(self):
         try:
@@ -433,7 +433,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             # Change array shape for broadcasting
             item = [np.newaxis] * self.data.ndim
             item[exposure_axis] = slice(None)
-            # WCS axis and data axis are inversed, so a transpose fixes this?
             exposure_time_s = exposure_time_s[tuple(item)]
         # Based on value on undo kwarg, apply or remove exposure time correction.
         if undo is True:

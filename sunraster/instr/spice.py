@@ -193,7 +193,7 @@ def _read_single_spice_l2_fits(
                 meta = SPICEMeta(
                     hdu.header,
                     comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
-                    data_shape=(len(list(hdu.header.keys())),),
+                    data_shape=hdu.data.shape
                 )
                 # Rename WCS time axis to time.
                 meta.update([("CTYPE4", "TIME")])
@@ -202,7 +202,7 @@ def _read_single_spice_l2_fits(
                 # Define WCS from new header
                 wcs = WCS(new_header)
                 # Define exposure times from metadata.
-                exp_times = u.Quantity(np.zeros(hdu.data.shape[-1]) + meta.get("XPOSURE"), 1)
+                exp_times = u.Quantity(np.zeros(hdu.data.shape[-1]) + meta.get("XPOSURE"), unit=u.s)
                 # Define data cube.
                 data = hdu.data
                 spectrogram = SpectrogramCube(
@@ -213,7 +213,7 @@ def _read_single_spice_l2_fits(
                     meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"),
                 )
-                spectrogram.meta["exposure time"] = exp_times
+                spectrogram.meta.add("exposure time", exp_times, None, 0)
                 window_name = meta.get("EXTNAME")
                 if output is None:
                     window_cubes.append((window_name, spectrogram))
