@@ -351,7 +351,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         except TypeError as err:
             if "unhashable type" not in err.args[0]:
                 raise err
-        except (KeyError, IndexError):
+        except KeyError:
             pass
         return result
 
