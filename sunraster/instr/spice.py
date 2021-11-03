@@ -112,8 +112,8 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
             aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
             aligned_axes = tuple(
-                i for i, phys_type in enumerate(first_sequence.array_axis_physical_types)
-                if phys_type != ("em.wl",))
+                i for i, phys_type in enumerate(first_sequence.array_axis_physical_types) if phys_type != ("em.wl",)
+            )
     else:
         aligned_axes = None
     return NDCollection(window_sequences, aligned_axes=aligned_axes)
