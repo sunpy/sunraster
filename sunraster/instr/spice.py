@@ -213,7 +213,7 @@ def _read_single_spice_l2_fits(
                     meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"),
                 )
-                spectrogram.meta.add("exposure time", exp_times, None, 0)
+                spectrogram.meta.add("exposure time", exp_times, None, 3)
                 window_name = meta.get("EXTNAME")
                 if output is None:
                     window_cubes.append((window_name, spectrogram))
