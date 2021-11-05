@@ -146,19 +146,6 @@ spectrogram_instrument_axes = SpectrogramCube(
 spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[0])
 
 
-def test_str():
-    assert str(spectrogram_instrument_axes)
-    assert str(spectrogram_NO_COORDS)
-    assert str(spectrogram_DN_s1)
-    assert str(spectrogram_DN_per_s_per_s1)
-    assert str(spectrogram_DN_per_s1)
-    assert str(spectrogram_DN1)
-    assert str(spectrogram_DN_s0)
-    assert str(spectrogram_DN_per_s_per_s0)
-    assert str(spectrogram_DN_per_s0)
-    assert str(spectrogram_DN0)
-
-
 def test_spectral_axis():
     assert all(spectrogram_DN0.spectral_axis == spectrogram_DN0.axis_world_coords("em.wl")[0])
 
