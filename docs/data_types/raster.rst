@@ -156,7 +156,7 @@ Raster axis extra coordinates
 *****************************
 
 Analogous to `~sunraster.RasterSequence.sns_axis_coords`, it is also possible to access the coordinates that are not assigned to any `~sunraster.SpectrogramCube` data axis via the `~sunraster.RasterSequence.raster_axis_coords` property.
-This property is equivalent to `ndcube.NDCubeSequence.sequence_axis_coords and can be used to return coordinates along the repeat raster scan axis.
+This property is equivalent to `ndcube.NDCubeSequence.sequence_axis_coords` and can be used to return coordinates along the repeat raster scan axis.
 
 Slicing
 ^^^^^^^
