@@ -265,15 +265,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 time_period = None
             else:
                 raise err
-        except TypeError as err:
-            # TODO: Fix issue with time axis and dt being a NaN.
-            # It errors on the isscaler call.
-            if "Unsupported operand type(s) for ufunc add: 'Time,Quantity'" in err.args[0]:
-                time_period = None
-            else:
-                raise err
-        except Exception as err:
-            raise Exception from err
         try:
             sc = self.celestial
             component_names = dict([(item, key) for key, item in sc.representation_component_names.items()])
