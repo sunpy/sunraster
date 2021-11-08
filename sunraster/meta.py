@@ -1,5 +1,7 @@
 import abc
 
+from sunraster.extern.meta import Meta
+
 __all__ = ["Meta", "RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
 
@@ -89,14 +91,3 @@ class SlitSpectrographMetaABC(RemoteSensorMetaABC):
         """
         Velocity of observatory in direction of source.
         """
-
-
-class Meta(dict):
-    def __init__(self, header, comments=None):
-        super().__init__(header)
-        self.original_header = header
-        if comments is None:
-            comments = {}
-        else:
-            comments = dict(comments)
-        self.comments = comments

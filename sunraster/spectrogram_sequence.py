@@ -36,14 +36,12 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     data_list: `list`
         List of `SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
-
     common_axis: `int` or `None` (optional)
         If the sequence axis is aligned with an axis of the component SpectrogramCube
         instances, e.g. Spectrogram cubes have a time dimension and are arranged within
         the sequence in chronological order, set this input to the axis number of the
         time axis within the cubes.
         Default=None implies there is no common axis.
-
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
     """
@@ -70,14 +68,6 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             return exposure_time
 
     @property
-    def lon(self):
-        return u.Quantity([raster.lon for raster in self.data])
-
-    @property
-    def lat(self):
-        return u.Quantity([raster.lat for raster in self.data])
-
-    @property
     def celestial(self):
         sc = SkyCoord([raster.celestial for raster in self.data])
         sc_shape = list(sc.shape)
@@ -91,7 +81,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         adjusts unit.
 
         Correction is only applied (undone) if the object's unit doesn't (does)
-        already include inverse time.  This can be overridden so that correction
+        already include inverse time. This can be overridden so that correction
         is applied (undone) regardless of unit by setting force=True.
 
         Parameters
@@ -100,21 +90,19 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             If False, exposure time correction is applied.
             If True, exposure time correction is removed.
             Default=False
-
         copy: `bool`
             If True a new instance with the converted data values is returned.
             If False, the current instance is overwritten.
             Default=False
-
         force: `bool`
             If not True, applies (undoes) exposure time correction only if unit
             doesn't (does) already include inverse time.
-            If True, correction is applied (undone) regardless of unit.  Unit is still
+            If True, correction is applied (undone) regardless of unit. Unit is still
             adjusted accordingly.
 
         Returns
         -------
-        result: `None` or `SpectrogramSequence`
+        `None` or `SpectrogramSequence`
             If copy=False, the original SpectrogramSequence is modified with the
             exposure time correction applied (undone).
             If copy=True, a new SpectrogramSequence is returned with the correction
@@ -136,21 +124,25 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
                     SUPPORTED_TIME_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._longitude_name, self.data[i]._longitude_loc,) = _find_axis_name(
                     SUPPORTED_LONGITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._latitude_name, self.data[i]._latitude_loc,) = _find_axis_name(
                     SUPPORTED_LATITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
                 (self.data[i]._spectral_name, self.data[i]._spectral_loc,) = _find_axis_name(
                     SUPPORTED_SPECTRAL_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
+                    cube.meta,
                 )
         data0 = self.data[0]
         if data0._time_name:
@@ -211,10 +203,8 @@ class RasterSequence(SpectrogramSequence):
     data_list: `list`
         List of `SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
-
     common_axis: `int`
         The axis of the SpectrogramCube instances corresponding to the slit step axis.
-
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
     """
@@ -225,30 +215,20 @@ class RasterSequence(SpectrogramSequence):
 
         # Determine axis indices of instrument axis types.
         self._raster_axis_name = RASTER_AXIS_NAME
-        self._SnS_axis_name = SNS_AXIS_NAME
+        self._sns_axis_name = SNS_AXIS_NAME
         self._slit_step_axis_name = SLIT_STEP_AXIS_NAME
         self._slit_axis_name = SLIT_AXIS_NAME
         self._spectral_axis_name = SPECTRAL_AXIS_NAME
         self._set_single_scan_instrument_axes_types()
 
     raster_dimensions = SpectrogramSequence.dimensions
-    SnS_dimensions = SpectrogramSequence.cube_like_dimensions
+    sns_dimensions = SpectrogramSequence.cube_like_dimensions
     raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
-    SnS_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
+    sns_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types
     raster_axis_coords = SpectrogramSequence.sequence_axis_coords
-    SnS_axis_coords = SpectrogramSequence.common_axis_coords
+    sns_axis_coords = SpectrogramSequence.common_axis_coords
     plot_as_raster = SpectrogramSequence.plot
-    plot_as_SnS = SpectrogramSequence.plot_as_cube
-
-    @property
-    def raster_axis_extra_coords(self):
-        warnings.warn("'.raster_axis_extra_coords is deprecated. Please use '.raster_axis_coords'.")
-        return self.raster_axis_coords
-
-    @property
-    def SnS_axis_extra_coords(self):
-        warnings.warn("'.SnS_axis_extra_coords is deprecated. Please use '.SnS_axis_coords'.")
-        return self.SnS_axis_coords
+    plot_as_sns = SpectrogramSequence.plot_as_cube
 
     def _set_single_scan_instrument_axes_types(self):
         if len(self.data) < 1:
@@ -266,6 +246,7 @@ class RasterSequence(SpectrogramSequence):
                         SUPPORTED_SPECTRAL_NAMES,
                         cube.wcs.world_axis_physical_types,
                         cube.extra_coords,
+                        cube.meta,
                     )
             spectral_name = self.data[0]._spectral_name
             array_axis_physical_types = self.data[0].array_axis_physical_types
@@ -274,20 +255,22 @@ class RasterSequence(SpectrogramSequence):
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = self._spectral_axis_name
             # Slit axis name.
-            w = self._single_scan_instrument_axes_types == None  # NOQA
+            w = self._single_scan_instrument_axes_types == None
             if w.sum() > 1:
-                raise ValueError("WCS, missing_axes, and/or common_axis not consistent.")
+                raise ValueError(
+                    "Unable to parse the WCS or common_axis to work out either or both the slit-step axis nor the spectral (aka the slit) axis."
+                )
             self._single_scan_instrument_axes_types[w] = self._slit_axis_name
             # Remove any instrument axes types whose axes are missing.
             self._single_scan_instrument_axes_types.astype(str)
 
     @property
-    def slice_as_SnS(self):
+    def slice_as_sns(self):
         """
         Method to slice instance as though data were taken as a sit-and-stare,
         i.e. slit position and raster number are combined into a single axis.
         """
-        return _SnSSlicer(self)
+        return _snsSlicer(self)
 
     @property
     def slice_as_raster(self):
@@ -317,9 +300,9 @@ class RasterSequence(SpectrogramSequence):
         return tuple([self._raster_axis_name] + list(self._single_scan_instrument_axes_types))
 
     @property
-    def SnS_instrument_axes_types(self):
+    def sns_instrument_axes_types(self):
         return tuple(
-            [self._SnS_axis_name]
+            [self._sns_axis_name]
             + list(
                 self._single_scan_instrument_axes_types[
                     self._single_scan_instrument_axes_types != self._slit_step_axis_name
@@ -328,10 +311,11 @@ class RasterSequence(SpectrogramSequence):
         )
 
 
-class _SnSSlicer:
+class _snsSlicer:
     """
     Helper class to make slicing in index_as_cube sliceable/indexable like a
     numpy array.
+
     Parameters
     ----------
     seq : `ndcube.NDCubeSequence`
@@ -367,7 +351,6 @@ def _slice_scan_axis_types(single_scan_axes_types, item):
     single_scan_axes_types: `numpy.ndarray`
         Value of RasterSequence._single_scan_axes_types,
         i.e. array of strings giving type of each axis.
-
     item: `int`, `slice` or `tuple` of `slice`s.
         The slicing item that get applied to the Raster instances within the RasterSequences.
 

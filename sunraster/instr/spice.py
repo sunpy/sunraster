@@ -6,13 +6,13 @@ import astropy.units as u
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 from astropy.wcs import WCS
-from ndcube import Meta, NDCollection
+from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
-from sunraster.meta import SlitSpectrographMetaABC
+from sunraster.meta import Meta, SlitSpectrographMetaABC
 
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
@@ -28,16 +28,13 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
     ----------
     filenames: iterable of `str`
         The name(s), including path, of the SPICE FITS file(s) to read.
-
     windows: iterable of `str`
         The names of the windows to read.
         All windows must of the same type: dumbbell and regular.
         Default=None implies all narrow-slit or dumbbell windows read out
-        depending on value of read_dumbells kwarg.  See below.
-
+        depending on value of read_dumbells kwarg. See below.
     memmap: `bool`
         If True, FITS file is reading with memory mapping.
-
     read_dumbbells: `bool`
         Defines whether dumbbell or regular windows are returned.
         If True, returns the dumbbell windows.
@@ -114,8 +111,9 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         if all([window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences]):
             aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
-            aligned_axes = np.where(np.asarray(first_sequence.world_axis_physical_types) != "em.wl")[0]
-            aligned_axes = tuple([int(i) for i in aligned_axes])
+            aligned_axes = tuple(
+                i for i, phys_type in enumerate(first_sequence.array_axis_physical_types) if phys_type != ("em.wl",)
+            )
     else:
         aligned_axes = None
     return NDCollection(window_sequences, aligned_axes=aligned_axes)
@@ -144,28 +142,23 @@ def _read_single_spice_l2_fits(
     ----------
     filename: `str`
         The name, including path, of the SPICE FITS file to read.
-
     windows: iterable of `str`
         The names of the windows to read.
         All windows must of the same type: dumbbell and regular.
         Default=None implies all narrow-slit or dumbbell windows read out
-        depending on value of read_dumbells kwarg.  See below.
-
+        depending on value of read_dumbells kwarg. See below.
     memmap: `bool`
         If True, FITS file is reading with memory mapping.
-
     read_dumbbells: `bool`
         Defines whether dumbbell or regular windows are returned.
         If True, returns the dumbbell windows.
         If False, returns regular windows.
         Default=False
         Ignored if windows kwarg is set.
-
     output: `dict` of `list`s (optional)
         A dictionary of lists with the same keys are the windows kwarg.
         The output for each window will be appended to the list corresponding
         the window's name.
-
     spice_id: `int` (optional)
         If not None, file must have a SPIOBSID equal to this value.
         Otherwise an error is raised
@@ -179,9 +172,7 @@ def _read_single_spice_l2_fits(
     dumbbell_label = "DUMBBELL"
     with fits.open(filename, memmap=memmap) as hdulist:
         if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
-            raise ValueError(
-                f"{INCORRECT_OBSID_MESSAGE}  " f"Expected {spice_id}.  Got {hdulist[0].header['SPIOBSID']}."
-            )
+            raise ValueError(f"{INCORRECT_OBSID_MESSAGE} Expected {spice_id}. Got {hdulist[0].header['SPIOBSID']}.")
         # Derive names of windows to be read.
         if windows is None:
             if read_dumbbells:
@@ -202,6 +193,7 @@ def _read_single_spice_l2_fits(
                 meta = SPICEMeta(
                     hdu.header,
                     comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
+                    data_shape=hdu.data.shape,
                 )
                 # Rename WCS time axis to time.
                 meta.update([("CTYPE4", "TIME")])
@@ -210,7 +202,7 @@ def _read_single_spice_l2_fits(
                 # Define WCS from new header
                 wcs = WCS(new_header)
                 # Define exposure times from metadata.
-                exp_times = TimeDelta(np.repeat(meta.get("XPOSURE"), hdu.data.shape[-1]), format="sec")
+                exp_times = u.Quantity(np.zeros(hdu.data.shape[-1]) + meta.get("XPOSURE"), unit=u.s)
                 # Define data cube.
                 data = hdu.data
                 spectrogram = SpectrogramCube(
@@ -218,10 +210,10 @@ def _read_single_spice_l2_fits(
                     wcs=wcs,
                     mask=np.isnan(data),
                     unit=u.adu,
-                    extra_coords=[("exposure time", -1, exp_times)],
                     meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"),
                 )
+                spectrogram.meta.add("exposure time", exp_times, None, 3)
                 window_name = meta.get("EXTNAME")
                 if output is None:
                     window_cubes.append((window_name, spectrogram))
