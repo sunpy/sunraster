@@ -211,6 +211,7 @@ def test_instrument_axes_slicing(item, expected):
     assert all(sliced_cube.instrument_axes == expected)
 
 
+@pytest.mark.skip
 def test_ndcube_components_after_slicing():
     """
     Tests all cube components are correctly propagated by slicing.
