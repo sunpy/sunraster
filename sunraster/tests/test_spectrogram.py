@@ -211,7 +211,6 @@ def test_instrument_axes_slicing(item, expected):
     assert all(sliced_cube.instrument_axes == expected)
 
 
-@pytest.mark.skip
 def test_ndcube_components_after_slicing():
     """
     Tests all cube components are correctly propagated by slicing.
@@ -237,7 +236,6 @@ def test_ndcube_components_after_slicing():
         instrument_axes=spectrogram_instrument_axes.instrument_axes,
     )
     expected_cube.extra_coords.add(*ec0)
-    # We had a bug in the repr
     assert str(sliced_cube)
     assert str(expected_cube)
     assert_cubes_equal(sliced_cube, expected_cube)
