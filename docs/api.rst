@@ -1,8 +1,10 @@
 .. _api:
 
-Reference/API
+API Reference
 =============
 
 .. automodapi:: sunraster
 
-.. automodapi:: sunraster.instr
+.. automodapi:: sunraster.instr.iris
+
+.. automodapi:: sunraster.instr.spice
