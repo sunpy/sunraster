@@ -1,4 +1,6 @@
+import tarfile
 import textwrap
+from pathlib import Path
 
 import astropy.units as u
 import numpy as np
@@ -34,6 +36,7 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
     filenames: `list` of `str` or `str`
         Filename of filenames to be read. They must all be associated with the same
         OBS number.
+        If you provide a tar file, it will be extracted at the same location.
     spectral_windows: iterable of `str` or `str`
         Spectral windows to extract from files. Default=None, implies, extract all
         spectral windows.
@@ -42,8 +45,15 @@ def read_iris_spectrograph_level2_fits(filenames, spectral_windows=None, uncerta
     -------
     result: `ndcube.NDCollection`
     """
-    if isinstance(filenames, str):
-        filenames = [filenames]
+    if isinstance(filenames, str) or (isinstance(filenames, list) and len(filenames) == 1):
+        if isinstance(filenames, list):
+            filenames = filenames[0]
+        if tarfile.is_tarfile(filenames):
+            with tarfile.open(filenames, "r") as tar:
+                tar.extractall(Path(filenames).parent)
+                filenames = [Path(filenames).parent / file for file in tar.getnames()]
+        else:
+            filenames = [filenames]
     for f, filename in enumerate(filenames):
         hdulist = fits.open(filename, memmap=memmap, do_not_scale_image_data=memmap)
         hdulist.verify("fix")
