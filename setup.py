@@ -7,9 +7,9 @@ from itertools import chain
 from setuptools import setup
 from setuptools.config import read_configuration
 
-################################################################################
-# Programmatically generate some extras combos.
-################################################################################
+##############################################
+# Programmatically generate some extras combos
+##############################################
 extras = read_configuration("setup.cfg")["options"]["extras_require"]
 
 # Dev is everything
