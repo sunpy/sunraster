@@ -1,1 +1,0 @@
-Added a sliceable ``Meta`` class for axis-associated metadata.
