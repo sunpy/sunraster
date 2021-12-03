@@ -196,14 +196,16 @@ class IRISSGMeta(Meta, metaclass=SlitSpectrographMetaABC):
             f"""
                 IRISMeta
                 --------
-                Observatory:\t\t{self.observatory}
-                Instrument:\t\t{self.instrument}
-                Detector:\t\t{self.detector}
-                Spectral Window:\t{self.spectral_window}
-                Spectral Range:\t\t{self.spectral_range}
-                Date:\t\t\t{self.date_reference}
-                OBS ID:\t\t\t{self.observing_mode_id}
-                OBS Description:\t{self.observing_mode_description}
+                Observatory:     {self.observatory}
+                Instrument:      {self.instrument}
+                Detector:        {self.detector}
+                Spectral Window: {self.spectral_window}
+                Spectral Range:  {self.spectral_range}
+                Spectral Band:   {self.spectral_band}
+                Dimensions:      {self.dimensions}
+                Date:            {self.date_reference}
+                OBS ID:          {self.observing_mode_id}
+                OBS Description: {self.observing_mode_description}
                 """
         )
 
