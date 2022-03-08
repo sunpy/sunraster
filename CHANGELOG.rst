@@ -1,3 +1,13 @@
+0.4.0 (2022-03-08)
+==================
+
+Breaking Changes
+----------------
+
+- Removed IRIS reader, you will want to install and use ``irispy-lmsal`` instead.
+- Removed support for Python 3.7. (`#198 <https://github.com/sunpy/sunraster/pull/198>`__)
+
+
 0.3.0 (2021-11-19)
 ==================
 
