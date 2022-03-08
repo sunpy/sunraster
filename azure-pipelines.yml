@@ -49,10 +49,6 @@ stages:
         toxdeps: tox-pypi-filter
         posargs: -n=4
         envs:
-          - linux: codestyle
-            name: style_check
-            pytest: false
-            libraries: {}
           - linux: py38
 
   - stage: SecondPhaseTests
