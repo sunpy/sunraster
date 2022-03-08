@@ -1,1 +1,2 @@
 Removed IRIS reader, you will want to install and use ``irispy-lmsal`` instead.
+Removed support for Python 3.7.
