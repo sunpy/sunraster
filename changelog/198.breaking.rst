@@ -1,0 +1,1 @@
+Removed IRIS reader, you will want to install and use ``irispy-lmsal`` instead.
