@@ -49,10 +49,6 @@ stages:
         toxdeps: tox-pypi-filter
         posargs: -n=4
         envs:
-          - linux: codestyle
-            name: style_check
-            pytest: false
-            libraries: {}
           - linux: py38
 
   - stage: SecondPhaseTests
@@ -70,13 +66,13 @@ stages:
           apt:
             - graphviz
         envs:
-          - macos: py37
-          - windows: py39
+          - macos: py38
+          - windows: py310
           - linux: build_docs
             posargs: " "
             pytest: false
-          - linux: py38-online
-          - linux: py37-oldestdeps
+          - linux: py39-online
+          - linux: py38-oldestdeps
 
   - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
     - stage: CronTests
