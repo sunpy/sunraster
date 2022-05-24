@@ -1,6 +1,9 @@
-ci:
-  autofix_prs: false
 repos:
+  - repo: https://github.com/myint/docformatter
+    rev: v1.4
+    hooks:
+      - id: docformatter
+        args: [--in-place, --pre-summary-newline, --make-summary-multi]
   - repo: https://github.com/myint/autoflake
     rev: v1.4
     hooks:
@@ -30,3 +33,6 @@ repos:
         exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
       - id: check-yaml
       - id: debug-statements
+
+ci:
+  autofix_prs: false
