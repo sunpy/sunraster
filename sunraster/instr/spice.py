@@ -9,7 +9,6 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 from ndcube import NDCollection
-from sunpy.coordinates import HeliographicStonyhurst
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
 from sunraster.meta import Meta, SlitSpectrographMetaABC
@@ -341,6 +340,8 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
 
     @property
     def observer_location(self):
+        from sunpy.coordinates import HeliographicStonyhurst
+
         lon_unit = u.deg
         lat_unit = u.deg
         radius_unit = u.m
