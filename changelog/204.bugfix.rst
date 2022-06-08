@@ -1,0 +1,1 @@
+Allow SPICE FITS reader to read handle wide-slit files.
