@@ -175,12 +175,18 @@ def _read_single_spice_l2_fits(
         # Derive names of windows to be read.
         if windows is None:
             if read_dumbbells:
-                windows = [hdu.header["EXTNAME"] for hdu in hdulist if dumbbell_label in hdu.header["EXTNAME"]]
+                windows = [
+                    hdu.header["EXTNAME"]
+                    for hdu in hdulist
+                    if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
+                    and dumbbell_label in hdu.header["EXTNAME"]
+                ]
             else:
                 windows = [
                     hdu.header["EXTNAME"]
                     for hdu in hdulist
-                    if (hdu.header["EXTNAME"] != "VARIABLE_KEYWORDS" and dumbbell_label not in hdu.header["EXTNAME"])
+                    if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
+                    and dumbbell_label not in hdu.header["EXTNAME"]
                 ]
         dumbbells_requested = [dumbbell_label in window for window in windows]
         if any(dumbbells_requested) and not all(dumbbells_requested):
