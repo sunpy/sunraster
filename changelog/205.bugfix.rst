@@ -1,1 +1,1 @@
-- Allow SPICE FITS reader to handle files with missing telemetry. (`#205 <https://github.com/sunpy/sunraster/pull/205>`__)
+Allow SPICE FITS reader to handle files with missing telemetry.
