@@ -179,7 +179,7 @@ def _read_single_spice_l2_fits(
                     hdu.header["EXTNAME"]
                     for hdu in hdulist
                     if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
-                        and dumbbell_label     in hdu.header["EXTNAME"]
+                        and dumbbell_label in hdu.header["EXTNAME"]
                 ]
             else:
                 windows = [
