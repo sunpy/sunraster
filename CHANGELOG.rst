@@ -1,3 +1,13 @@
+0.4.2 (2022-06-08)
+==================
+
+Bug Fixes
+---------
+
+- Allow SPICE FITS reader to read handle wide-slit files. (`#204 <https://github.com/sunpy/sunraster/pull/204>`__)
+- Allow SPICE FITS reader to handle files with missing telemetry. (`#205 <https://github.com/sunpy/sunraster/pull/205>`__)
+
+
 0.4.1 (2022-05-24)
 ==================
 
