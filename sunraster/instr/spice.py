@@ -169,6 +169,7 @@ def _read_single_spice_l2_fits(
     """
     window_cubes = []
     dumbbell_label = "DUMBBELL"
+    excluded_labels = ["LOSTPLNPIXLIST", "WCSDVARR"]
     with fits.open(filename, memmap=memmap) as hdulist:
         if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
             raise ValueError(f"{INCORRECT_OBSID_MESSAGE} Expected {spice_id}. Got {hdulist[0].header['SPIOBSID']}.")
@@ -187,6 +188,7 @@ def _read_single_spice_l2_fits(
                     for hdu in hdulist
                     if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
                     and dumbbell_label not in hdu.header["EXTNAME"]
+                    and hdu.header["EXTNAME"] not in excluded_labels
                 ]
         dumbbells_requested = [dumbbell_label in window for window in windows]
         if any(dumbbells_requested) and not all(dumbbells_requested):
