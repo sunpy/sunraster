@@ -169,7 +169,7 @@ def _read_single_spice_l2_fits(
     """
     window_cubes = []
     dumbbell_label = "DUMBBELL"
-    excluded_labels = ["LOSTPLNPIXLIST", "WCSDVARR"]
+    excluded_labels = ["WCSDVARR"]
     with fits.open(filename, memmap=memmap) as hdulist:
         if isinstance(spice_id, numbers.Integral) and hdulist[0].header["SPIOBSID"] != spice_id:
             raise ValueError(f"{INCORRECT_OBSID_MESSAGE} Expected {spice_id}. Got {hdulist[0].header['SPIOBSID']}.")
