@@ -1,3 +1,12 @@
+0.4.3 (2022-10-06)
+==================
+
+Bug Fixes
+---------
+
+- Fixed SPICE reader failing on FITS files containing ``WCSDVARR`` HDUs (with additional distortion information), by ignoring these HDUs. (`#215 <https://github.com/sunpy/sunraster/pull/215>`__)
+
+
 0.4.2 (2022-06-08)
 ==================
 

@@ -1,1 +1,0 @@
-Fixed SPICE reader failing on FITS files containing ``WCSDVARR`` HDUs (with additional distortion information), by ignoring these HDUs.
