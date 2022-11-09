@@ -49,7 +49,7 @@ stages:
         toxdeps: tox-pypi-filter
         posargs: -n=4
         envs:
-          - linux: py310
+          - linux: py311
 
   - stage: SecondPhaseTests
     displayName: Stage 2 Tests
@@ -71,7 +71,7 @@ stages:
           - linux: build_docs
             posargs: " "
             pytest: false
-          - linux: py39-online
+          - linux: py310-online
           - linux: py38-oldestdeps
 
   - ${{ if or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual')) }}:
@@ -93,7 +93,7 @@ stages:
               - libpng-devel
               - hdf5-devel
           envs:
-            - linux: py38-devdeps
+            - linux: py311-devdeps
 
   # On branches which aren't main, and not Pull Requests, build the wheels but only upload them on tags
   - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.SourceBranchName'], 'main'), eq(variables['Build.Reason'], 'Schedule'), eq(variables['Build.Reason'], 'Manual'))) }}:

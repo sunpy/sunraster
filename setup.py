@@ -1,15 +1,18 @@
 #!/usr/bin/env python
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
+from setuptools import setup  # isort:skip
 import os
 from itertools import chain
 
-from setuptools import setup
-from setuptools.config import read_configuration
+try:
+    # Recommended for setuptools 61.0.0+
+    # (though may disappear in the future)
+    from setuptools.config.setupcfg import read_configuration
+except ImportError:
+    from setuptools.config import read_configuration
 
-##############################################
-# Programmatically generate some extras combos
-##############################################
+################################################################################
+# Programmatically generate some extras combos.
+################################################################################
 extras = read_configuration("setup.cfg")["options"]["extras_require"]
 
 # Dev is everything
