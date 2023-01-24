@@ -547,7 +547,6 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """
-
     # If force is not set to True and unit already includes inverse time,
     # raise error as exposure time correction has probably already been
     # applied and should not be applied again.
@@ -592,7 +591,6 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """
-
     # If force is not set to True and unit does not include inverse time,
     # raise error as exposure time correction has probably already been
     # undone and should not be undone again.
