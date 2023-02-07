@@ -126,19 +126,28 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
                     cube.extra_coords,
                     cube.meta,
                 )
-                (self.data[i]._longitude_name, self.data[i]._longitude_loc,) = _find_axis_name(
+                (
+                    self.data[i]._longitude_name,
+                    self.data[i]._longitude_loc,
+                ) = _find_axis_name(
                     SUPPORTED_LONGITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
                     cube.meta,
                 )
-                (self.data[i]._latitude_name, self.data[i]._latitude_loc,) = _find_axis_name(
+                (
+                    self.data[i]._latitude_name,
+                    self.data[i]._latitude_loc,
+                ) = _find_axis_name(
                     SUPPORTED_LATITUDE_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
                     cube.meta,
                 )
-                (self.data[i]._spectral_name, self.data[i]._spectral_loc,) = _find_axis_name(
+                (
+                    self.data[i]._spectral_name,
+                    self.data[i]._spectral_loc,
+                ) = _find_axis_name(
                     SUPPORTED_SPECTRAL_NAMES,
                     cube.wcs.world_axis_physical_types,
                     cube.extra_coords,
@@ -242,7 +251,10 @@ class RasterSequence(SpectrogramSequence):
             # If spectral name not present in raster cube, try finding it.
             if not self.data[0]._spectral_name:
                 for i, cube in enumerate(self):
-                    (self.data[i]._spectral_name, self.data[i]._spectral_name,) = _find_axis_name(
+                    (
+                        self.data[i]._spectral_name,
+                        self.data[i]._spectral_name,
+                    ) = _find_axis_name(
                         SUPPORTED_SPECTRAL_NAMES,
                         cube.wcs.world_axis_physical_types,
                         cube.extra_coords,
