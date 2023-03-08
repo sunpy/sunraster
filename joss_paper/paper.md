@@ -69,16 +69,16 @@ the position, wavelengths and times represented by the pixels; and general metad
 These classes provide support for analysis tasks, such as extracting regions of
 interest and applying/removing exposure time corrections, as well as a quick-look
 visualization suite.
-sunraster depends heavily on the ndcube package [@ndcube-apj, @ndcube-joss] and its
+sunraster depends heavily on the ndcube package [@ndcube-apj; @ndcube-joss] and its
 SpectrogramCube class complies with the NDCube 2 API [sep12; @ndcube-apj].
 
 # Statement of Need
 
 Observing the location, morphology, dynamics and energetics of physical phenomena
-are often key to understanding the underlying physics that drives them.
+is often key to understanding the underlying physics that drives them.
 However, making simultaneous spatial, temporal and spectral measurements with a single
 instrument is often challenging.
-One solution is to disperse the incoming light through a narrow slit onto a pixelated
+One option is to disperse the incoming light through a narrow slit onto a pixelated
 detector creating a spectrogram, i.e. an image with a spectral dimension and a spatial
 dimension corresponding to the long axis of the slit.
 The second spatial dimension is reconstructed by scanning the slit across a region of
@@ -109,22 +109,24 @@ that not only alter the data array, but also the associated uncertainties, data 
 and the coordinate transformations.
 This saves users from performing multiple tedious and error-prone tasks on the various
 compoennts of their dataset individually.
-This makes the development of analysis workflows quicker, more reliable, and easier
+It also makes the development of analysis workflows quicker, more reliable, and easier
 to understand, thus boosting users' productivity.
 
 # Community Applications
 
-Most of sunrasters tools are instrument-agnostic.
+Most of sunraster's tools are instrument-agnostic.
 However it does provide specific tools for reading Solar Orbiter/SPICE FITS files
 and hence helping SPICE users leverage the wider scientific Python ecosystem
 for their analysis.
-In addition, the Python user tools package for the IRIS mission, irispy-lmsal
-[irispy-docs; @irispy-code], depends on sunraster.
+In addition, the data and metadata classes in the IRIS mission's Python user
+tools package [irispy-lmsal; @irispy-docs; @irispy-code] inherit from and build
+upon those provided by sunraster.
 
 # Acknowledgements
 
 We acknowledge financial support for sunraster from Solar Orbiter/SPICE
-(grant 80NSSC19K1000).
+(grant 80NSSC19K1000) as well as NASA's SDO/AIA and IRIS missions
+(grant NNG04EA00C and NNG09FA40C).
 We also acknowledge the SunPy and Python in Heliophysics communities for their support.
 
 # References
