@@ -132,4 +132,3 @@ We acknowledge financial support for sunraster from Solar Orbiter/SPICE
 We also acknowledge the SunPy and Python in Heliophysics communities for their support.
 
 # References
-
