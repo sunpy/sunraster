@@ -72,7 +72,7 @@ These classes provide support for analysis tasks, such as extracting regions of
 interest and applying/removing exposure time corrections, as well as a quick-look
 visualization suite.
 sunraster depends heavily on the ndcube package [@ndcube-apj; @ndcube-joss] and its
-SpectrogramCube class complies with the NDCube 2 API [sep12; @ndcube-apj].
+SpectrogramCube class complies with the NDCube 2 API [sep12; @sep12].
 
 # Statement of Need
 
