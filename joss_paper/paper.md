@@ -108,7 +108,7 @@ A powerful slicing API enables users to extract regions of interest with single 
 that not only alter the data array, but also the associated uncertainties, data mask
 and the coordinate transformations.
 This saves users from performing multiple tedious and error-prone tasks on the various
-compoennts of their dataset individually.
+components of their dataset individually.
 It also makes the development of analysis workflows quicker, more reliable, and easier
 to understand, thus boosting users' productivity.
 
