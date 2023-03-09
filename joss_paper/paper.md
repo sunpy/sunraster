@@ -19,7 +19,7 @@ authors:
   - name: Baptiste Pellorce
     affiliation: "6, 7"
   - name: Steven D. Christe
-    orcid:
+    orcid: 0000-0001-6127-795X
     affiliation: 8
   - name:  Ankit Kumar Baruah
     affiliation: 9
