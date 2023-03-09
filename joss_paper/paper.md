@@ -24,11 +24,11 @@ authors:
   - name:  Ankit Kumar Baruah
     affiliation: 9
   - name: Tiago Pereira
-    orcid:
-    affiliation: 7
+    orcid: 0000-0003-4747-4329
+    affiliation: "7, 10"
   - name: Eric Buchlin
     orcid: 0000-0003-4290-1897
-    affiliation: 10
+    affiliation: 11
   - name: Theresa A. Kucera
     orcid: 0000-0001-9632-447X
     affiliation: 8
@@ -51,8 +51,10 @@ affiliations:
    index: 8
  - name: Workato Gmbh, Germany
    index: 9
- - name: Université Paris-Saclay, CNRS, Institut d'Astrophysique Spatiale, France
+ - name: Rosseland Centre for Solar Physics, University of Oslo, Norway
    index: 10
+ - name: Université Paris-Saclay, CNRS, Institut d'Astrophysique Spatiale, France
+   index: 11
 date: 24 February 2023
 bibliography: paper.bib
 
