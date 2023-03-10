@@ -75,7 +75,7 @@ For more information on contributing to sunraster, please read SunPy's `Newcomer
 .. _Developers Guide: https://docs.sunpy.org/en/latest/dev_guide/index.html
 .. _`#sunpy:openastronomy.org`: https://chat.openastronomy.org/#/room/#sunpy:openastronomy.org
 .. _issues page: https://github.com/sunpy/sunraster/issues
-.. _Newcomers' guide: https://docs.sunpy.org/en/latest/dev_guide/newcomers.html
+.. _Newcomers' guide: https://docs.sunpy.org/en/latest/dev_guide/contents/newcomers.html
 
 Code of Conduct
 ===============
