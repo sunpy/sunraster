@@ -1,3 +1,13 @@
+0.5.0 (2023-06-06)
+==================
+
+Breaking Changes
+----------------
+
+- Increased the minimum version of ``sunpy`` to 5.0.0
+- Increased the minimum version of ``ndcube`` to 2.1.2
+- Increased the minimum version of Python to 3.9
+
 0.4.3 (2022-10-06)
 ==================
 
