@@ -113,6 +113,8 @@ This saves users from performing multiple tedious and error-prone tasks on the v
 components of their dataset individually.
 It also makes the development of analysis workflows quicker, more reliable, and easier
 to understand, thus boosting users' productivity.
+Currently there is no other Python package that supports the specific needs of solar
+slit-spectrograph data analysis in this way.
 
 # Community Applications
 
