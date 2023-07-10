@@ -1,10 +1,10 @@
 [build-system]
 requires = [
-  "setuptools>=56,!=61.0.0",
-  "setuptools_scm[toml]>=6.2",
-  "wheel",
+  "extension-helpers",
   "oldest-supported-numpy",
-  "extension-helpers"
+  "setuptools_scm[toml]",
+  "setuptools",
+  "wheel",
 ]
 build-backend = 'setuptools.build_meta'
 
