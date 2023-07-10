@@ -518,7 +518,7 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords, me
 def _find_name_in_array(supported_names, names_array):
     name_index = np.isin(names_array, supported_names)
     if name_index.sum() > 0:
-        name_index = int(np.arange(len(names_array))[name_index])
+        name_index = np.arange(len(names_array))[name_index][0]
         return names_array[name_index]
     return None
 
