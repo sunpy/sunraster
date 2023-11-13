@@ -28,6 +28,6 @@ repos:
         exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
       - id: check-yaml
       - id: debug-statements
-
 ci:
   autofix_prs: false
+  autoupdate_schedule: "quarterly"
