@@ -11,7 +11,6 @@ def assert_metas_equal(test_input, expected_output):
         raise AssertionError(
             "input and expected are of different type. " f"input: {type(test_input)}; expected: {type(expected_output)}"
         )
-    multi_element_msg = "more than one element is ambiguous"
     if isinstance(test_input, Meta) and isinstance(expected_output, Meta):
         # Check keys are the same.
         assert test_input.keys() == expected_output.keys()
@@ -22,6 +21,7 @@ def assert_metas_equal(test_input, expected_output):
         else:
             assert np.allclose(test_input.shape, expected_output.shape)
 
+        multi_element_msg = "more than one element is ambiguous"
         # Check values and axes are the same.
         for test_value, expected_value in zip(test_input.values(), expected_output.values()):
             try:
@@ -32,11 +32,10 @@ def assert_metas_equal(test_input, expected_output):
         # Check axes are the same.
         for test_axis, expected_axis in zip(test_input.axes.values(), expected_output.axes.values()):
             assert (test_axis is None and expected_axis is None) or all(test_axis == expected_axis)
-    else:
-        if not (test_input is None and expected_output is None):
-            assert test_input.keys() == expected_output.keys()
-            for key in list(test_input.keys()):
-                assert test_input[key] == expected_output[key]
+    elif test_input is not None or expected_output is not None:
+        assert test_input.keys() == expected_output.keys()
+        for key in list(test_input.keys()):
+            assert test_input[key] == expected_output[key]
 
 
 @pytest.fixture
@@ -102,10 +101,10 @@ def test_slice_away_independent_axis(basic_meta):
     item = 0
     output = meta[item]
     # Build expected result.
-    values = dict([(key, value) for key, value in meta.items()])
+    values = dict(list(meta.items()))
     values["b"] = values["b"][0]
     comments = meta.comments
-    axes = dict([(key, axis) for key, axis in meta.axes.items()])
+    axes = dict(list(meta.axes.items()))
     del axes["b"]
     axes["c"] -= 1
     axes["d"] -= 1
@@ -123,11 +122,11 @@ def test_slice_dependent_axes(basic_meta):
     output = meta[:, 1:3, 1]
     print(meta["a"])
     # Build expected result.
-    values = dict([(key, value) for key, value in meta.items()])
+    values = dict(list(meta.items()))
     values["c"] = values["c"][1:3, 1]
     values["d"] = values["d"][1]
     comments = meta.comments
-    axes = dict([(key, axis) for key, axis in meta.axes.items()])
+    axes = dict(list(meta.axes.items()))
     axes["c"] = 1
     del axes["d"]
     shape = np.array([2, 2, 5])

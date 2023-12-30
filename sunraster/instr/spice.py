@@ -85,16 +85,13 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
                         "All files must correspond to same observing campaign/SPICE OBS ID. "
                         f"First file SPICE OBS ID: {first_obs_id}; "
                         f"{i+1}th file SPICE OBS ID: {this_obs_id}"
-                    )
+                    ) from err
         # Depending on type of file, combine data from different files into
         # SpectrogramSequences and RasterSequences.
         is_raster = "ras" in first_meta.get("FILENAME") and not any(
-            [window[1].meta.contains_dumbbell for window in cube_lists.values()]
+            window[1].meta.contains_dumbbell for window in cube_lists.values()
         )
-        if is_raster:
-            sequence_class = RasterSequence
-        else:
-            sequence_class = SpectrogramSequence
+        sequence_class = RasterSequence if is_raster else SpectrogramSequence
         window_sequences = [
             (key, sequence_class([v[0] for v in value], common_axis=-1)) for key, value in cube_lists.items()
         ]
@@ -107,7 +104,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         # same spectral window, e.g. because they are dumbbell windows.
         first_sequence = window_sequences[0][1]
         first_spectral_window = first_sequence[0].meta.spectral_window
-        if all([window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences]):
+        if all(window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences):
             aligned_axes = tuple(range(len(first_sequence.dimensions)))
         else:
             aligned_axes = tuple(
@@ -179,14 +176,30 @@ def _read_single_spice_l2_fits(
                 windows = [
                     hdu.header["EXTNAME"]
                     for hdu in hdulist
-                    if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
+                    if (
+                        isinstance(
+                            hdu,
+                            (
+                                fits.hdu.image.PrimaryHDU,
+                                fits.hdu.image.ImageHDU,
+                            ),
+                        )
+                    )
                     and dumbbell_label in hdu.header["EXTNAME"]
                 ]
             else:
                 windows = [
                     hdu.header["EXTNAME"]
                     for hdu in hdulist
-                    if (isinstance(hdu, fits.hdu.image.PrimaryHDU) or isinstance(hdu, fits.hdu.image.ImageHDU))
+                    if (
+                        isinstance(
+                            hdu,
+                            (
+                                fits.hdu.image.PrimaryHDU,
+                                fits.hdu.image.ImageHDU,
+                            ),
+                        )
+                    )
                     and dumbbell_label not in hdu.header["EXTNAME"]
                     and hdu.header["EXTNAME"] not in excluded_labels
                 ]
@@ -194,7 +207,7 @@ def _read_single_spice_l2_fits(
         if any(dumbbells_requested) and not all(dumbbells_requested):
             raise ValueError("Cannot read dumbbell and other window types simultaneously.")
         # Retrieve window names from FITS file.
-        for i, hdu in enumerate(hdulist):
+        for hdu in hdulist:
             if hdu.header["EXTNAME"] in windows:
                 # Define metadata object.
                 meta = SPICEMeta(
@@ -226,10 +239,7 @@ def _read_single_spice_l2_fits(
                     window_cubes.append((window_name, spectrogram))
                 else:
                     output[window_name].append(spectrogram)
-    if output is None:
-        return dict(window_cubes)
-    else:
-        return output
+    return dict(window_cubes) if output is None else output
 
 
 def _convert_fits_comments_to_key_value_pairs(fits_header):
@@ -241,8 +251,7 @@ def _convert_fits_comments_to_key_value_pairs(fits_header):
 class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
     # ---------- SPICE-specific convenience methods ----------
     def _get_unit(self, key):
-        comment = self.comments.get(key)
-        if comment:
+        if comment := self.comments.get(key):
             try:
                 return [s.split("]") for s in comment.split("[")[1:]][0][:-1][0]
             except IndexError:

@@ -300,8 +300,8 @@ def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_filena
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all([window.dimensions[0].value == len(filenames) for window in result.values()])
-    assert all([isinstance(window, RasterSequence) for window in result.values()])
+    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
+    assert all(isinstance(window, RasterSequence) for window in result.values())
 
 
 def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename):

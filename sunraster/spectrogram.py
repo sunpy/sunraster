@@ -279,11 +279,10 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 lon_range = u.Quantity([lon.min(), lon.max()])
                 lat_range = u.Quantity([lat.min(), lat.max()])
         except ValueError as err:
-            if AXIS_NOT_FOUND_ERROR in err.args[0]:
-                lon_range = None
-                lat_range = None
-            else:
+            if AXIS_NOT_FOUND_ERROR not in err.args[0]:
                 raise err
+            lon_range = None
+            lat_range = None
         try:
             if self.spectral_axis.isscalar:
                 spectral_range = self.spectral_axis
@@ -355,7 +354,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 self.meta,
             )
         if not self._spectral_name:
-            raise ValueError("Spectral" + AXIS_NOT_FOUND_ERROR + f"{SUPPORTED_SPECTRAL_NAMES}")
+            raise ValueError(f"Spectral{AXIS_NOT_FOUND_ERROR}" + f"{SUPPORTED_SPECTRAL_NAMES}")
         return self._get_axis_coord(self._spectral_name, self._spectral_loc)
 
     @property
@@ -367,8 +366,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 self.extra_coords,
                 self.meta,
             )
-            if not self._time_name:
-                raise ValueError(f"Time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_TIME_NAMES}")
+        if not self._time_name:
+            raise ValueError(f"Time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_TIME_NAMES}")
         return Time(self._get_axis_coord(self._time_name, self._time_loc))
 
     @property
@@ -380,8 +379,8 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 self.extra_coords,
                 self.meta,
             )
-            if not self._exposure_time_name:
-                raise ValueError(f"Exposure time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_EXPOSURE_NAMES}")
+        if not self._exposure_time_name:
+            raise ValueError(f"Exposure time {AXIS_NOT_FOUND_ERROR} {SUPPORTED_EXPOSURE_NAMES}")
         return self._get_axis_coord(self._exposure_time_name, self._exposure_time_loc)
 
     @property
@@ -547,23 +546,19 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """
-    # If force is not set to True and unit already includes inverse time,
-    # raise error as exposure time correction has probably already been
-    # applied and should not be applied again.
     if force is not True and u.s in unit.decompose().bases:
         raise ValueError(APPLY_EXPOSURE_TIME_ERROR)
+    # Else, either unit does not include inverse time and so
+    # exposure does need to be applied, or
+    # user has set force=True and wants the correction applied
+    # regardless of the unit.
+    new_data = data / exposure_time
+    if uncertainty:
+        uncertainty_unit = uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
+        new_uncertainty = uncertainty.__class__(uncertainty.array / exposure_time, unit=uncertainty_unit)
     else:
-        # Else, either unit does not include inverse time and so
-        # exposure does need to be applied, or
-        # user has set force=True and wants the correction applied
-        # regardless of the unit.
-        new_data = data / exposure_time
-        if uncertainty:
-            uncertainty_unit = uncertainty.unit / u.s if uncertainty.unit else uncertainty.unit
-            new_uncertainty = uncertainty.__class__(uncertainty.array / exposure_time, unit=uncertainty_unit)
-        else:
-            new_uncertainty = uncertainty
-        new_unit = unit / u.s
+        new_uncertainty = uncertainty
+    new_unit = unit / u.s
     return new_data, new_uncertainty, new_unit
 
 
@@ -591,21 +586,17 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
     new_unit: `astropy.unit.Unit`
         Unit of new_data array after exposure time correction.
     """
-    # If force is not set to True and unit does not include inverse time,
-    # raise error as exposure time correction has probably already been
-    # undone and should not be undone again.
     if force is not True and u.s in (unit * u.s).decompose().bases:
         raise ValueError(UNDO_EXPOSURE_TIME_ERROR)
+    # Else, either unit does include inverse time and so
+    # exposure does need to be removed, or
+    # user has set force=True and wants the correction removed
+    # regardless of the unit.
+    new_data = data * exposure_time
+    if uncertainty:
+        uncertainty_unit = uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
+        new_uncertainty = uncertainty.__class__(uncertainty.array * exposure_time, unit=uncertainty_unit)
     else:
-        # Else, either unit does include inverse time and so
-        # exposure does need to be removed, or
-        # user has set force=True and wants the correction removed
-        # regardless of the unit.
-        new_data = data * exposure_time
-        if uncertainty:
-            uncertainty_unit = uncertainty.unit * u.s if uncertainty.unit else uncertainty.unit
-            new_uncertainty = uncertainty.__class__(uncertainty.array * exposure_time, unit=uncertainty_unit)
-        else:
-            new_uncertainty = uncertainty
-        new_unit = unit * u.s
+        new_uncertainty = uncertainty
+    new_unit = unit * u.s
     return new_data, new_uncertainty, new_unit

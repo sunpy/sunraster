@@ -108,9 +108,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             If copy=True, a new SpectrogramSequence is returned with the correction
             applied (undone).
         """
-        converted_data_list = []
-        for cube in self.data:
-            converted_data_list.append(cube.apply_exposure_time_correction(undo=undo, force=force))
+        converted_data_list = [cube.apply_exposure_time_correction(undo=undo, force=force) for cube in self.data]
         if copy is True:
             return self.__class__(converted_data_list, meta=self.meta, common_axis=self._common_axis)
         else:
