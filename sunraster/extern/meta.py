@@ -43,16 +43,13 @@ class Meta(dict):
         self.original_header = header
 
         # Sanitize metadata values and instantiate class.
-        if header is None:
-            header = {}
-        else:
-            header = dict(header)
+        header = {} if header is None else dict(header)
         super().__init__(header.items())
         header_keys = header.keys()
 
         # Generate dictionary for comments.
         if comments is None:
-            self._comments = dict()
+            self._comments = {}
         else:
             comments = dict(comments)
             if not set(comments.keys()).issubset(set(header_keys)):
@@ -67,12 +64,12 @@ class Meta(dict):
 
         # Generate dictionary for axes.
         if axes is None:
-            self._axes = dict()
+            self._axes = {}
         else:
             # Verify data_shape is set if axes is set.
             if not (
                 isinstance(data_shape, collections.abc.Iterable)
-                and all([isinstance(i, numbers.Integral) for i in data_shape])
+                and all(isinstance(i, numbers.Integral) for i in data_shape)
             ):
                 raise TypeError(
                     "If axes is set, data_shape must be an iterable giving "
@@ -91,7 +88,7 @@ class Meta(dict):
         # Verify each entry in axes is an iterable of ints.
         if isinstance(axis, numbers.Integral):
             axis = (axis,)
-        if not (isinstance(axis, collections.abc.Iterable) and all([isinstance(i, numbers.Integral) for i in axis])):
+        if not isinstance(axis, collections.abc.Iterable) or not all(isinstance(i, numbers.Integral) for i in axis):
             raise TypeError(
                 "Values in axes must be an int or tuple of ints giving "
                 "the data axis/axes associated with the metadata."
@@ -101,13 +98,11 @@ class Meta(dict):
         # Confirm each axis-associated piece of metadata has the same shape
         # as its associated axes.
         shape_error_msg = f"{key} must have shape {tuple(self.shape[axis])} as it is associated with axes {axis}"
-        if len(axis) == 1:
-            if not hasattr(value, "__len__"):
-                raise TypeError(shape_error_msg)
+        if len(axis) == 1 and not hasattr(value, "__len__") or len(axis) != 1 and not hasattr(value, "shape"):
+            raise TypeError(shape_error_msg)
+        elif len(axis) == 1:
             meta_shape = (len(value),)
         else:
-            if not hasattr(value, "shape"):
-                raise TypeError(shape_error_msg)
             meta_shape = value.shape
         if not all(meta_shape == self.shape[axis]):
             raise ValueError(shape_error_msg)
@@ -172,19 +167,18 @@ class Meta(dict):
         if axis is not None:
             recommendation = "We recommend using the 'add' method to set values."
             if len(axis) == 1:
-                if not (hasattr(val, "__len__") and len(val) == self.shape[axis[0]]):
+                if not hasattr(val, "__len__") or len(val) != self.shape[axis[0]]:
                     raise TypeError(
                         f"{key} must have same length as associated axis, "
                         f"i.e. axis {axis[0]}: {self.shape[axis[0]]}\n"
                         f"{recommendation}"
                     )
-            else:
-                if not (hasattr(val, "shape") and all(val.shape == self.shape[axis])):
-                    raise TypeError(
-                        f"{key} must have same shape as associated axes, "
-                        f"i.e axes {axis}: {self.shape[axis]}\n"
-                        f"{recommendation}"
-                    )
+            elif not hasattr(val, "shape") or not all(val.shape == self.shape[axis]):
+                raise TypeError(
+                    f"{key} must have same shape as associated axes, "
+                    f"i.e axes {axis}: {self.shape[axis]}\n"
+                    f"{recommendation}"
+                )
         super().__setitem__(key, val)
 
     def __getitem__(self, item):
@@ -195,7 +189,6 @@ class Meta(dict):
         # If item is single string, slicing is simple.
         if isinstance(item, str):
             return super().__getitem__(item)
-        # Else, the item is assumed to be a typical slicing item.
         elif self.shape is None:
             raise TypeError("Meta object does not have a shape and so cannot be sliced.")
         else:
@@ -235,10 +228,7 @@ class Meta(dict):
                 axis = self.axes.get(key, None)
                 if axis is not None:
                     new_item = tuple(item[axis])
-                    if len(new_item) == 1:
-                        new_value = value[new_item[0]]
-                    else:
-                        new_value = value[new_item]
+                    new_value = value[new_item[0]] if len(new_item) == 1 else value[new_item]
                     new_axis = np.array([-1 if isinstance(i, numbers.Integral) else a for i, a in zip(new_item, axis)])
                     new_axis -= cumul_dropped_axes[axis]
                     new_axis = new_axis[new_axis >= 0]
