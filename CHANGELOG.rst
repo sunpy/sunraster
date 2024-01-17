@@ -1,3 +1,11 @@
+0.5.1 (2024-01-17)
+==================
+
+Bug Fixes
+---------
+
+- Fixed SPICE reader from hardcoing ``u.adu`` and instead using the "BUNIT" keyword in the FITS header. (`#254 <https://github.com/sunpy/sunraster/pull/254>`__)
+
 0.5.0 (2023-11-16)
 ==================
 
