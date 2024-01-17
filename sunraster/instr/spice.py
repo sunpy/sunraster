@@ -229,7 +229,7 @@ def _read_single_spice_l2_fits(
                     data=data,
                     wcs=wcs,
                     mask=np.isnan(data),
-                    unit=u.adu,
+                    unit=u.Unit(meta.get("BUNIT"), format="fits"),
                     meta=meta,
                     instrument_axes=("raster scan", "spectral", "slit", "slit step"),
                 )
