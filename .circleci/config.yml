@@ -60,7 +60,3 @@ workflows:
   pip-install:
     jobs:
       - pip-install
-
-notify:
-  webhooks:
-    - url: https://giles.cadair.dev/circleci
