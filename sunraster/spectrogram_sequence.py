@@ -228,7 +228,10 @@ class RasterSequence(SpectrogramSequence):
         self._spectral_axis_name = SPECTRAL_AXIS_NAME
         self._set_single_scan_instrument_axes_types()
 
-    raster_dimensions = SpectrogramSequence.dimensions
+    # TODO: Compatibility with upcoming ndcube 2.3
+    raster_dimensions = (
+        SpectrogramSequence.shape if hasattr(SpectrogramSequence, "shape") else SpectrogramSequence.dimensions
+    )
     sns_dimensions = SpectrogramSequence.cube_like_dimensions
     raster_array_axis_physical_types = SpectrogramSequence.array_axis_physical_types
     sns_array_axis_physical_types = SpectrogramSequence.cube_like_array_axis_physical_types

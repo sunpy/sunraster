@@ -300,8 +300,10 @@ def test_read_spice_l2_fits_multiple_rasters_multiple_windows(spice_rasdb_filena
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
-    assert all(isinstance(window, RasterSequence) for window in result.values())
+    for window in result.values():
+        assert isinstance(window, RasterSequence)
+        data_length = window.shape[0] if hasattr(window, "shape") else window.dimensions[0].value
+        assert data_length == len(filenames)
 
 
 def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename):
@@ -310,8 +312,10 @@ def test_read_spice_l2_fits_multiple_rasters_single_window(spice_rasdb_filename)
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert result.aligned_axes is None
     assert len(result) == 1
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
-    assert all(isinstance(window, RasterSequence) for window in result.values())
+    for window in result.values():
+        assert isinstance(window, RasterSequence)
+        data_length = window.shape[0] if hasattr(window, "shape") else window.dimensions[0].value
+        assert data_length == len(filenames)
 
 
 def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
@@ -320,8 +324,10 @@ def test_read_spice_l2_fits_multiple_sns_multiple_windows(spice_sns_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert set(result.aligned_axes.values()) == {(0, 2, 3)}
     assert len(result) == 2
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
-    assert all(isinstance(window, SpectrogramSequence) for window in result.values())
+    for window in result.values():
+        assert isinstance(window, SpectrogramSequence)
+        data_length = window.shape[0] if hasattr(window, "shape") else window.dimensions[0].value
+        assert data_length == len(filenames)
 
 
 def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
@@ -330,8 +336,10 @@ def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
     assert isinstance(result, READ_SPICE_L2_FITS_RETURN_TYPE)
     assert all(window[0].meta.contains_dumbbell for window in result.values())
     assert set(result.aligned_axes.values()) == {tuple(range(4))}
-    assert all(window.dimensions[0].value == len(filenames) for window in result.values())
-    assert all(isinstance(window, SpectrogramSequence) for window in result.values())
+    for window in result.values():
+        assert isinstance(window, SpectrogramSequence)
+        data_length = window.shape[0] if hasattr(window, "shape") else window.dimensions[0].value
+        assert data_length == len(filenames)
 
 
 def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
