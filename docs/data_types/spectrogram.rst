@@ -110,7 +110,7 @@ The `~sunraster.SpectrogramCube.dimensions` and `~sunraster.SpectrogramCube.arra
 
 .. code-block:: python
 
-    >>> my_spectrograms.shape
+    >>> my_spectrograms.dimensions
     <Quantity [3., 4., 5.] pix>
     >>> my_spectrograms.array_axis_physical_types
     [(np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('em.wl'),)]

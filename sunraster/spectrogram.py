@@ -299,7 +299,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Period: {time_period}
                 Instrument axes: {self.instrument_axes}
-                Pixel dimensions: {self.dimensions.astype(int)}
+                Pixel dimensions: {self.shape if hasattr(self, "shape") else self.dimensions.astype(int)}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}

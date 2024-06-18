@@ -105,7 +105,9 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
         first_sequence = window_sequences[0][1]
         first_spectral_window = first_sequence[0].meta.spectral_window
         if all(window[1][0].meta.spectral_window == first_spectral_window for window in window_sequences):
-            aligned_axes = tuple(range(len(first_sequence.dimensions)))
+            aligned_axes = tuple(
+                range(len(first_sequence.shape if hasattr(first_sequence, "shape") else first_sequence.dimensions))
+            )
         else:
             aligned_axes = tuple(
                 i for i, phys_type in enumerate(first_sequence.array_axis_physical_types) if "em.wl" not in phys_type
