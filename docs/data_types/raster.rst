@@ -103,10 +103,10 @@ Dimensions
 .. code-block:: python
 
     >>> my_rasters.raster_array_axis_physical_types
-    [('meta.obs.sequence',), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
+    [('meta.obs.sequence',), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon'), np.str_('time')), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('em.wl'),)]
 
     >>> my_rasters.sns_array_axis_physical_types
-    [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
+    [(np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon'), np.str_('time')), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('em.wl'),)]
 
 In the raster case, ``'meta.obs.sequence'`` represents the raster scan number axis.
 For those familiar with `~ndcube.NDCubeSequence`, these are simply aliases for the `~ndcube.NDCubeSequence.array_axis_physical_axis_types` and `~ndcube.NDCubeSequence.cube_like_world_axis_physical_axis_types`, respectively.
