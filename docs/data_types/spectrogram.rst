@@ -113,7 +113,9 @@ The `~sunraster.SpectrogramCube.dimensions` and `~sunraster.SpectrogramCube.arra
     >>> my_spectrograms.dimensions
     <Quantity [3., 4., 5.] pix>
     >>> my_spectrograms.array_axis_physical_types
-    [(np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('em.wl'),)]
+    [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+    ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
+    ('em.wl',)]
 
 `~sunraster.SpectrogramCube.dimensions` returns a `~astropy.units.Quantity` giving the length of each dimension in pixel units while `~sunraster.SpectrogramCube.array_axis_physical_types` returns an list of tuples where each tuple contains the types of physical properties associated with each array axis.
 Since more than one physical type be associated with an array axis because they are dependent, e.g. latitude/longitude, or because of the rastering nature of the instrument, e.g. latitude/longitude and time, the length of each tuple can be greater than one.
@@ -321,7 +323,7 @@ In order to inspect the dimensionality of our sequence and the physical properti
     >>> my_sequence.dimensions
     (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
     >>> my_sequence.array_axis_physical_types
-    [('meta.obs.sequence',), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon'), np.str_('time'), np.str_('custom:CUSTOM')), (np.str_('custom:pos.helioprojective.lat'), np.str_('custom:pos.helioprojective.lon')), (np.str_('em.wl'),)]
+    [('meta.obs.sequence',), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time', 'custom:CUSTOM'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
 
 Note that this is the same API as `~sunraster.SpectrogramCube` except that `sunraster.SpectrogramSequence.dimensions` returns an iterable of `~astropy.units.Quantity` objects, one for each axis.
 This is because of its inheritance from  `~ndcube.NDCubeSequence` rather than `~ndcube.NDCube`.

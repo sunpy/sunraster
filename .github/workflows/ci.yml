@@ -74,7 +74,7 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   online:
-    if: '!startsWith(github.event.ref, "refs/tags/v"'
+    if: "!startsWith(github.event.ref, 'refs/tags/v')"
     needs: [docs]
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@main
     with:
