@@ -3,10 +3,12 @@ import numbers
 import textwrap
 from copy import deepcopy
 
-import astropy.units as u
-import ndcube.utils.wcs as nuw
 import numpy as np
+
+import astropy.units as u
 from astropy.time import Time
+
+import ndcube.utils.wcs as nuw
 from ndcube.ndcube import NDCube
 
 from sunraster.meta import Meta

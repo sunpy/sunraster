@@ -2,12 +2,14 @@ import copy
 import numbers
 import textwrap
 
-import astropy.units as u
 import numpy as np
+
+import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
+
 from ndcube import NDCollection
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence

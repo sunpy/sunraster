@@ -1,3 +1,7 @@
+"""
+This module contains package tests.
+"""
+
 import os.path
 
 import sunraster

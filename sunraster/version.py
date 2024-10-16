@@ -1,5 +1,5 @@
 # NOTE: First try _dev.scm_version if it exists and setuptools_scm is installed
-# This file is not included in sunpy wheels/tarballs, so otherwise it will
+# This file is not included in wheels/tarballs, so otherwise it will
 # fall back on the generated _version module.
 try:
     try:
@@ -13,26 +13,3 @@ except Exception:
     del warnings
 
     version = "0.0.0"
-
-
-# We use LooseVersion to define major, minor, micro, but ignore any suffixes.
-def split_version(version):
-    pieces = [0, 0, 0]
-
-    try:
-        from distutils.version import LooseVersion
-
-        for j, piece in enumerate(LooseVersion(version).version[:3]):
-            pieces[j] = int(piece)
-
-    except Exception:
-        pass
-
-    return pieces
-
-
-major, minor, bugfix = split_version(version)
-
-del split_version  # clean up namespace.
-
-release = "dev" not in version

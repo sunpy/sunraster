@@ -1,8 +1,10 @@
-import astropy.units as u
 import numpy as np
 import pytest
+
+import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
+
 from ndcube.tests.helpers import assert_cubesequences_equal
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
