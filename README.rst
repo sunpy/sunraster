@@ -3,7 +3,6 @@ sunraster
 =========
 
 sunraster is an open-source Python library that provides the tools to read in and analyze spectrogram data.
------------------------------------------------------------------------------------------------------------
 
 |Latest Version| |codecov| |matrix| |DOI| |Powered by NumFOCUS| |Powered by SunPy|
 
