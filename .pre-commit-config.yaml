@@ -8,13 +8,13 @@ repos:
   -   repo: https://github.com/psf/black
       rev: 24.4.2
       hooks:
-      - id: black
-        exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
+        - id: black
+          exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
   -   repo: https://github.com/PyCQA/isort
       rev: 5.13.2
       hooks:
-      - id: isort
-        exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
+        - id: isort
+          exclude: ".*(.fits|.fts|.fit|.txt|.csv)$"
   -   repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.6.0
       hooks:
