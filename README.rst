@@ -1,6 +1,8 @@
-*********
+=========
 sunraster
-*********
+=========
+
+sunraster is an open-source Python library that provides the tools to read in and analyze spectrogram data.
 
 |Latest Version| |codecov| |matrix| |DOI| |Powered by NumFOCUS| |Powered by SunPy|
 
@@ -63,11 +65,41 @@ For more information or to ask questions about ``sunraster``, check out:
 .. _sunpy Matrix Channel: https://chat.openastronomy.org/#/room/#sunpy:openastronomy.org
 .. _sunpy Mailing List: https://groups.google.com/forum/#!forum/sunpy
 
+
+License
+=======
+
+This project is Copyright (c) The SunPy Community and licensed under
+the terms of the BSD 2-Clause license. This package is based upon
+the `Openastronomy packaging guide <https://github.com/OpenAstronomy/packaging-guide>`_
+which is licensed under the BSD 3-clause licence. See the licenses folder for
+more information.
+
 Contributing
 ============
 
-If you would like to get involved, start by joining the `SunPy mailing list`_ and check out the `Developers Guide`_ section of the SunPy docs.
-Help is always welcome so let us know what you like to work on, or check out the `issues page`_ for the list of known outstanding items.
+We love contributions! sunraster is open source,
+built on open source, and we'd love to have you hang out in our community.
+
+**Imposter syndrome disclaimer**: We want your help. No, really.
+
+There may be a little voice inside your head that is telling you that you're not
+ready to be an open source contributor; that your skills aren't nearly good
+enough to contribute. What could you possibly offer a project like this one?
+
+We assure you - the little voice in your head is wrong. If you can write code at
+all, you can contribute code to open source. Contributing to open source
+projects is a fantastic way to advance one's coding skills. Writing perfect code
+isn't the measure of a good developer (that would disqualify all of us!); it's
+trying to create something, making mistakes, and learning from those
+mistakes. That's how we all improve, and we are happy to help others learn.
+
+Being an open source contributor doesn't just mean writing code, either. You can
+help out by writing documentation, tests, or even giving feedback about the
+project (and yes - that includes giving feedback about the contribution
+process). Some of these contributions may be the most valuable to the project as
+a whole, because you're coming to the project with fresh eyes, so you can see
+the errors and assumptions that seasoned contributors have glossed over.
 
 For more information on contributing to sunraster, please read SunPy's `Newcomers' guide`_.
 
@@ -77,9 +109,9 @@ For more information on contributing to sunraster, please read SunPy's `Newcomer
 .. _issues page: https://github.com/sunpy/sunraster/issues
 .. _Newcomers' guide: https://docs.sunpy.org/en/latest/dev_guide/contents/newcomers.html
 
-Code of Conduct
-===============
 
-When you are interacting with the SunPy community you are asked to follow our `Code of Conduct`_.
-
-.. _Code of Conduct: https://sunpy.org/coc
+Note: This disclaimer was originally written by
+`Adrienne Lowe <https://github.com/adriennefriend>`_ for a
+`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
+sunraster based on its use in the README file for the
+`MetPy project <https://github.com/Unidata/MetPy>`_.

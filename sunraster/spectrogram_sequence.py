@@ -1,10 +1,12 @@
 import numbers
 import textwrap
 
-import astropy.units as u
 import numpy as np
+
+import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+
 from ndcube import NDCubeSequence
 
 from sunraster.spectrogram import (

@@ -1,6 +1,6 @@
-********************
-Welcome to sunraster
-********************
+***********************
+sunraster Documentation
+***********************
 
 Welcome to the ``sunraster`` User Guide.
 
@@ -30,6 +30,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
    installation
    data_types/index

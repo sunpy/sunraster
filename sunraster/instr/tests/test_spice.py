@@ -1,11 +1,13 @@
 import os.path
 
-import astropy.units as u
 import numpy as np
 import pytest
+
+import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time
+
 from ndcube import NDCollection
 from sunpy.coordinates import HeliographicStonyhurst
 
