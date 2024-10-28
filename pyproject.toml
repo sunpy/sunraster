@@ -36,6 +36,9 @@ tests = [
 ]
 docs = [
   "sphinx",
+  "sphinx-automodapi",
+  "sunpy-sphinx-theme",
+  "packaging",
   "sphinx_automodapi",
   "sphinx-changelog",
   "sphinx-gallery",
