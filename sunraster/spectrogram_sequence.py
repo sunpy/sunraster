@@ -270,7 +270,7 @@ class RasterSequence(SpectrogramSequence):
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = self._spectral_axis_name
             # Slit axis name.
-            w = self._single_scan_instrument_axes_types == None
+            w = self._single_scan_instrument_axes_types is None
             if w.sum() > 1:
                 raise ValueError(
                     "Unable to parse the WCS or common_axis to work out either or both the slit-step axis nor the spectral (aka the slit) axis."

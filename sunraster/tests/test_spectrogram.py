@@ -176,7 +176,7 @@ def test_exposure_time_error():
 
 
 @pytest.mark.parametrize(
-    "input_cube, undo, force, expected_cube",
+    ("input_cube", "undo", "force", "expected_cube"),
     [
         (spectrogram_DN0, False, False, spectrogram_DN_per_s0),
         (spectrogram_DN_per_s0, True, False, spectrogram_DN0),
@@ -200,7 +200,7 @@ def test_uncalculate_exposure_time_correction_error():
 
 
 @pytest.mark.parametrize(
-    "item,expected",
+    ("item", "expected"),
     [
         (0, np.array(["b", "c"])),
         (slice(0, 1), np.array(["a", "b", "c"])),

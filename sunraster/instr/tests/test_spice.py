@@ -216,11 +216,11 @@ def test_meta_observing_mode_id_solar_orbiter(spice_meta):
 
 
 def test_meta_darkmap_subtracted_onboard(spice_meta):
-    assert spice_meta.darkmap_subtracted_onboard == False
+    assert spice_meta.darkmap_subtracted_onboard is False
 
 
 def test_meta_bias_frame_subtracted_onboard(spice_meta):
-    assert spice_meta.bias_frame_subtracted_onboard == False
+    assert spice_meta.bias_frame_subtracted_onboard is False
 
 
 def test_meta_window_type(spice_meta):
