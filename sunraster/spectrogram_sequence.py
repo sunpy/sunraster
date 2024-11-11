@@ -66,7 +66,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         exposure_time = np.concatenate([raster.exposure_time for raster in self.data])
         try:
             return exposure_type(exposure_time)
-        except Exception:
+        except Exception:  # NOQA: BLE001
             return exposure_time
 
     @property
@@ -113,8 +113,8 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         converted_data_list = [cube.apply_exposure_time_correction(undo=undo, force=force) for cube in self.data]
         if copy is True:
             return self.__class__(converted_data_list, meta=self.meta, common_axis=self._common_axis)
-        else:
-            self.data = converted_data_list
+        self.data = converted_data_list
+        return None
 
     def __str__(self):
         data0 = self.data[0]
@@ -163,7 +163,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
             time_period = None
         if data0._longitude_name or data0._latitude_name:
             sc = self.celestial
-            component_names = dict([(item, key) for key, item in sc.representation_component_names.items()])
+            component_names = {item: key for key, item in sc.representation_component_names.items()}
             lon = getattr(sc, component_names["lon"])
             lat = getattr(sc, component_names["lat"])
             if sc.isscalar:
@@ -199,7 +199,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         )
 
     def __repr__(self):
-        return f"{object.__repr__(self)}\n{str(self)}"
+        return f"{object.__repr__(self)}\n{self!s}"
 
 
 class RasterSequence(SpectrogramSequence):
@@ -270,7 +270,7 @@ class RasterSequence(SpectrogramSequence):
             if len(spectral_raster_index) == 1:
                 self._single_scan_instrument_axes_types[spectral_raster_index] = self._spectral_axis_name
             # Slit axis name.
-            w = self._single_scan_instrument_axes_types is None
+            w = self._single_scan_instrument_axes_types == None  # NOQA: E711
             if w.sum() > 1:
                 raise ValueError(
                     "Unable to parse the WCS or common_axis to work out either or both the slit-step axis nor the spectral (aka the slit) axis."
@@ -312,17 +312,17 @@ class RasterSequence(SpectrogramSequence):
 
     @property
     def raster_instrument_axes_types(self):
-        return tuple([self._raster_axis_name] + list(self._single_scan_instrument_axes_types))
+        return (self._raster_axis_name, *list(self._single_scan_instrument_axes_types))
 
     @property
     def sns_instrument_axes_types(self):
-        return tuple(
-            [self._sns_axis_name]
-            + list(
+        return (
+            self._sns_axis_name,
+            *list(
                 self._single_scan_instrument_axes_types[
                     self._single_scan_instrument_axes_types != self._slit_step_axis_name
                 ]
-            )
+            ),
         )
 
 

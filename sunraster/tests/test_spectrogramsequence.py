@@ -300,7 +300,6 @@ def test_apply_exposure_time_correction(input_sequence, undo, force, expected_se
     ],
 )
 def test_raster_instrument_axes_types(input_sequence, expected_raster_axes_types):
-    print(input_sequence.raster_instrument_axes_types, expected_raster_axes_types)
     assert input_sequence.raster_instrument_axes_types == expected_raster_axes_types
 
 

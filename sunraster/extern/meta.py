@@ -78,7 +78,7 @@ class Meta(dict):
             axes = dict(axes)
             if not set(axes.keys()).issubset(set(header_keys)):
                 raise ValueError("All axes must correspond to a value in header under the same key.")
-            self._axes = dict([(key, self._sanitize_axis_value(axis, header[key], key)) for key, axis in axes.items()])
+            self._axes = {key: self._sanitize_axis_value(axis, header[key], key) for key, axis in axes.items()}
 
     def _sanitize_axis_value(self, axis, value, key):
         if axis is None:
@@ -100,7 +100,7 @@ class Meta(dict):
         shape_error_msg = f"{key} must have shape {tuple(self.shape[axis])} as it is associated with axes {axis}"
         if len(axis) == 1 and not hasattr(value, "__len__") or len(axis) != 1 and not hasattr(value, "shape"):
             raise TypeError(shape_error_msg)
-        elif len(axis) == 1:
+        if len(axis) == 1:
             meta_shape = (len(value),)
         else:
             meta_shape = value.shape
@@ -189,51 +189,50 @@ class Meta(dict):
         # If item is single string, slicing is simple.
         if isinstance(item, str):
             return super().__getitem__(item)
-        elif self.shape is None:
+        if self.shape is None:
             raise TypeError("Meta object does not have a shape and so cannot be sliced.")
-        else:
-            new_meta = copy.deepcopy(self)
-            # Convert item to array of ints and slices for consistent behaviour.
-            if isinstance(item, (numbers.Integral, slice)):
-                item = [item]
-            item = np.array(list(item) + [slice(None)] * (len(self.shape) - len(item)), dtype=object)
+        new_meta = copy.deepcopy(self)
+        # Convert item to array of ints and slices for consistent behaviour.
+        if isinstance(item, (numbers.Integral, slice)):
+            item = [item]
+        item = np.array(list(item) + [slice(None)] * (len(self.shape) - len(item)), dtype=object)
 
-            # Edit data shape and calculate which axis will be dropped.
-            dropped_axes = np.zeros(len(self.shape), dtype=bool)
-            new_shape = new_meta.shape
-            for i, axis_item in enumerate(item):
-                if isinstance(axis_item, numbers.Integral):
-                    dropped_axes[i] = True
-                elif isinstance(axis_item, slice):
-                    start = axis_item.start
-                    if start is None:
-                        start = 0
-                    if start < 0:
-                        start = self.shape[i] - start
-                    stop = axis_item.stop
-                    if stop is None:
-                        stop = self.shape[i]
-                    if stop < 0:
-                        stop = self.shape[i] - stop
-                    new_shape[i] = stop - start
-                else:
-                    raise TypeError("Unrecognized slice type. " "Must be an int, slice and tuple of the same.")
-            new_meta._data_shape = new_shape[np.invert(dropped_axes)]
+        # Edit data shape and calculate which axis will be dropped.
+        dropped_axes = np.zeros(len(self.shape), dtype=bool)
+        new_shape = new_meta.shape
+        for i, axis_item in enumerate(item):
+            if isinstance(axis_item, numbers.Integral):
+                dropped_axes[i] = True
+            elif isinstance(axis_item, slice):
+                start = axis_item.start
+                if start is None:
+                    start = 0
+                if start < 0:
+                    start = self.shape[i] - start
+                stop = axis_item.stop
+                if stop is None:
+                    stop = self.shape[i]
+                if stop < 0:
+                    stop = self.shape[i] - stop
+                new_shape[i] = stop - start
+            else:
+                raise TypeError("Unrecognized slice type. " "Must be an int, slice and tuple of the same.")
+        new_meta._data_shape = new_shape[np.invert(dropped_axes)]
 
-            # Calculate the cumulative number of dropped axes.
-            cumul_dropped_axes = np.cumsum(dropped_axes)
+        # Calculate the cumulative number of dropped axes.
+        cumul_dropped_axes = np.cumsum(dropped_axes)
 
-            # Slice all metadata associated with axes.
-            for key, value in self.items():
-                axis = self.axes.get(key, None)
-                if axis is not None:
-                    new_item = tuple(item[axis])
-                    new_value = value[new_item[0]] if len(new_item) == 1 else value[new_item]
-                    new_axis = np.array([-1 if isinstance(i, numbers.Integral) else a for i, a in zip(new_item, axis)])
-                    new_axis -= cumul_dropped_axes[axis]
-                    new_axis = new_axis[new_axis >= 0]
-                    if len(new_axis) == 0:
-                        new_axis = None
-                    new_meta.add(key, new_value, self.comments.get(key, None), new_axis, overwrite=True)
+        # Slice all metadata associated with axes.
+        for key, value in self.items():
+            axis = self.axes.get(key, None)
+            if axis is not None:
+                new_item = tuple(item[axis])
+                new_value = value[new_item[0]] if len(new_item) == 1 else value[new_item]
+                new_axis = np.array([-1 if isinstance(i, numbers.Integral) else a for i, a in zip(new_item, axis)])
+                new_axis -= cumul_dropped_axes[axis]
+                new_axis = new_axis[new_axis >= 0]
+                if len(new_axis) == 0:
+                    new_axis = None
+                new_meta.add(key, new_value, self.comments.get(key, None), new_axis, overwrite=True)
 
-            return new_meta
+        return new_meta

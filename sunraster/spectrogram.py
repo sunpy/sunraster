@@ -268,7 +268,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 raise err
         try:
             sc = self.celestial
-            component_names = dict([(item, key) for key, item in sc.representation_component_names.items()])
+            component_names = {item: key for key, item in sc.representation_component_names.items()}
             lon = getattr(sc, component_names["lon"])
             lat = getattr(sc, component_names["lat"])
             if sc.isscalar:
@@ -309,7 +309,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         )
 
     def __repr__(self):
-        return f"{object.__repr__(self)}\n{str(self)}"
+        return f"{object.__repr__(self)}\n{self!s}"
 
     def __getitem__(self, item):
         # Slice SpectrogramCube using parent slicing.
@@ -445,36 +445,33 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def _get_axis_coord(self, axis_name, coord_loc):
         if coord_loc == "wcs":
             return self.axis_world_coords(axis_name)[0]
-        elif coord_loc == "extra_coords":
+        if coord_loc == "extra_coords":
             return self.axis_world_coords(wcs=self.extra_coords[axis_name])[0]
-        elif coord_loc == "global_coords":
+        if coord_loc == "global_coords":
             return self.global_coords[axis_name]
-        elif coord_loc == "meta":
+        if coord_loc == "meta":
             return self.meta[axis_name]
-        else:
-            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
+        raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
     def _get_axis_coord_index(self, axis_name, coord_loc):
         if coord_loc == "wcs":
             coord_pix_axes = nuw.physical_type_to_pixel_axes(axis_name, self.wcs)
             coord_array_axes = nuw.convert_between_array_and_pixel_axes(coord_pix_axes, len(self.dimensions))
             return coord_array_axes.tolist()[0]
-        elif coord_loc == "extra_coords":
+        if coord_loc == "extra_coords":
             return self.extra_coords[axis_name].mapping[0]
-        elif coord_loc == "meta":
+        if coord_loc == "meta":
             return self.meta.axes[axis_name]
-        else:
-            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
+        raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
     def _get_axis_coord_values(self, axis_name, coord_loc):
         if coord_loc == "wcs":
             return self.axis_world_coords_values(axis_name)[0]
-        elif coord_loc == "extra_coords":
+        if coord_loc == "extra_coords":
             return self.axis_world_coords_values(wcs=self.extra_coords[axis_name])[0]
-        elif coord_loc == "global_coords":
+        if coord_loc == "global_coords":
             return self.global_coords[axis_name]
-        else:
-            raise ValueError(f"{coord_loc} is not a valid coordinate location.")
+        raise ValueError(f"{coord_loc} is not a valid coordinate location.")
 
 
 def _find_axis_name(supported_names, world_axis_physical_types, extra_coords, meta):

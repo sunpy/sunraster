@@ -153,7 +153,7 @@ def test_spectral_axis():
 
 
 def test_spectral_axis_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="A"):
         spectrogram_NO_COORDS.spectral_axis
 
 
@@ -162,7 +162,7 @@ def test_time():
 
 
 def test_time_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Time axis not found. If in extra_coords, axis"):
         spectrogram_NO_COORDS.time
 
 
@@ -171,7 +171,7 @@ def test_exposure_time():
 
 
 def test_exposure_time_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Exposure time axis not found."):
         spectrogram_NO_COORDS.exposure_time
 
 
@@ -190,12 +190,12 @@ def test_apply_exposure_time_correction(input_cube, undo, force, expected_cube):
 
 
 def test_calculate_exposure_time_correction_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Exposure time correction has probably already been "):
         sunraster.spectrogram._calculate_exposure_time_correction(SOURCE_DATA_DN, None, u.s, EXPOSURE_TIME)
 
 
 def test_uncalculate_exposure_time_correction_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Exposure time correction has probably already been undone since"):
         sunraster.spectrogram._uncalculate_exposure_time_correction(SOURCE_DATA_DN, None, u.ct, EXPOSURE_TIME)
 
 

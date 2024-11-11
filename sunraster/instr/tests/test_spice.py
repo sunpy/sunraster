@@ -1,5 +1,3 @@
-import os.path
-
 import numpy as np
 import pytest
 
@@ -13,7 +11,7 @@ from sunpy.coordinates import HeliographicStonyhurst
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
 from sunraster.instr.spice import SPICEMeta, read_spice_l2_fits
-from sunraster.tests import test_data_dir
+from sunraster.tests import TEST_DATA_PATH
 
 READ_SPICE_L2_FITS_RETURN_TYPE = NDCollection
 SPECTRAL_WINDOW = ("WINDOW0_74.73", "Extension name")
@@ -53,35 +51,35 @@ DATE_START_SUN = ("2020-06-02T07:43:26.686", "[UTC] DATE-BEG - SUN_TIME")
 @pytest.fixture
 def spice_fits_header():
     hdr = fits.Header()
-    hdr.append(tuple(["EXTNAME"] + list(SPECTRAL_WINDOW)))
-    hdr.append(tuple(["DETECTOR"] + list(DETECTOR)))
-    hdr.append(tuple(["INSTRUME"] + list(INSTRUMENT)))
-    hdr.append(tuple(["OBSRVTRY"] + list(OBSERVATORY)))
-    hdr.append(tuple(["LEVEL"] + list(PROCESSING_LEVEL)))
-    hdr.append(tuple(["RSUN_REF"] + list(RSUN_METERS)))
-    hdr.append(tuple(["RSUN_ARC"] + list(RSUN_ANGULAR)))
-    hdr.append(tuple(["OBS_ID"] + list(OBSERVING_MODE_ID)))
-    hdr.append(tuple(["OBS_VR"] + list(OBSERVATORY_RADIAL_VELOCITY)))
-    hdr.append(tuple(["DSUN_OBS"] + list(DISTANCE_TO_SUN)))
-    hdr.append(tuple(["DATE-OBS"] + list(DATE_REFERENCE)))
-    hdr.append(tuple(["DATE-BEG"] + list(DATE_START)))
-    hdr.append(tuple(["DATE-END"] + list(DATE_END)))
-    hdr.append(tuple(["HGLN_OBS"] + list(HGLN_OBS)))
-    hdr.append(tuple(["HGLT_OBS"] + list(HGLT_OBS)))
-    hdr.append(tuple(["SPIOBSID"] + list(SPICE_OBSERVING_MODE_ID)))
-    hdr.append(tuple(["DARKMAP"] + list(DARKMAP)))
-    hdr.append(tuple(["BLACKLEV"] + list(BLACKLEV)))
-    hdr.append(tuple(["WIN_TYPE"] + list(WINDOW_TYPE)))
-    hdr.append(tuple(["WINTABID"] + list(WINDOW_TABLE_ID)))
-    hdr.append(tuple(["SLIT_ID"] + list(SLIT_ID)))
-    hdr.append(tuple(["SLIT_WID"] + list(SLIT_WIDTH)))
-    hdr.append(tuple(["DUMBBELL"] + list(DUMBBELL)))
-    hdr.append(tuple(["SOLAR_B0"] + list(SOLAR_B0)))
-    hdr.append(tuple(["SOLAR_P0"] + list(SOLAR_P0)))
-    hdr.append(tuple(["SOLAR_EP"] + list(SOLAR_EP)))
-    hdr.append(tuple(["CAR_ROT"] + list(CARRINGTON_ROTATION_NUMBER)))
-    hdr.append(tuple(["DATE_EAR"] + list(DATE_START_EARTH)))
-    hdr.append(tuple(["DATE_SUN"] + list(DATE_START_SUN)))
+    hdr.append(("EXTNAME", *list(SPECTRAL_WINDOW)))
+    hdr.append(("DETECTOR", *list(DETECTOR)))
+    hdr.append(("INSTRUME", *list(INSTRUMENT)))
+    hdr.append(("OBSRVTRY", *list(OBSERVATORY)))
+    hdr.append(("LEVEL", *list(PROCESSING_LEVEL)))
+    hdr.append(("RSUN_REF", *list(RSUN_METERS)))
+    hdr.append(("RSUN_ARC", *list(RSUN_ANGULAR)))
+    hdr.append(("OBS_ID", *list(OBSERVING_MODE_ID)))
+    hdr.append(("OBS_VR", *list(OBSERVATORY_RADIAL_VELOCITY)))
+    hdr.append(("DSUN_OBS", *list(DISTANCE_TO_SUN)))
+    hdr.append(("DATE-OBS", *list(DATE_REFERENCE)))
+    hdr.append(("DATE-BEG", *list(DATE_START)))
+    hdr.append(("DATE-END", *list(DATE_END)))
+    hdr.append(("HGLN_OBS", *list(HGLN_OBS)))
+    hdr.append(("HGLT_OBS", *list(HGLT_OBS)))
+    hdr.append(("SPIOBSID", *list(SPICE_OBSERVING_MODE_ID)))
+    hdr.append(("DARKMAP", *list(DARKMAP)))
+    hdr.append(("BLACKLEV", *list(BLACKLEV)))
+    hdr.append(("WIN_TYPE", *list(WINDOW_TYPE)))
+    hdr.append(("WINTABID", *list(WINDOW_TABLE_ID)))
+    hdr.append(("SLIT_ID", *list(SLIT_ID)))
+    hdr.append(("SLIT_WID", *list(SLIT_WIDTH)))
+    hdr.append(("DUMBBELL", *list(DUMBBELL)))
+    hdr.append(("SOLAR_B0", *list(SOLAR_B0)))
+    hdr.append(("SOLAR_P0", *list(SOLAR_P0)))
+    hdr.append(("SOLAR_EP", *list(SOLAR_EP)))
+    hdr.append(("CAR_ROT", *list(CARRINGTON_ROTATION_NUMBER)))
+    hdr.append(("DATE_EAR", *list(DATE_START_EARTH)))
+    hdr.append(("DATE_SUN", *list(DATE_START_SUN)))
     return hdr
 
 
@@ -101,20 +99,21 @@ def spice_rasdb_filename(tmp_path):
 
     A new FITS file is saved in a tmp file path.
     """
+    rng_gen = np.random.default_rng()
     filename = "solo_L2_spice-n-ras-db_20200602T081733_V01_12583760-000.fits"
-    with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
+    with fits.open(TEST_DATA_PATH / filename) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(fits.PrimaryHDU(np.random.rand(1, 48, 832, 30), header=hdulist[0].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 48, 832, 30), header=hdulist[1].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[2].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(1, 56, 64, 30), header=hdulist[3].header))
+        new_hdulist.append(fits.PrimaryHDU(rng_gen.random((1, 48, 832, 30)), header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(rng_gen.random((1, 48, 832, 30)), header=hdulist[1].header))
+        new_hdulist.append(fits.ImageHDU(rng_gen.random((1, 56, 64, 30)), header=hdulist[2].header))
+        new_hdulist.append(fits.ImageHDU(rng_gen.random((1, 56, 64, 30)), header=hdulist[3].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
-        if not os.path.exists(tmp_spice_path):
+        if not tmp_spice_path.exists():
             tmp_spice_path.mkdir()
-        new_filename = os.path.join(tmp_spice_path, filename)
+        new_filename = tmp_spice_path / filename
         new_hdulist.writeto(new_filename, overwrite=True)
-    return new_filename
+    return str(new_filename)
 
 
 @pytest.fixture
@@ -124,16 +123,17 @@ def spice_sns_filename(tmp_path):
 
     A new FITS file is saved in a tmp file path.
     """
+    rng_gen = np.random.default_rng()
     filename = "solo_L2_spice-n-sit_20200620T235901_V01_16777431-000.fits"
-    with fits.open(os.path.join(test_data_dir, filename)) as hdulist:
+    with fits.open(TEST_DATA_PATH / filename) as hdulist:
         new_hdulist = fits.HDUList()
-        new_hdulist.append(fits.PrimaryHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[0].header))
-        new_hdulist.append(fits.ImageHDU(np.random.rand(32, 48, 1024, 1), header=hdulist[1].header))
+        new_hdulist.append(fits.PrimaryHDU(rng_gen.random((32, 48, 1024, 1)), header=hdulist[0].header))
+        new_hdulist.append(fits.ImageHDU(rng_gen.random((32, 48, 1024, 1)), header=hdulist[1].header))
         new_hdulist.append(hdulist[-1])
         tmp_spice_path = tmp_path / "spice"
-        if not os.path.exists(tmp_spice_path):
+        if not tmp_spice_path.exists():
             tmp_spice_path.mkdir()
-        new_filename = os.path.join(tmp_spice_path, filename)
+        new_filename = tmp_spice_path / filename
         new_hdulist.writeto(new_filename, output_verify="fix+ignore", overwrite=True)
     return new_filename
 
@@ -345,6 +345,6 @@ def test_read_spice_l2_fits_multiple_files_dumbbells(spice_rasdb_filename):
 
 
 def test_read_spice_l2_fits_incompatible_files(spice_rasdb_filename, spice_sns_filename):
-    with pytest.raises(ValueError):
-        filenames = [spice_rasdb_filename, spice_sns_filename]
+    filenames = [spice_rasdb_filename, spice_sns_filename]
+    with pytest.raises(ValueError, match="A"):
         read_spice_l2_fits(filenames)
