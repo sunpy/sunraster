@@ -39,11 +39,10 @@ docs = [
   "sphinx-automodapi",
   "sunpy-sphinx-theme",
   "packaging",
-  "sphinx_automodapi",
   "sphinx-changelog",
   "sphinx-gallery",
-  "sunpy-sphinx-theme"
 ]
+
 [project.urls]
 repository = "https://sunpy.org"
 
