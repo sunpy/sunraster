@@ -36,19 +36,13 @@ tests = [
 ]
 docs = [
   "sphinx",
-<<<<<<<
-=======
   "sphinx-automodapi",
   "sunpy-sphinx-theme",
   "packaging",
-]
-[project.urls]
->>>>>>>
-  "sphinx_automodapi",
   "sphinx-changelog",
   "sphinx-gallery",
-  "sunpy-sphinx-theme"
 ]
+
 [project.urls]
 repository = "https://sunpy.org"
 
