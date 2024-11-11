@@ -244,7 +244,7 @@ def test_exposure_time():
 
 
 @pytest.mark.parametrize(
-    "input_sequence, undo, force, expected_sequence",
+    ("input_sequence", "undo", "force", "expected_sequence"),
     [
         (sequence_DN, False, False, sequence_DN_per_s),
         (sequence_DN_per_s, True, False, sequence_DN),
@@ -258,7 +258,7 @@ def test_apply_exposure_time_correction(input_sequence, undo, force, expected_se
 
 
 @pytest.mark.parametrize(
-    "input_sequence, expected_raster_axes_types",
+    ("input_sequence", "expected_raster_axes_types"),
     [
         (
             sequence_DN0,
@@ -300,12 +300,11 @@ def test_apply_exposure_time_correction(input_sequence, undo, force, expected_se
     ],
 )
 def test_raster_instrument_axes_types(input_sequence, expected_raster_axes_types):
-    print(input_sequence.raster_instrument_axes_types, expected_raster_axes_types)
     assert input_sequence.raster_instrument_axes_types == expected_raster_axes_types
 
 
 @pytest.mark.parametrize(
-    "input_sequence, expected_sns_axes_types",
+    ("input_sequence", "expected_sns_axes_types"),
     [
         (
             sequence_DN0,

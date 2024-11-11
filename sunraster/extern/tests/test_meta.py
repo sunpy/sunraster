@@ -26,7 +26,7 @@ def assert_metas_equal(test_input, expected_output):
         for test_value, expected_value in zip(test_input.values(), expected_output.values()):
             try:
                 assert test_value == expected_value
-            except ValueError as err:
+            except ValueError as err:  # NOQA: PERF203
                 if multi_element_msg in err.args[0]:
                     assert np.allclose(test_value, expected_value)
         # Check axes are the same.
@@ -109,7 +109,6 @@ def test_slice_away_independent_axis(basic_meta):
     axes["c"] -= 1
     axes["d"] -= 1
     shape = meta.shape[1:]
-    print(values, comments, axes, shape)
     expected = Meta(values, comments, axes, shape)
     # Compare output and expected.
     assert_metas_equal(output, expected)
@@ -117,10 +116,8 @@ def test_slice_away_independent_axis(basic_meta):
 
 def test_slice_dependent_axes(basic_meta):
     meta = basic_meta
-    print(meta["a"])
     # Get output
     output = meta[:, 1:3, 1]
-    print(meta["a"])
     # Build expected result.
     values = dict(list(meta.items()))
     values["c"] = values["c"][1:3, 1]
@@ -175,13 +172,13 @@ def test_add_overwrite(basic_meta):
 
 def test_add_overwrite_error(basic_meta):
     meta = basic_meta
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="A"):
         meta.add("a", "world", None, None)
 
 
 def test_add_axis_without_shape(no_shape_meta):
     meta = no_shape_meta
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="A"):
         meta.add("z", [100], axis=0)
 
 
