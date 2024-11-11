@@ -62,7 +62,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
     if len(filenames) > 1:
         # Wrap windows from first file in lists
         # so windows from other files can be appended.
-        cube_lists = dict([(key, [value]) for key, value in first_cubes.items()])
+        cube_lists = {key: [value] for key, value in first_cubes.items()}
         # Get info from first file for consistency checks between files.
         first_meta = _get_meta_from_last_added(cube_lists)
         first_obs_id = _get_obsid(first_meta)
@@ -79,7 +79,7 @@ def read_spice_l2_fits(filenames, windows=None, memmap=True, read_dumbbells=Fals
                     output=cube_lists,
                     spice_id=first_obs_id,
                 )
-            except ValueError as err:
+            except ValueError as err:  # NOQA: PERF203
                 err_message = err.args[0]
                 if INCORRECT_OBSID_MESSAGE in err_message:
                     this_obs_id = err_message.split()[-1]
@@ -291,7 +291,7 @@ class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
         )
 
     def __repr__(self):
-        return f"{object.__repr__(self)}\n{str(self)}"
+        return f"{object.__repr__(self)}\n{self!s}"
 
     # ---------- Inherited ABC properties ----------
     @property

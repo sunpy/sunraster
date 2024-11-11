@@ -2,10 +2,11 @@
 This module contains package tests.
 """
 
-import os.path
+from pathlib import Path
 
 import sunraster
 
-__all__ = ["test_data_path"]
+__all__ = ["TEST_DATA_PATH"]
 
-test_data_dir = os.path.join(os.path.dirname(sunraster.__file__), "tests", "data")
+
+TEST_DATA_PATH = Path(sunraster.__file__).parent / "tests" / "data"
