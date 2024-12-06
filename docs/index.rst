@@ -31,6 +31,14 @@ Contents
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+<<<<<<<
+=======
+
+   whatsnew/index
+
+Indices and tables
+==================
+>>>>>>>
 
    installation
    data_types/index
