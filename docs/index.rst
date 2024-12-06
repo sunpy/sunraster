@@ -25,9 +25,6 @@ It will describe the different data classes, as well as how to install ``sunrast
 Contents
 ========
 
-* :ref:`genindex`
-* :ref:`modindex`
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -35,4 +32,4 @@ Contents
    installation
    data_types/index
    api
-   changelog
+   whatsnew/index

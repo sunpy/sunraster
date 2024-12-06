@@ -16,26 +16,22 @@ select = [
   "PT",
 ]
 extend-ignore = [
-  # pycodestyle
+  # pycodestyle (E, W)
   "E501", # ignore line length will use a formatter instead
-  "E712", # Avoid equality comparisons to True; use if {cond}: for truth checks
-  "E721", # type comparison Use is and is not for type comparisons, or isinstance() for isinstance checks
-  # upgrades
+  # pyupgrade (UP)
   "UP038", # Use | in isinstance - not compatible with models and is slower
   # pytest (PT)
   "PT001", # Always use pytest.fixture()
-  "PT004", # Fixtures which don't return anything should have leading _
-  "PT011",  # except(ValueRaises) is too broad
   "PT023", # Always use () on pytest decorators
-  # flake8-pie
+  # flake8-pie (PIE)
   "PIE808", # Disallow passing 0 as the first argument to range
-  # flake8-use-pathlib
+  # flake8-use-pathlib (PTH)
   "PTH123", # open() should be replaced by Path.open()
-  # Ruff
+  # Ruff (RUF)
   "RUF003", # Ignore ambiguous quote marks, doesn't allow ' in comments
-  "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
-  "RUF013",  # PEP 484 prohibits implicit `Optional`
-  "RUF015",  # Prefer `next(iter(...))` over single element slice
+  "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+  "RUF013", # PEP 484 prohibits implicit `Optional`
+  "RUF015", # Prefer `next(iter(...))` over single element slice
 ]
 
 [lint.per-file-ignores]
