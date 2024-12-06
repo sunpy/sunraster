@@ -63,86 +63,6 @@ exclude = ["sunraster._dev*"]
 [tool.setuptools_scm]
 write_to = "sunraster/_version.py"
 
-[ tool.gilesbot ]
-  [ tool.gilesbot.pull_requests ]
-    enabled = true
-
-  [ tool.gilesbot.towncrier_changelog ]
-    enabled = true
-    verify_pr_number = true
-    changelog_skip_label = "No Changelog Entry Needed"
-    help_url = "https://github.com/sunpy/sunraster/blob/main/changelog/README.rst"
-    changelog_missing_long = "There isn't a changelog file in this pull request. Please add a changelog file to the `changelog/` directory following the instructions in the changelog [README](https://github.com/sunpy/sunraster/blob/main/changelog/README.rst)."
-    type_incorrect_long = "The changelog file you added is not one of the allowed types. Please use one of the types described in the changelog [README](https://github.com/sunpy/sunraster/blob/main/changelog/README.rst)"
-    number_incorrect_long = "The number in the changelog file you added does not match the number of this pull request. Please rename the file."
-
-[tool.towncrier]
-    package = "sunraster"
-    filename = "CHANGELOG.rst"
-    directory = "changelog/"
-    issue_format = "`#{issue} <https://github.com/sunpy/sunraster/pull/{issue}>`__"
-
-    [[tool.towncrier.type]]
-        directory = "breaking"
-        name = "Breaking Changes"
-        showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "deprecation"
-      name = "Deprecations"
-      showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "removal"
-      name = "Removals"
-      showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "feature"
-      name = "New Features"
-      showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "bugfix"
-      name = "Bug Fixes"
-      showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "doc"
-      name = "Documentation"
-      showcontent = true
-
-    [[tool.towncrier.type]]
-      directory = "trivial"
-      name = "Internal Changes"
-      showcontent = true
-
-[tool.black]
-line-length = 120
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | docs
-    | .history
-<<<<<<<
-  )/
-)
-'''
-=======
-
-[tool.setuptools_scm]
-write_to = "sunraster/_version.py"
-
 [tool.gilesbot]
   [tool.gilesbot.pull_requests]
   enabled = true
@@ -202,4 +122,3 @@ write_to = "sunraster/_version.py"
   directory = "trivial"
   name = "Internal Changes"
   showcontent = true
->>>>>>>
