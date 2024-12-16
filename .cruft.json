@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/sunpy/package-template",
-  "commit": "3737aa309d2a695ada046c7868c5683213003f3d",
+  "commit": "c66950b04d0a535002d122c9d5bc0f23534b530c",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -10,12 +10,12 @@
       "author_name": "The SunPy Community",
       "author_email": "sunpy@googlegroups.com",
       "project_url": "https://sunpy.org",
-      "github_repo": "sunpy/radiospectra",
-      "sourcecode_url": "https://github.com/sunpy/radiospectra",
+      "github_repo": "sunpy/sunraster",
+      "sourcecode_url": "https://github.com/sunpy/sunraster",
       "download_url": "https://pypi.org/project/sunraster",
-      "documentation_url": "https://docs.sunpy.org/projects/radiospectra",
-      "changelog_url": "https://docs.sunpy.org/projects/radiospectra/en/stable/whatsnew/changelog.html",
-      "issue_tracker_url": "https://github.com/sunpy/radiospectra/issues/",
+      "documentation_url": "https://docs.sunpy.org/projects/sunraster",
+      "changelog_url": "https://docs.sunpy.org/projects/sunraster/en/stable/whatsnew/changelog.html",
+      "issue_tracker_url": "https://github.com/sunpy/sunraster/issues",
       "license": "BSD 2-Clause",
       "minimum_python_version": "3.10",
       "use_compiled_extensions": "n",
