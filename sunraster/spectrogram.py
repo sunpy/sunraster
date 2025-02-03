@@ -11,8 +11,6 @@ from astropy.time import Time
 import ndcube.utils.wcs as nuw
 from ndcube.ndcube import NDCube
 
-from sunraster.meta import Meta
-
 __all__ = ["SpectrogramCube"]
 
 
@@ -250,9 +248,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             raise ValueError("Length of instrument_axes must match number of data axes.")
         else:
             self.instrument_axes = np.asarray(instrument_axes, dtype=str)
-        # TODO: Remove after ndcube 2.1
-        if not isinstance(self.meta, Meta):
-            self.meta = Meta(self.meta, data_shape=self.data.shape)
 
     def __str__(self):
         try:
@@ -335,15 +330,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             if len(instrument_axes) == 0:
                 instrument_axes = None
         result.instrument_axes = instrument_axes
-        # TODO: Remove for ndcube 2.1
-        # Slice metadata if possible.
-        try:
-            result.meta = self.meta[item]
-        except TypeError as err:
-            if "unhashable type" not in err.args[0]:
-                raise err
-        except KeyError:
-            pass
         return result
 
     @property

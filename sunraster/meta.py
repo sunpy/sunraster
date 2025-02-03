@@ -1,36 +1,42 @@
 import abc
 
-from sunraster.extern.meta import Meta
+from ndcube.meta import NDMeta
 
-__all__ = ["Meta", "RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
+__all__ = ["RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
 
-class MetaABC(abc.ABCMeta):
-    @abc.abstractproperty
+class MetaABC(NDMeta):
+    @property
+    @abc.abstractmethod
     def detector(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def instrument(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def observatory(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def processing_level(self):
         """
         The level to which the data has been processed.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def observer_location(self):
         """
         Coordinate of observatory location based on header info.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def date_reference(self):
         """
         The base time from which time axis values are measured.
@@ -38,15 +44,18 @@ class MetaABC(abc.ABCMeta):
         Often the same or very similar to date_start.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def date_start(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def date_end(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def version(self):
         """
         The data version.
@@ -54,19 +63,22 @@ class MetaABC(abc.ABCMeta):
 
 
 class RemoteSensorMetaABC(MetaABC):
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def rsun_meters(self):
         """
         Solar radius in units of length.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def rsun_angular(self):
         """
         Solar radius in angular units as seen from observatory.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def distance_to_sun(self):
         """
         Distance to Sun center from observatory.
@@ -74,11 +86,13 @@ class RemoteSensorMetaABC(MetaABC):
 
 
 class SlitSpectrographMetaABC(RemoteSensorMetaABC):
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def spectral_window(self):
         pass
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def observing_mode_id(self):
         """
         Unique identifier for the observing mode.
@@ -86,7 +100,8 @@ class SlitSpectrographMetaABC(RemoteSensorMetaABC):
         Often referred to as OBS ID.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def observer_radial_velocity(self):
         """
         Velocity of observatory in direction of source.
