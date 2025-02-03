@@ -1,11 +1,11 @@
 import abc
 
-from ndcube.meta import NDMeta
+from ndcube.meta import NDMetaABC
 
 __all__ = ["RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
 
-class MetaABC(NDMeta):
+class MetaABC(NDMetaABC):
     @property
     @abc.abstractmethod
     def detector(self):

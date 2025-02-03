@@ -11,9 +11,10 @@ from astropy.time import Time
 from astropy.wcs import WCS
 
 from ndcube import NDCollection
+from ndcube.meta import NDMeta
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
-from sunraster.meta import Meta, SlitSpectrographMetaABC
+from sunraster.meta import SlitSpectrographMetaABC
 
 __all__ = ["read_spice_l2_fits", "SPICEMeta"]
 
@@ -216,7 +217,7 @@ def _read_single_spice_l2_fits(
                 # Define metadata object.
                 meta = SPICEMeta(
                     hdu.header,
-                    comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
+                    # comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
                     data_shape=hdu.data.shape,
                 )
                 # Rename WCS time axis to time.
@@ -252,7 +253,7 @@ def _convert_fits_comments_to_key_value_pairs(fits_header):
     return [(key, fits_header.comments[key]) for key in keys]
 
 
-class SPICEMeta(Meta, metaclass=SlitSpectrographMetaABC):
+class SPICEMeta(SlitSpectrographMetaABC, NDMeta):
     # ---------- SPICE-specific convenience methods ----------
     def _get_unit(self, key):
         if comment := self.comments.get(key):
