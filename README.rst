@@ -2,21 +2,7 @@
 sunraster
 =========
 
-sunraster is an open-source Python library that provides the tools to read in and analyze spectrogram data.
-
-<<<<<<<
 |Latest Version| |codecov| |matrix| |DOI| |Powered by NumFOCUS| |Powered by SunPy|
-=======
-Usage of Generative AI
-======================
-
-We expect authentic engagement in our community.
-Be wary of posting output from Large Language Models or similar generative AI as comments on GitHub or any other platform, as such comments tend to be formulaic and low quality content.
-If you use generative AI tools as an aid in developing code or documentation changes, ensure that you fully understand the proposed changes and can explain why they are the correct approach and an improvement to the current state.
-
-License
--------
->>>>>>>
 
 .. |Latest Version| image:: https://img.shields.io/pypi/v/sunraster.svg
    :target: https://pypi.python.org/pypi/sunraster/
@@ -86,6 +72,13 @@ the terms of the BSD 2-Clause license. This package is based upon
 the `Openastronomy packaging guide <https://github.com/OpenAstronomy/packaging-guide>`_
 which is licensed under the BSD 3-clause licence. See the licenses folder for
 more information.
+
+Usage of Generative AI
+======================
+
+We expect authentic engagement in our community.
+Be wary of posting output from Large Language Models or similar generative AI as comments on GitHub or any other platform, as such comments tend to be formulaic and low quality content.
+If you use generative AI tools as an aid in developing code or documentation changes, ensure that you fully understand the proposed changes and can explain why they are the correct approach and an improvement to the current state.
 
 Contributing
 ============
