@@ -64,11 +64,8 @@ jobs:
         - windows: py311
         - macos: py310
         - linux: py310-oldestdeps
-<<<<<<<
-        - linux: py312-devdeps
-=======
-        - linux: py311-devdeps
->>>>>>>
+        - linux: py313-devdeps
+
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -81,15 +78,6 @@ jobs:
       pytest: false
       toxdeps: tox-pypi-filter
       cache-key: docs-${{ github.run_id }}
-<<<<<<<
-=======
-      envs: |
-        - linux: build_docs
-
-  publish:
-    # Build wheels on PRs only when labelled. Releases will only be published if tagged ^v.*
-    # see https://github-actions-workflows.openastronomy.org/en/latest/publish.html#upload-to-pypi
->>>>>>>
       libraries: |
         apt:
           - graphviz
