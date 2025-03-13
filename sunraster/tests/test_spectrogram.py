@@ -5,11 +5,11 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
 
+from ndcube.meta import NDMeta
 from ndcube.tests.helpers import assert_cubes_equal
 
 import sunraster.spectrogram
 from sunraster import SpectrogramCube
-from sunraster.extern.meta import Meta
 
 # Define a sample wcs object
 H0 = {
@@ -77,7 +77,7 @@ EXTRA_COORDS1 = [
         (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
 ]
-meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
+meta_exposure0 = NDMeta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
 
 spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN, wcs=WCS0, unit=u.ct, uncertainty=SOURCE_UNCERTAINTY_DN, meta=meta_exposure0
@@ -213,7 +213,7 @@ def test_instrument_axes_slicing(item, expected):
     assert all(sliced_cube.instrument_axes == expected)
 
 
-def test_ndcube_components_after_slicing():
+def test_components_after_slicing():
     """
     Tests all cube components are correctly propagated by slicing.
     """
