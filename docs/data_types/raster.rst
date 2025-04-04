@@ -37,7 +37,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> from datetime import datetime, timedelta
     >>> from astropy.time import Time
     >>> from sunraster import SpectrogramCube
-    >>> from sunraster.meta import Meta
+    >>> from ndcube.meta import NDMeta
 
     >>> # Define primary data array and WCS object.
     >>> data = np.ones((3, 4, 5))
@@ -50,7 +50,7 @@ As before, we will add the timestamps and exposure times as extra coordinates.
     >>> mask = np.zeros(data.shape, dtype=bool)
     >>> # Define some RasterSequence metadata.
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
-    >>> scan_meta = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    >>> scan_meta = NDMeta({"exposure time": exposure_times}, axes={"exposure time": 0},
     ...                  data_shape=data.shape)
     >>> seq_meta = {"description": "This is a RasterSequence.", "exposure time" : exposure_times}
 

@@ -164,11 +164,11 @@ Let's recreate our spectrogram object again, but this time with exposure times o
 .. code-block:: python
 
     >>> import astropy.units as u
-    >>> from sunraster.meta import Meta
+    >>> from ndcube.meta import NDMeta
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
     >>> # Create a metadata instance to hold the exposure times.
     >>> # We must also assign the exposure time to the time axis, in this case, the 0th array axis.
-    >>> metadata = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    >>> metadata = NDMeta({"exposure time": exposure_times}, axes={"exposure time": 0},
     ...                 data_shape=data.shape)
     >>> my_spectrograms = SpectrogramCube(data, input_wcs, uncertainty=uncertainties,
     ...                                   mask=mask, meta=metadata, unit=u.ct)
