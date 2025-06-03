@@ -202,10 +202,10 @@ def test_uncalculate_exposure_time_correction_error():
 @pytest.mark.parametrize(
     ("item", "expected"),
     [
-        (0, np.array(["b", "c"])),
-        (slice(0, 1), np.array(["a", "b", "c"])),
-        ((slice(None), 0), np.array(["a", "c"])),
-        ((slice(None), slice(None), slice(0, 1)), np.array(["a", "b", "c"])),
+        (0, ["b", "c"]),
+        (slice(0, 1), ["a", "b", "c"]),
+        ((slice(None), 0), ["a", "c"]),
+        ((slice(None), slice(None), slice(0, 1)), ["a", "b", "c"]),
     ],
 )
 def test_instrument_axes_slicing(item, expected):
