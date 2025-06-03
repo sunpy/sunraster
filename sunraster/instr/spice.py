@@ -217,7 +217,7 @@ def _read_single_spice_l2_fits(
                 # Define metadata object.
                 meta = SPICEMeta(
                     hdu.header,
-                    comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
+                    key_comments=_convert_fits_comments_to_key_value_pairs(hdu.header),
                     data_shape=hdu.data.shape,
                 )
                 # Rename WCS time axis to time.
