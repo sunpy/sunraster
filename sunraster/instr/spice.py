@@ -250,13 +250,13 @@ def _read_single_spice_l2_fits(
 def _convert_fits_comments_to_key_value_pairs(fits_header):
     keys = np.unique(np.array(list(fits_header.keys())))
     keys = keys[keys != ""]
-    return [(key, fits_header.comments[key]) for key in keys]
+    return dict([(key, fits_header.comments[key]) for key in keys])
 
 
-class SPICEMeta(NDMeta, metaclass=SlitSpectrographMetaABC):
+class SPICEMeta(SlitSpectrographMetaABC, NDMeta):
     # ---------- SPICE-specific convenience methods ----------
     def _get_unit(self, key):
-        if comment := self.comments.get(key):
+        if comment := self.key_comments.get(key):
             try:
                 return [s.split("]") for s in comment.split("[")[1:]][0][:-1][0]
             except IndexError:

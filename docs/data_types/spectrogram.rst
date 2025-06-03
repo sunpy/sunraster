@@ -110,8 +110,8 @@ The `~sunraster.SpectrogramCube.dimensions` and `~sunraster.SpectrogramCube.arra
 
 .. code-block:: python
 
-    >>> my_spectrograms.dimensions
-    <Quantity [3., 4., 5.] pix>
+    >>> my_spectrograms.shape
+    (3, 4, 5)
     >>> my_spectrograms.array_axis_physical_types
     [('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
     ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'),
@@ -270,7 +270,7 @@ Let's create some using what we learned in the :ref:`spectrogramcube` section an
     >>> # Define exposure times.
     >>> exposure_times = np.ones(data.shape[0])/2 * u.s
     >>> axis_length = int(data.shape[0])
-    >>> meta = Meta({"exposure time": exposure_times}, axes={"exposure time": 0},
+    >>> meta = NDMeta({"exposure time": exposure_times}, axes={"exposure time": 0},
     ...             data_shape=data.shape)
 
     >>> # Create 1st cube of spectrograms.
@@ -320,8 +320,8 @@ In order to inspect the dimensionality of our sequence and the physical properti
 
 .. code-block:: python
 
-    >>> my_sequence.dimensions
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+    >>> my_sequence.shape
+    (3, 3, 4, 5)
     >>> my_sequence.array_axis_physical_types
     [('meta.obs.sequence',), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon', 'time', 'custom:CUSTOM'), ('custom:pos.helioprojective.lat', 'custom:pos.helioprojective.lon'), ('em.wl',)]
 
@@ -368,10 +368,10 @@ We can check the effect of the slicing via the `~sunraster.SpectrogramSequence.d
 
 .. code-block:: python
 
-    >>> print(my_sequence.dimensions)  # Check dimensionality before slicing.
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
-    >>> print(my_sequence_roi.dimensions) # See how slicing has changed dimensionality.
-    (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
+    >>> print(my_sequence.shape)  # Check dimensionality before slicing.
+    (3, 3, 4, 5)
+    >>> print(my_sequence_roi.shape) # See how slicing has changed dimensionality.
+    (2, 2, 2, 3)
 
 Slicing can reduce the dimensionality of `~sunraster.SpectrogramSequence` instances.
 For example, let's slice out the 2nd pixel along the slit.
@@ -379,8 +379,8 @@ For example, let's slice out the 2nd pixel along the slit.
 .. code-block:: python
 
     >>> my_3d_sequence = my_sequence[:, :, 2]
-    >>> print(my_3d_sequence.dimensions)
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 5. pix>)
+    >>> print(my_3d_sequence.shape)
+    (3, 3, 5)
 
 Plotting
 ^^^^^^^^
