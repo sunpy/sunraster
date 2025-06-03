@@ -5,10 +5,10 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
 
+from ndcube.meta import NDMeta
 from ndcube.tests.helpers import assert_cubesequences_equal
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
-from sunraster.extern.meta import Meta
 
 # Define an sample wcs objects.
 H0 = {
@@ -121,8 +121,8 @@ extra_coords21 = [
 meta_seq = {
     "a": 0,
 }
-meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
-meta_exposure2 = Meta(
+meta_exposure0 = NDMeta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
+meta_exposure2 = NDMeta(
     {"exposure time": u.Quantity(np.zeros(SOURCE_DATA_DN.shape[2]) + SINGLES_EXPOSURE_TIME, unit=u.s)},
     axes={"exposure time": 2},
     data_shape=SOURCE_DATA_DN.shape,

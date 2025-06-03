@@ -1,0 +1,2 @@
+Increased minimum required version of ``ndcube`` to 2.3.0.
+This comes with the removal of older metadata handling methods which are now using upstreamed methods from ndcube.
