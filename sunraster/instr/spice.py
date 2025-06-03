@@ -253,7 +253,7 @@ def _convert_fits_comments_to_key_value_pairs(fits_header):
     return [(key, fits_header.comments[key]) for key in keys]
 
 
-class SPICEMeta(SlitSpectrographMetaABC, NDMeta):
+class SPICEMeta(NDMeta, metaclass=SlitSpectrographMetaABC):
     # ---------- SPICE-specific convenience methods ----------
     def _get_unit(self, key):
         if comment := self.comments.get(key):
