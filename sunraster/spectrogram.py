@@ -1,5 +1,4 @@
 import abc
-import numbers
 import textwrap
 from copy import deepcopy
 
@@ -9,6 +8,7 @@ import astropy.units as u
 from astropy.time import Time
 
 import ndcube.utils.wcs as nuw
+from ndcube import NDMeta
 from ndcube.ndcube import NDCube
 
 __all__ = ["SpectrogramCube"]
@@ -93,25 +93,29 @@ SUPPORTED_EXPOSURE_NAMES = np.array(SUPPORTED_EXPOSURE_NAMES)
 class SpectrogramABC(abc.ABC):
     # Abstract Base Class to define the basic API of Spectrogram classes.
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def spectral_axis(self):
         """
         Return the spectral coordinates for each pixel.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def time(self):
         """
         Return the time coordinates for each pixel.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def exposure_time(self):
         """
         Return the exposure time for each exposure.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def celestial(self):
         """
         Return the celestial coordinates for each pixel.
@@ -197,7 +201,15 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         copy=False,
         **kwargs,
     ):
-        # Initialize SpectrogramCube.
+        if instrument_axes is not None:
+            if len(instrument_axes) != data.ndim:
+                raise ValueError("Length of instrument_axes must match number of data axes.")
+            if meta is None:
+                meta = NDMeta()
+            if not isinstance(meta, NDMeta):
+                meta = NDMeta(meta)
+            meta.add("instrument_axes", np.asarray(instrument_axes, dtype=str), axes=data.shape, overwrite=True)
+
         super().__init__(
             data,
             wcs=wcs,
@@ -241,13 +253,6 @@ class SpectrogramCube(NDCube, SpectrogramABC):
             self_extra_coords,
             self.meta,
         )
-        # Set up instrument axes if set.
-        if instrument_axes is None:
-            self.instrument_axes = instrument_axes
-        elif len(instrument_axes) != data.ndim:
-            raise ValueError("Length of instrument_axes must match number of data axes.")
-        else:
-            self.instrument_axes = np.asarray(instrument_axes, dtype=str)
 
     def __str__(self):
         try:
@@ -306,31 +311,13 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     def __repr__(self):
         return f"{object.__repr__(self)}\n{self!s}"
 
-    def __getitem__(self, item):
-        # Slice SpectrogramCube using parent slicing.
-        result = super().__getitem__(item)
-        # Slice instrument_axes if it exists.
-        # If item is a slice, cube dimensionality is not reduced
-        # so instrument_axes need not be sliced.
-        if self.instrument_axes is None or isinstance(item, slice):
-            instrument_axes = self.instrument_axes
-        else:
-            # If item is int, instrument_axes needs slicing.
-            if isinstance(item, numbers.Integral):
-                instrument_axes = self.instrument_axes[1:]
-            # If item is tuple, instrument axes will need to be sliced if tuple contains an int.
-            elif isinstance(item, tuple):
-                instr_item = [isinstance(i, numbers.Integral) for i in item] + [False] * (
-                    len(self.instrument_axes) - len(item)
-                )
-                instrument_axes = self.instrument_axes[np.invert(instr_item)]
-            else:
-                raise TypeError("Unrecognized slice item. Must be int, slice or tuple.")
-            # If slicing causes cube to be a scalar, set instrument_axes to None.
-            if len(instrument_axes) == 0:
-                instrument_axes = None
-        result.instrument_axes = instrument_axes
-        return result
+    @property
+    def instrument_axes(self):
+        """
+        The relationship between the array axes and the instrument,
+        i.e. repeat raster axis, slit position, position along slit, and spectral.
+        """
+        return self.meta["instrument_axes"]
 
     @property
     def spectral_axis(self):
