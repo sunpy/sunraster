@@ -18,7 +18,7 @@ authors = [
 dependencies = [
   "numpy>=1.23.0",
   "astropy>=5.0.6,!=5.1.0",
-  "ndcube[all]>=2.3.0rc1"
+  "ndcube[all]>=2.3.0"
 ]
 dynamic = ["version"]
 
