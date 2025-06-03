@@ -233,7 +233,7 @@ def test_components_after_slicing():
         wcs=wcs,
         uncertainty=uncertainty,
         mask=mask,
-        meta=spectrogram_instrument_axes.meta,
+        meta=sliced_cube.meta,
         unit=spectrogram_instrument_axes.unit,
         instrument_axes=spectrogram_instrument_axes.instrument_axes,
     )

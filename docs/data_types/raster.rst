@@ -116,7 +116,7 @@ The length of each axis can also be displayed in either the raster or sns repres
 .. code-block:: python
 
     >>> my_rasters.raster_dimensions
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+    (3, 3, 4, 5)
 
 `~sunraster.RasterSequence.raster_dimensions` always represents the length of the scan number axis in the 0th position.
 We can therefore see that we have 3 raster scans in our `~sunraster.RasterSequence`.
@@ -129,7 +129,7 @@ To see the length of the axes as though the data is in sit-and-stare mode, simpl
 .. code-block:: python
 
     >>> my_rasters.sns_dimensions
-    <Quantity [9., 4., 5.] pix>
+    [9, 4, 5]
 
 Note that scan number and slit-step axes have been combined into the 0th position.
 From this we can see that we have 9 (3x3) spectrograms or times in our `~sunraster.RasterSequence`.
@@ -177,11 +177,11 @@ We can see the result of slicing using the ``dimensions`` properties.
 .. code-block:: python
 
     >>> print(my_rasters.raster_dimensions)  # Check dimensionality before slicing.
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+    (3, 3, 4, 5)
     >>> print(my_rasters_roi.raster_dimensions) # See how slicing has changed dimensionality.
-    (<Quantity 2. pix>, <Quantity 2. pix>, <Quantity 2. pix>, <Quantity 3. pix>)
+    (2, 2, 2, 3)
     >>> my_rasters_roi.sns_dimensions  # Dimensionality can still be represented in sns form.
-    <Quantity [4., 2., 3.] pix>
+    [4, 2, 3]
 
 To slice in the sit-and-stare representation, do the following:
 
@@ -194,11 +194,11 @@ Let's check the effect of the slicing once again.
 .. code-block:: python
 
     >>> print(my_rasters.sns_dimensions)  # Check dimensionality before slicing.
-    [9. 4. 5.] pix
+    [9, 4, 5]
     >>> print(my_rasters_roi.sns_dimensions)  # See how slicing has changed dimensionality.
-    [6. 2. 3.] pix
+    [6, 2, 3]
     >>> print(my_rasters_roi.raster_dimensions)  # Dimensionality can still be represented in raster form.
-    (<Quantity 3. pix>, <Quantity [2., 3., 1.] pix>, <Quantity 2. pix>, <Quantity 3. pix>)
+    (3, (2, 3, 1), 2, 3)
 
 Notice that after slicing the data can still be inspected and interpreted in the raster or sit-and-stare format, irrespective of which slicing representation was used.
 Also notice that the ``my_sequence.slice_as_sns[1:7, 1:3, 1:4]`` command led to different `~sunraster.SpectrogramCube` objects to have different lengths along the slit step axis.
@@ -214,9 +214,9 @@ However, the raster and sit-and-stare representations are still valid.
 
     >>> slit_pixel_rasters = my_rasters.slice_as_raster[:, :, 2]
     >>> print(slit_pixel_rasters.raster_dimensions)
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 5. pix>)
+    (3, 3, 5)
     >>> print(slit_pixel_rasters.sns_dimensions)
-    [9. 5.] pix
+    [9, 5]
 
 This demonstrates that the difference between the raster and sit-and-stare representations is more subtle than simply a 4-D or 3-D dimensionality.
 The difference is whether the raster scan and slit step axes are convolved into a time axis or whether they are represented separately.
@@ -257,8 +257,8 @@ To make a 4-D array from the data arrays in ``my_rasters``, use `numpy.stack`.
 
 .. code-block:: python
 
-    >>> print(my_rasters._dimensions)  # Print sequence dimensions as a reminder.
-    (<Quantity 3. pix>, <Quantity 3. pix>, <Quantity 4. pix>, <Quantity 5. pix>)
+    >>> print(my_rasters.shape)  # Print sequence dimensions as a reminder.
+    (3, 3, 4, 5)
     >>> data = np.stack([cube.data for cube in my_rasters.data])
     >>> print(data.shape)
     (3, 3, 4, 5)

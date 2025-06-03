@@ -87,7 +87,7 @@ def spice_fits_header():
 def spice_meta(spice_fits_header):
     return SPICEMeta(
         spice_fits_header,
-        key_comments=zip(spice_fits_header.keys(), spice_fits_header.comments),
+        key_comments=dict(zip(spice_fits_header.keys(), spice_fits_header.comments)),
     )
 
 
