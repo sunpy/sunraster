@@ -208,7 +208,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
                 meta = NDMeta()
             if not isinstance(meta, NDMeta):
                 meta = NDMeta(meta)
-            meta.add("instrument_axes", np.asarray(instrument_axes, dtype=str), axes=data.shape, overwrite=True)
+            meta.add("instrument_axes", np.asarray(instrument_axes, dtype=str), axes=np.arange(data.ndim, dtype=int), overwrite=True)
 
         super().__init__(
             data,
