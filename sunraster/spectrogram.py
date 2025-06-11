@@ -317,7 +317,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         The relationship between the array axes and the instrument,
         i.e. repeat raster axis, slit position, position along slit, and spectral.
         """
-        return self.meta["instrument_axes"]
+        return self.meta.get("instrument_axes")
 
     @property
     def spectral_axis(self):
