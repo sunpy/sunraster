@@ -5,11 +5,11 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
 
+from ndcube.meta import NDMeta
 from ndcube.tests.helpers import assert_cubes_equal
 
 import sunraster.spectrogram
 from sunraster import SpectrogramCube
-from sunraster.extern.meta import Meta
 
 # Define a sample wcs object
 H0 = {
@@ -77,7 +77,7 @@ EXTRA_COORDS1 = [
         (Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN, TIME_DIM_LEN * 2), format="sec")),
     ),
 ]
-meta_exposure0 = Meta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
+meta_exposure0 = NDMeta({"exposure time": EXPOSURE_TIME}, axes={"exposure time": 0}, data_shape=SOURCE_DATA_DN.shape)
 
 spectrogram_DN0 = SpectrogramCube(
     SOURCE_DATA_DN, wcs=WCS0, unit=u.ct, uncertainty=SOURCE_UNCERTAINTY_DN, meta=meta_exposure0
@@ -142,7 +142,7 @@ spectrogram_instrument_axes = SpectrogramCube(
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
     mask=MASK,
-    instrument_axes=("a", "b", "c"),
+    instrument_axes=np.asanyarray(("a", "b", "c")),
     meta=meta_exposure0,
 )
 spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[0])
@@ -202,10 +202,10 @@ def test_uncalculate_exposure_time_correction_error():
 @pytest.mark.parametrize(
     ("item", "expected"),
     [
-        (0, np.array(["b", "c"])),
-        (slice(0, 1), np.array(["a", "b", "c"])),
-        ((slice(None), 0), np.array(["a", "c"])),
-        ((slice(None), slice(None), slice(0, 1)), np.array(["a", "b", "c"])),
+        (0, ["b", "c"]),
+        (slice(0, 1), ["a", "b", "c"]),
+        ((slice(None), 0), ["a", "c"]),
+        ((slice(None), slice(None), slice(0, 1)), ["a", "b", "c"]),
     ],
 )
 def test_instrument_axes_slicing(item, expected):
@@ -213,7 +213,7 @@ def test_instrument_axes_slicing(item, expected):
     assert all(sliced_cube.instrument_axes == expected)
 
 
-def test_ndcube_components_after_slicing():
+def test_components_after_slicing():
     """
     Tests all cube components are correctly propagated by slicing.
     """
@@ -233,11 +233,12 @@ def test_ndcube_components_after_slicing():
         wcs=wcs,
         uncertainty=uncertainty,
         mask=mask,
-        meta=spectrogram_instrument_axes.meta,
+        meta=sliced_cube.meta,
         unit=spectrogram_instrument_axes.unit,
         instrument_axes=spectrogram_instrument_axes.instrument_axes,
     )
     expected_cube.extra_coords.add(*ec0)
     assert str(sliced_cube)
     assert str(expected_cube)
+
     assert_cubes_equal(sliced_cube, expected_cube)

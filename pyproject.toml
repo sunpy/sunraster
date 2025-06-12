@@ -16,9 +16,9 @@ authors = [
   { name = "The SunPy Community", email = "sunpy@googlegroups.com" },
 ]
 dependencies = [
-  "numpy>=1.24",
-  "astropy>=5.2",
-  "ndcube[plotting]>=2.1.2"
+  "numpy>=1.25.0",
+  "astropy>=5.0.6,!=5.1.0",
+  "ndcube[all]>=2.3.2"
 ]
 dynamic = ["version"]
 
