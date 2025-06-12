@@ -142,7 +142,7 @@ spectrogram_instrument_axes = SpectrogramCube(
     unit=u.ct,
     uncertainty=SOURCE_UNCERTAINTY_DN,
     mask=MASK,
-    instrument_axes=("a", "b", "c"),
+    instrument_axes=np.asanyarray(("a", "b", "c")),
     meta=meta_exposure0,
 )
 spectrogram_instrument_axes.extra_coords.add(*EXTRA_COORDS0[0])
@@ -240,4 +240,5 @@ def test_components_after_slicing():
     expected_cube.extra_coords.add(*ec0)
     assert str(sliced_cube)
     assert str(expected_cube)
+
     assert_cubes_equal(sliced_cube, expected_cube)
