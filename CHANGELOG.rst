@@ -1,3 +1,14 @@
+0.6.0 (2025-06-12)
+==================
+
+Breaking Changes
+----------------
+
+- Increased the minimum version of ``sunpy`` to 6.0.0
+- Increased the minimum version of ``ndcube`` to 2.3.2
+- Increased the minimum version of Python to 3.10
+- Removed internal metadata handling and replaced it with the new ndcube version.
+
 0.5.1 (2024-01-17)
 ==================
 
