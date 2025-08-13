@@ -191,7 +191,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
                 {self.__class__.__name__}
                 {"".join(["-"] * len(self.__class__.__name__))}
                 Time Range: {time_period}
-                Pixel Dimensions: {self.dimensions}
+                Pixel Dimensions: {self.shape if hasattr(self, "shape") else self.dimensions.astype(int)}
                 Longitude range: {lon_range}
                 Latitude range: {lat_range}
                 Spectral range: {spectral_range}
