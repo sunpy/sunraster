@@ -11,7 +11,7 @@ import ndcube.utils.wcs as nuw
 from ndcube import NDMeta
 from ndcube.ndcube import NDCube
 
-__all__ = ["SpectrogramCube"]
+__all__ = ["SpectrogramABC","SpectrogramCube"]
 
 
 # Define some custom error messages.
@@ -161,9 +161,9 @@ class SpectrogramCube(NDCube, SpectrogramABC):
     ----------
     data: `numpy.ndarray`
         The array holding the actual data in this object.
-    wcs: `ndcube.wcs.wcs.WCS`
+    wcs: `astropy.wcs.WCS`
         The WCS object containing the axes' information
-    unit : `astropy.unit.Unit` or `str`, optional
+    unit : `astropy.units.Unit` or `str`, optional
         Unit for the dataset. Strings that can be converted to a Unit are allowed.
     uncertainty : any type, optional
         Uncertainty in the dataset. Should have an attribute uncertainty_type
@@ -172,7 +172,7 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         such an interface is NDUncertainty - but isn't mandatory. If the uncertainty
         has no such attribute the uncertainty is stored as UnknownUncertainty.
         Defaults to None.
-    meta : dict-like object, optional
+    meta : `dict` object, optional
         Additional meta information about the dataset.
     mask : any type, optional
         Mask for the dataset. Masks should follow the numpy convention
@@ -187,6 +187,19 @@ class SpectrogramCube(NDCube, SpectrogramABC):
         before saving it while False tries to save every parameter as reference.
         Note however that it is not always possible to save the input as reference.
         Default is False.
+
+    Attributes
+    ----------
+    array_axis_physical_types
+    axis_world_coords
+    dimensions
+    extra_coords
+    meta
+    pixel_to_world
+    plot
+    spectral
+    uncertainty
+    world_to_pixel
     """
 
     def __init__(
@@ -504,7 +517,7 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
         Data array to be converted.
     uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in data.
-    old_unit: `astropy.unit.Unit`
+    old_unit: `astropy.units.Unit`
         Unit of data arrays.
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
@@ -515,7 +528,7 @@ def _calculate_exposure_time_correction(data, uncertainty, unit, exposure_time, 
         Data array with exposure time corrected for.
     new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in new_data.
-    new_unit: `astropy.unit.Unit`
+    new_unit: `astropy.units.Unit`
         Unit of new_data array after exposure time correction.
     """
     if force is not True and u.s in unit.decompose().bases:
@@ -544,7 +557,7 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
         Data array to be converted.
     uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in data.
-    old_unit: `astropy.unit.Unit`
+    old_unit: `astropy.units.Unit`
         Unit of data arrays.
     exposure_time: `numpy.ndarray`
         Exposure time in seconds for each exposure in data arrays.
@@ -555,7 +568,7 @@ def _uncalculate_exposure_time_correction(data, uncertainty, unit, exposure_time
         Data array with exposure time corrected for.
     new_uncertainty: `astropy.nddata.nduncertainty.NDUncertainty`
         The uncertainty of each element in new_data.
-    new_unit: `astropy.unit.Unit`
+    new_unit: `astropy.units.Unit`
         Unit of new_data array after exposure time correction.
     """
     if force is not True and u.s in (unit * u.s).decompose().bases:

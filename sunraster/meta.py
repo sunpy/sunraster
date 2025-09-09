@@ -2,7 +2,7 @@ import abc
 
 from ndcube.meta import NDMetaABC
 
-__all__ = ["RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
+__all__ = ["MetaABC", "RemoteSensorMetaABC", "SlitSpectrographMetaABC"]
 
 
 class MetaABC(NDMetaABC):
