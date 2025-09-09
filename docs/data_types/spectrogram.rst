@@ -157,8 +157,8 @@ An important step in analyzing any form of photon-based observations is normaliz
 This is important both for converting between instrumental and physical units, e.g. DN to energy, and comparing spectral features between exposure, e.g. line intensity.
 
 `~sunraster.SpectrogramCube` provides a simple API for performing this correction: `~sunraster.SpectrogramCube.apply_exposure_time_correction`.
-It requires that the exposure time is stored in the ``.meta`` attribute of the `~sunraster.SpectromCube` as a `~astropy.units.Quantity`.
-The ``.meta`` attribute must be an instance of `~sunraster.meta.Meta`.
+It requires that the exposure time is stored in the ``.meta`` attribute of the `~sunraster.SpectrogramCube` as a `~astropy.units.Quantity`.
+The ``.meta`` attribute must be an instance of `ndcube.meta.NDMeta`.
 Let's recreate our spectrogram object again, but this time with exposure times of 0.5 seconds stored as an extra coordinate and a data unit of counts.
 
 .. code-block:: python

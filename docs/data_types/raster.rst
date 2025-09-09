@@ -250,7 +250,7 @@ Extracting Data Arrays
 ^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible that you may have some procedures that are designed to operate on arrays instead of `~sunraster.SpectrogramSequence` or `~sunraster.RasterSequence` objects.
-Therefore it may be useful to extract the data (or other array-like information such as `uncertainty` or `mask`) into a single `~numpy.ndarray`.
+Therefore it may be useful to extract the data (or other array-like information such as ``uncertainty`` or ``mask``) into a single `~numpy.ndarray`.
 A succinct way of doing this operation is using python's list comprehension.
 
 To make a 4-D array from the data arrays in ``my_rasters``, use `numpy.stack`.

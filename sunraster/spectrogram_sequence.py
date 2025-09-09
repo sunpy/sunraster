@@ -46,6 +46,20 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
         Default=None implies there is no common axis.
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
+
+    Attributes
+    ----------
+    array_axis_physical_axis_types
+    array_axis_physical_types
+    axis_world_coords
+    dimensions
+    extra_coords
+    meta
+    pixel_to_world
+    plot
+    spectral
+    uncertainty
+    world_to_pixel
     """
 
     def __init__(self, data_list, common_axis=None, meta=None):
@@ -216,6 +230,13 @@ class RasterSequence(SpectrogramSequence):
         The axis of the SpectrogramCube instances corresponding to the slit step axis.
     meta: `dict` or header object (optional)
         Metadata associated with the sequence.
+
+    Attributes
+    ----------
+    celestial
+    exposure_time
+    spectral
+    time
     """
 
     def __init__(self, data_list, common_axis, meta=None):

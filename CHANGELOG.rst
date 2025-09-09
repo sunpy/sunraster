@@ -71,7 +71,7 @@ Breaking Changes
 ----------------
 
 - In IRIS spectrograph read, move all metadata to the meta objects of the raster cubes. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
-- Remove extra_coords keyword from `~sunraster.spectrogram.SpectrogramCube.__init__` in accordance with new ndcube 2.0 API.
+- Remove extra_coords keyword from `~sunraster.spectrogram.SpectrogramCube` in accordance with new ndcube 2.0 API.
   Extra coords can by added through the ndcube ExtraCoords.add API which is new in ndcube 2.0. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
 - In IRIS spectrograph reader, all extra coords except time have been moved to the meta object. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
 - Removed ``lon`` and ``lat`` properties from all objects in sunraster. (`#184 <https://github.com/sunpy/sunraster/pull/184>`__)
@@ -80,9 +80,9 @@ Breaking Changes
 New Features
 ------------
 
-- Create new property `~sunraster.spectrogram.SpectrogramSequence.celestial`, on `~sunraster.spectrogram.SpectrogramSequence` to return a `~astropy.coordinates.SkyCoord` holding the celestial world coords of the pixels. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
+- Create new property ``sunraster.spectrogram.SpectrogramSequence.celestial``, on ``sunraster.spectrogram.SpectrogramSequence`` to return a `~astropy.coordinates.SkyCoord` holding the celestial world coords of the pixels. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
 - Create new property `~sunraster.spectrogram.SpectrogramCube.celestial`, on `~sunraster.spectrogram.SpectrogramCube` to return a `~astropy.coordinates.SkyCoord` holding the celestial world coords of the pixels. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
-- Create a new `~sunraster.instr.iris.IRISSGMeta` metadata object. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
+- Create a new ``~sunraster.instr.iris.IRISSGMeta`` metadata object. (`#182 <https://github.com/sunpy/sunraster/pull/182>`__)
 - Added a sliceable ``Meta`` class for axis-associated metadata. (`#184 <https://github.com/sunpy/sunraster/pull/184>`__)
 
 
