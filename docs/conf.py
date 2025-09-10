@@ -92,9 +92,9 @@ intersphinx_mapping = {
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     "matplotlib": ("https://matplotlib.org/", None),
-    "astropy": ("http://docs.astropy.org/en/stable/", None),
-    "sunpy": ("https://docs.sunpy.org/en/stable/", None),
-    "ndcube": ("https://docs.sunpy.org/projects/ndcube/en/stable/", None),
+    "astropy": ("http://docs.astropy.org/en/latest/", None),
+    "sunpy": ("https://docs.sunpy.org/en/latest/", None),
+    "ndcube": ("https://docs.sunpy.org/projects/ndcube/en/latest/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
