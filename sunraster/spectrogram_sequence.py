@@ -118,10 +118,10 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
 
         Returns
         -------
-        `None` or `SpectrogramSequence`
-            If copy=False, the original SpectrogramSequence is modified with the
+        `None` or `sunraster.SpectrogramSequence`
+            If copy=False, the original input is modified with the
             exposure time correction applied (undone).
-            If copy=True, a new SpectrogramSequence is returned with the correction
+            If copy=True, a new `sunraster.SpectrogramSequence` is returned with the correction
             applied (undone).
         """
         converted_data_list = [cube.apply_exposure_time_correction(undo=undo, force=force) for cube in self.data]

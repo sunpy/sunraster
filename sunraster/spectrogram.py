@@ -145,7 +145,7 @@ class SpectrogramABC(abc.ABC):
 
         Returns
         -------
-        result: `SpectrogramCube`
+        result: `sunraster.SpectrogramCube`
             New SpectrogramCube in new units.
         """
 
