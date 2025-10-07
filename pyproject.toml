@@ -16,8 +16,8 @@ authors = [
   { name = "The SunPy Community", email = "sunpy@googlegroups.com" },
 ]
 dependencies = [
-  "numpy>=1.25.0",
-  "astropy>=5.0.6,!=5.1.0",
+  "numpy>=1.26.0",
+  "astropy>=6.1.0",
   "ndcube[all]>=2.3.2"
 ]
 dynamic = ["version"]
@@ -25,7 +25,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 all = ["sunraster[instr]"]
 instr = [
-    "sunpy>=6.0",
+    "sunpy>=7.0",
 ]
 tests = [
   "pytest",
