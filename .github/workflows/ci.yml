@@ -43,8 +43,8 @@ jobs:
   sdist_verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - run: python -m pip install -U --user build
@@ -61,10 +61,11 @@ jobs:
       toxdeps: tox-pypi-filter
       posargs: -n auto
       envs: |
-        - windows: py311
+        - linux: py314
+        - windows: py312
         - macos: py312
-        - linux: py310-oldestdeps
-        - linux: py313-devdeps
+        - linux: py312-oldestdeps
+        - linux: py314-devdeps
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 

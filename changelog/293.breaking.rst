@@ -1,0 +1,4 @@
+Increased minimum version of Python to 3.12.
+Increased minimum version of NumPy to 1.26.0.
+Increased minimum version of Astropy to 6.1.0.
+Increased minimum version of sunpy to 7.0.0.
