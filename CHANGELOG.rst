@@ -1,3 +1,18 @@
+0.7.0 (2025-10-16)
+==================
+
+Breaking Changes
+----------------
+
+- Increased the minimum version of Python to 3.10.0 (`#257 <https://github.com/sunpy/sunraster/pull/257>`__)
+- Increased minimum required version of ``ndcube`` to 2.3.0.
+  This comes with the removal of older metadata handling methods which are now using upstreamed methods from ndcube. (`#273 <https://github.com/sunpy/sunraster/pull/273>`__)
+- Increased minimum version of Python to 3.12.
+  Increased minimum version of NumPy to 1.26.0.
+  Increased minimum version of Astropy to 6.1.0.
+  Increased minimum version of sunpy to 7.0.0. (`#293 <https://github.com/sunpy/sunraster/pull/293>`__)
+
+
 0.6.0 (2025-06-12)
 ==================
 
