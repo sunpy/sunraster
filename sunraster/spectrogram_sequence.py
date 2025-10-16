@@ -36,7 +36,7 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
     Parameters
     ----------
     data_list: `list`
-        List of `SpectrogramCube` objects from the same spectral window and OBS ID.
+        List of `sunraster.SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
     common_axis: `int` or `None` (optional)
         If the sequence axis is aligned with an axis of the component SpectrogramCube
@@ -224,7 +224,7 @@ class RasterSequence(SpectrogramSequence):
     Parameters
     ----------
     data_list: `list`
-        List of `SpectrogramCube` objects from the same spectral window and OBS ID.
+        List of `sunraster.SpectrogramCube` objects from the same spectral window and OBS ID.
         Must also contain the 'detector type' in its meta attribute.
     common_axis: `int`
         The axis of the SpectrogramCube instances corresponding to the slit step axis.
