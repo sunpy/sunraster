@@ -467,7 +467,7 @@ def _find_axis_name(supported_names, world_axis_physical_types, extra_coords, me
     Parameters
     ----------
     supported_names: 1D `numpy.ndarray`
-        The names for the axis supported by `SpectrogramCube`.
+        The names for the axis supported by `sunraster.SpectrogramCube`.
     world_axis_physical_types: 1D `numpy.ndarray`
         Output of SpectrogramCube.world_axis_physical_types converted to an array.
     extra_coords: `ndcube.ExtraCoords` or `None`
