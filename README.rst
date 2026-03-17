@@ -1,4 +1,3 @@
-=========
 sunraster
 =========
 
@@ -20,7 +19,7 @@ sunraster
 ``sunraster`` is an open-source Python library that provides the tools to read in and analyze spectrogram data.
 
 Installation
-============
+------------
 
 An easy way to install ``sunraster`` is to do so with the anaconda distribution using the conda-forge channel, with the following command at the terminal:
 
@@ -35,7 +34,7 @@ Another equally easy way to install ``sunraster`` is with pip:
     pip install sunraster
 
 Developing
-==========
+----------
 
 If you want to develop ``sunraster`` you will need to install from GitHub.
 We suggest you fork ``sunraster`` so you can work on it.
@@ -51,7 +50,7 @@ The best way to do this is to create a new python virtual environment (conda/pip
 For detailed installation instructions (aimed at installing ``sunpy``), see the `Newcomers' guide`_ in the sunpy docs.
 
 Getting help
-============
+------------
 
 For more information or to ask questions about ``sunraster``, check out:
 
@@ -64,24 +63,16 @@ For more information or to ask questions about ``sunraster``, check out:
 .. _sunpy Mailing List: https://groups.google.com/forum/#!forum/sunpy
 
 
-License
-=======
-
-This project is Copyright (c) The SunPy Community and licensed under
-the terms of the BSD 2-Clause license. This package is based upon
-the `Openastronomy packaging guide <https://github.com/OpenAstronomy/packaging-guide>`_
-which is licensed under the BSD 3-clause licence. See the licenses folder for
-more information.
-
 Usage of Generative AI
-======================
+----------------------
 
 We expect authentic engagement in our community.
-Be wary of posting output from Large Language Models or similar generative AI as comments on GitHub or any other platform, as such comments tend to be formulaic and low quality content.
+**Do not post the output from Large Language Models or similar generative AI as code, issues or comments on GitHub or any other platform.**
 If you use generative AI tools as an aid in developing code or documentation changes, ensure that you fully understand the proposed changes and can explain why they are the correct approach and an improvement to the current state.
+For more information see our documentation on fair and appropriate `AI usage <https://docs.sunpy.org/en/latest/dev_guide/contents/ai_usage.html>`__.
 
 Contributing
-============
+------------
 
 We love contributions! sunraster is open source,
 built on open source, and we'd love to have you hang out in our community.
@@ -116,7 +107,7 @@ For more information on contributing to sunraster, please read SunPy's `Newcomer
 
 
 Note: This disclaimer was originally written by
-`Adrienne Lowe <https://github.com/adriennefriend>`_ for a
-`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
+`Adrienne Lowe <https://github.com/adriennefriend>`__ for a
+`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`__, and was adapted by
 sunraster based on its use in the README file for the
-`MetPy project <https://github.com/Unidata/MetPy>`_.
+`MetPy project <https://github.com/Unidata/MetPy>`__.
