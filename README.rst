@@ -56,6 +56,7 @@ Getting help
 For more information or to ask questions about ``sunraster``, check out:
 
 -  `sunraster Documentation`_
+<<<<<<<
 -  `sunpy Matrix Channel`_
 -  `sunpy Mailing List`_
 
@@ -63,13 +64,21 @@ For more information or to ask questions about ``sunraster``, check out:
 .. _sunpy Matrix Channel: https://chat.openastronomy.org/#/room/#sunpy:openastronomy.org
 .. _sunpy Mailing List: https://groups.google.com/forum/#!forum/sunpy
 
+=======
+----------------------
+
+We expect authentic engagement in our community.
+**Do not post the output from Large Language Models or similar generative AI as code, issues or comments on GitHub or any other platform.**
+If you use generative AI tools as an aid in developing code or documentation changes, ensure that you fully understand the proposed changes and can explain why they are the correct approach and an improvement to the current state.
+For more information see our documentation on fair and appropriate `AI usage <https://docs.sunpy.org/en/latest/dev_guide/contents/ai_usage.html>`__.
+>>>>>>>
 
 License
 =======
 
 This project is Copyright (c) The SunPy Community and licensed under
 the terms of the BSD 2-Clause license. This package is based upon
-the `Openastronomy packaging guide <https://github.com/OpenAstronomy/packaging-guide>`_
+the `Openastronomy packaging guide <https://github.com/OpenAstronomy/packaging-guide>`__
 which is licensed under the BSD 3-clause licence. See the licenses folder for
 more information.
 
@@ -116,7 +125,7 @@ For more information on contributing to sunraster, please read SunPy's `Newcomer
 
 
 Note: This disclaimer was originally written by
-`Adrienne Lowe <https://github.com/adriennefriend>`_ for a
-`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
+`Adrienne Lowe <https://github.com/adriennefriend>`__ for a
+`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`__, and was adapted by
 sunraster based on its use in the README file for the
-`MetPy project <https://github.com/Unidata/MetPy>`_.
+`MetPy project <https://github.com/Unidata/MetPy>`__.
