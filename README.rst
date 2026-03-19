@@ -1,6 +1,14 @@
+<<<<<<<
 sunraster
 =========
 
+=======
+sunraster is an open-source Python library that provides the tools to read in and analyze spectrogram data.
+===========================================================================================================
+
+Usage of Generative AI
+----------------------
+>>>>>>>
 |Latest Version| |codecov| |matrix| |DOI| |Powered by NumFOCUS| |Powered by SunPy|
 
 .. |Latest Version| image:: https://img.shields.io/pypi/v/sunraster.svg
@@ -77,6 +85,7 @@ Contributing
 We love contributions! sunraster is open source,
 built on open source, and we'd love to have you hang out in our community.
 
+<<<<<<<
 **Imposter syndrome disclaimer**: We want your help. No, really.
 
 There may be a little voice inside your head that is telling you that you're not
@@ -111,3 +120,17 @@ Note: This disclaimer was originally written by
 `PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`__, and was adapted by
 sunraster based on its use in the README file for the
 `MetPy project <https://github.com/Unidata/MetPy>`__.
+=======
+If you would like to get involved, check out the `Developers Guide`_ section of the SunPy docs.
+Stop by our chat room `#sunpy:openastronomy.org`_ if you have any questions.
+Help is always welcome so let us know what you like to work on, or check out the `issues page`_ for the list of known outstanding items.
+
+For more information on contributing to SunPy, please read our `Newcomers' guide`_.
+
+.. _Developers Guide: https://docs.sunpy.org/en/latest/dev_guide/index.html
+.. _`#sunpy:openastronomy.org`: https://app.element.io/#/room/#sunpy:openastronomy.org
+.. _issues page: https://github.com/sunpy/sunraster/issues
+.. _Newcomers' guide: https://docs.sunpy.org/en/latest/dev_guide/contents/newcomers.html
+
+When you are interacting with the SunPy community you are asked at to follow our `code of conduct <https://sunpy.org/coc>`__.
+>>>>>>>
