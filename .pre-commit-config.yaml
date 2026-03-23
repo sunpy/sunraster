@@ -16,12 +16,8 @@ repos:
     rev: 8.0.1
     hooks:
       - id: isort
-<<<<<<<
-        exclude: ".*(.fits|.fts|.fit|.header|.txt|tca.*|extern.*|{{ cookiecutter.module_name }}/extern)$"
-=======
         types: [python]
         exclude: *exclude_dirs
->>>>>>>
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
