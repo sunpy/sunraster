@@ -4,6 +4,8 @@ omit =
   sunraster/*setup_package*
   sunraster/extern/*
   sunraster/version*
+  sunraster/_dev/*
+  */sunraster/_dev/*
   */sunraster/conftest.py
   */sunraster/*setup_package*
   */sunraster/extern/*
