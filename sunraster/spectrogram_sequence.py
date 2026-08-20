@@ -2,12 +2,11 @@ import numbers
 import textwrap
 
 import numpy as np
+from ndcube import NDCubeSequence
 
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
-
-from ndcube import NDCubeSequence
 
 from sunraster.spectrogram import (
     SUPPORTED_LATITUDE_NAMES,

@@ -1,12 +1,11 @@
 import numpy as np
 import pytest
+from ndcube.meta import NDMeta
+from ndcube.tests.helpers import assert_cubes_equal
 
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
-
-from ndcube.meta import NDMeta
-from ndcube.tests.helpers import assert_cubes_equal
 
 import sunraster.spectrogram
 from sunraster import SpectrogramCube

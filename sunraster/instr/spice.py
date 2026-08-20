@@ -3,15 +3,14 @@ import numbers
 import textwrap
 
 import numpy as np
+from ndcube import NDCollection
+from ndcube.meta import NDMeta
 
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
-
-from ndcube import NDCollection
-from ndcube.meta import NDMeta
 
 from sunraster import RasterSequence, SpectrogramCube, SpectrogramSequence
 from sunraster.meta import SlitSpectrographMetaABC
