@@ -2,14 +2,13 @@ import abc
 import textwrap
 from copy import deepcopy
 
+import ndcube.utils.wcs as nuw
 import numpy as np
+from ndcube import NDMeta
+from ndcube.ndcube import NDCube
 
 import astropy.units as u
 from astropy.time import Time
-
-import ndcube.utils.wcs as nuw
-from ndcube import NDMeta
-from ndcube.ndcube import NDCube
 
 __all__ = ["SpectrogramABC","SpectrogramCube"]
 
