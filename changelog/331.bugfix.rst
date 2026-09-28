@@ -1,0 +1,1 @@
+The time range printed for a `~sunraster.SpectrogramSequence` now runs from the earliest to the latest time, even when time runs backwards along an axis (for example IRIS v34 rasters); before, it could print the start after the end.
