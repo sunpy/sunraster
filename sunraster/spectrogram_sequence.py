@@ -168,9 +168,10 @@ class SpectrogramSequence(NDCubeSequence, SpectrogramABC):
                 )
         data0 = self.data[0]
         if data0._time_name:
-            start_time = data0.time if data0.time.isscalar else data0.time.squeeze()[0]
-            data_1 = self.data[-1]
-            stop_time = data_1.time if data_1.time.isscalar else data_1.time.squeeze()[-1]
+            # Time can run backwards along an axis (for example IRIS v34 rasters),
+            # so the first and last values are not always the start and end.
+            start_time = min(cube.time.min() for cube in self.data)
+            stop_time = max(cube.time.max() for cube in self.data)
             time_period = start_time if start_time == stop_time else Time([start_time.iso, stop_time.iso])
         else:
             time_period = None
