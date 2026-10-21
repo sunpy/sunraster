@@ -322,3 +322,16 @@ def test_sns_instrument_axes_types(input_sequence, expected_sns_axes_types):
 
 def test_slice_as_raster():
     assert isinstance(sequence_DN[:, 0], SpectrogramSequence)
+
+
+def test_str_time_range_when_time_runs_backwards():
+    # IRIS v34 rasters step backwards in time, so the first time is the latest one.
+    times = Time("2017-01-01") + TimeDelta(np.arange(TIME_DIM_LEN * 2)[::-1], format="sec")
+    cubes = []
+    for i in range(2):
+        cube = SpectrogramCube(SOURCE_DATA_DN, WCS0, u.ct, SOURCE_UNCERTAINTY_DN, meta=meta_exposure0)
+        cube.extra_coords.add("time", 0, times[i * TIME_DIM_LEN : (i + 1) * TIME_DIM_LEN])
+        cubes.append(cube)
+    assert "Time Range: ['2017-01-01 00:00:00.000' '2017-01-01 00:00:03.000']" in str(
+        RasterSequence(cubes, meta=meta_seq, common_axis=0)
+    )
